@@ -1,0 +1,7 @@
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+**/vendor/
+**/dist/
+**/_ide_helper.php
