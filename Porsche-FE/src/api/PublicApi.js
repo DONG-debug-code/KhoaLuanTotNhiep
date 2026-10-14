@@ -1,6 +1,29 @@
 import axios from "axios";
 import { BASE_URL } from "./config";
 
+const PUBLIC_CACHE_TTL = 5 * 60 * 1000;
+const publicDataCache = new Map();
+
+function getCachedPublicData(key, loadData) {
+  const cached = publicDataCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const entry = { expiresAt: Number.POSITIVE_INFINITY, promise: null };
+  entry.promise = Promise.resolve()
+    .then(loadData)
+    .then((data) => {
+      entry.expiresAt = Date.now() + PUBLIC_CACHE_TTL;
+      return data;
+    })
+    .catch((error) => {
+      if (publicDataCache.get(key) === entry) publicDataCache.delete(key);
+      throw error;
+    });
+
+  publicDataCache.set(key, entry);
+  return entry.promise;
+}
+
 const getValue = (record, keys, fallback = "") => {
   for (const key of keys) {
     if (record?.[key] !== undefined && record[key] !== null) return record[key];
@@ -230,74 +253,93 @@ function normalizeSanPham(sanPham) {
 }
 
 export async function getHomePageData() {
-  const { data } = await axios.get(`${BASE_URL}/home-page/data`);
-  return data;
+  return getCachedPublicData("home-page", async () => {
+    const { data } = await axios.get(`${BASE_URL}/home-page/data`);
+    return data;
+  });
 }
 
 export async function getHangPhuTungClient() {
-  const { data } = await axios.get(`${BASE_URL}/client/hang-phu-tung/data`);
-  return getCollection(data, ["hang_phu_tung", "hangPhuTung", "chuyen_khoa", "chuyenKhoa", "hangs", "brands", "items", "data"])
-    .map(normalizeHang);
+  return getCachedPublicData("hang-phu-tung", async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/hang-phu-tung/data`);
+    return getCollection(data, ["hang_phu_tung", "hangPhuTung", "chuyen_khoa", "chuyenKhoa", "hangs", "brands", "items", "data"])
+      .map(normalizeHang);
+  });
 }
 
 export async function getHangPhuTungClientById(id) {
-  const { data } = await axios.get(`${BASE_URL}/client/hang-phu-tung/chi-tiet/${encodeURIComponent(id)}`);
-  const detail = data?.data ?? data;
-  return detail && typeof detail === "object" ? normalizeHang(detail) : null;
+  return getCachedPublicData(`hang-phu-tung:${id}`, async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/hang-phu-tung/chi-tiet/${encodeURIComponent(id)}`);
+    const detail = data?.data ?? data;
+    return detail && typeof detail === "object" ? normalizeHang(detail) : null;
+  });
 }
 
 export async function getGoiDoClientById(id) {
-  const { data } = await axios.get(
-    `${BASE_URL}/client/goi-do/chi-tiet/${encodeURIComponent(id)}`
-  );
-  const detail = data?.data ?? data;
-  return detail && typeof detail === "object" ? normalizeGoiDo(detail) : null;
+  return getCachedPublicData(`goi-do:${id}`, async () => {
+    const { data } = await axios.get(
+      `${BASE_URL}/client/goi-do/chi-tiet/${encodeURIComponent(id)}`
+    );
+    const detail = data?.data ?? data;
+    return detail && typeof detail === "object" ? normalizeGoiDo(detail) : null;
+  });
 }
 
 export async function getGoiDoClient() {
-  const { data } = await axios.get(`${BASE_URL}/client/goi-do/data`);
-  return getCollection(data, ["goi_do", "san_phams", "san_pham", "products", "items", "data"])
-    .map(normalizeGoiDo);
+  return getCachedPublicData("goi-do", async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/goi-do/data`);
+    return getCollection(data, ["goi_do", "san_phams", "san_pham", "products", "items", "data"])
+      .map(normalizeGoiDo);
+  });
 }
 
 export async function getPhuTungClient() {
-  const { data } = await axios.get(`${BASE_URL}/client/phu-tung/data`);
-  return getCollection(data, ["phu_tungs", "phu_tung", "accessories", "items", "data"])
-    .map(normalizePhuTung);
+  return getCachedPublicData("phu-tung", async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/phu-tung/data`);
+    return getCollection(data, ["phu_tungs", "phu_tung", "accessories", "items", "data"])
+      .map(normalizePhuTung);
+  });
 }
 
 export async function getPhuTungClientById(id) {
-  const { data } = await axios.get(
-    `${BASE_URL}/client/phu-tung/chi-tiet/${encodeURIComponent(id)}`
-  );
-  const detail = data?.data ?? data;
-  return detail && typeof detail === "object" ? normalizePhuTung(detail) : null;
+  return getCachedPublicData(`phu-tung:${id}`, async () => {
+    const { data } = await axios.get(
+      `${BASE_URL}/client/phu-tung/chi-tiet/${encodeURIComponent(id)}`
+    );
+    const detail = data?.data ?? data;
+    return detail && typeof detail === "object" ? normalizePhuTung(detail) : null;
+  });
 }
 
 export async function getMauXeClient() {
-  const { data } = await axios.get(`${BASE_URL}/client/mau-xe/data`);
-  return getCollection(data, ["mau_xes", "mau_xe", "models", "vehicles", "items", "data"])
-    .map(normalizeMauXe);
+  return getCachedPublicData("mau-xe", async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/mau-xe/data`);
+    return getCollection(data, ["mau_xes", "mau_xe", "models", "vehicles", "items", "data"])
+      .map(normalizeMauXe);
+  });
 }
 
 export async function getSanPhamClient(filters = {}) {
-  const { data } = await axios.get(`${BASE_URL}/san-pham`, { params: filters });
-  const pageData = data?.data;
+  const filterKey = JSON.stringify(Object.entries(filters).sort(([a], [b]) => a.localeCompare(b)));
+  return getCachedPublicData(`san-pham:${filterKey}`, async () => {
+    const { data } = await axios.get(`${BASE_URL}/san-pham`, { params: filters });
+    const pageData = data?.data;
 
-  if (Array.isArray(pageData)) {
-    return { sanPham: pageData.map(normalizeSanPham), currentPage: 1, lastPage: 1, total: pageData.length };
-  }
+    if (Array.isArray(pageData)) {
+      return { sanPham: pageData.map(normalizeSanPham), currentPage: 1, lastPage: 1, total: pageData.length };
+    }
 
-  if (!Array.isArray(pageData?.data)) {
-    throw new Error("BE trả về cấu trúc phân trang sản phẩm không hợp lệ.");
-  }
+    if (!Array.isArray(pageData?.data)) {
+      throw new Error("BE trả về cấu trúc phân trang sản phẩm không hợp lệ.");
+    }
 
-  return {
-    sanPham: pageData.data.map(normalizeSanPham),
-    currentPage: Number(pageData.current_page) || 1,
-    lastPage: Number(pageData.last_page) || 1,
-    total: Number(pageData.total) || 0,
-  };
+    return {
+      sanPham: pageData.data.map(normalizeSanPham),
+      currentPage: Number(pageData.current_page) || 1,
+      lastPage: Number(pageData.last_page) || 1,
+      total: Number(pageData.total) || 0,
+    };
+  });
 }
 
 export async function getXeDangBanClient() {
@@ -320,19 +362,21 @@ export async function getXeDangBanClient() {
 }
 
 export async function getSanPhamClientById(id) {
-  const { data } = await axios.get(`${BASE_URL}/san-pham/${encodeURIComponent(id)}`);
-  const sanPham = data?.data;
-  if (!sanPham || typeof sanPham !== "object") return null;
+  return getCachedPublicData(`san-pham:${id}`, async () => {
+    const { data } = await axios.get(`${BASE_URL}/san-pham/${encodeURIComponent(id)}`);
+    const sanPham = data?.data;
+    if (!sanPham || typeof sanPham !== "object") return null;
 
-  const normalized = normalizeSanPham(sanPham);
-  if (normalized.slug) return null;
+    const normalized = normalizeSanPham(sanPham);
+    if (normalized.slug) return null;
 
-  return {
-    sanPham: normalized,
-    xeLienQuan: asArray(data?.xe_lien_quan)
-      .map(normalizeSanPham)
-      .filter((item) => !item.slug),
-  };
+    return {
+      sanPham: normalized,
+      xeLienQuan: asArray(data?.xe_lien_quan)
+        .map(normalizeSanPham)
+        .filter((item) => !item.slug),
+    };
+  });
 }
 
 export async function getGoiDoVaPhuTungClient() {
@@ -354,13 +398,17 @@ export async function getGoiDoVaPhuTungClient() {
 }
 
 export async function getChuyenGiaTuningClient() {
-  const { data } = await axios.get(`${BASE_URL}/client/chuyen-gia-tuning/data`);
-  return getCollection(data, ["chuyen_gia", "chuyen_gias", "chuyenGia", "chuyen_gia_tuning", "bac_si", "bacSi", "experts", "items", "data"])
-    .map(normalizeChuyenGia);
+  return getCachedPublicData("chuyen-gia-tuning", async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/chuyen-gia-tuning/data`);
+    return getCollection(data, ["chuyen_gia", "chuyen_gias", "chuyenGia", "chuyen_gia_tuning", "bac_si", "bacSi", "experts", "items", "data"])
+      .map(normalizeChuyenGia);
+  });
 }
 
 export async function getChuyenGiaTuningClientById(id) {
-  const { data } = await axios.get(`${BASE_URL}/client/chuyen-gia-tuning/chi-tiet/${encodeURIComponent(id)}`);
-  const detail = data?.data ?? data;
-  return detail && typeof detail === "object" ? normalizeChuyenGia(detail) : null;
+  return getCachedPublicData(`chuyen-gia-tuning:${id}`, async () => {
+    const { data } = await axios.get(`${BASE_URL}/client/chuyen-gia-tuning/chi-tiet/${encodeURIComponent(id)}`);
+    const detail = data?.data ?? data;
+    return detail && typeof detail === "object" ? normalizeChuyenGia(detail) : null;
+  });
 }

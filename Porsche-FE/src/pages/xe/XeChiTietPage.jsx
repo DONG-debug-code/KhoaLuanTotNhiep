@@ -43,8 +43,37 @@ function layGiaTriSanPham(sanPham, aliases, giaTriMacDinh = "") {
   return giaTriMacDinh;
 }
 
+const TEN_THONG_SO = {
+  dongxe: "Dòng xe",
+  doixe: "Đời xe",
+  dongco: "Động cơ",
+  congsuat: "Công suất cực đại",
+  momenxoan: "Mô-men xoắn",
+  tangtoc0100: "Tăng tốc 0–100 km/h",
+  tocdotoida: "Tốc độ tối đa",
+  hopso: "Hộp số",
+  hedanhdong: "Hệ dẫn động",
+  nhienlieu: "Nhiên liệu",
+  dungluongpin: "Dung lượng pin",
+  dienap: "Điện áp",
+  quangduongwltp: "Quãng đường WLTP",
+  sacdctoida: "Công suất sạc DC",
+};
+
+const THONG_SO_DA_HIEN_THI = new Set([
+  "dongco",
+  "congsuat",
+  "momenxoan",
+  "tangtoc0100",
+  "tocdotoida",
+  "hopso",
+  "hedandong",
+  "nhienlieu",
+]);
+
 function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
   const ten = sanPham.ten || xeMau?.ten || "Xe Porsche";
+  const thongSoChiTiet = sanPham.thongSoChiTiet ?? {};
   const anhGallery = sanPham.anhGallery?.length
     ? sanPham.anhGallery
     : xeMau?.anhGallery ?? [];
@@ -60,6 +89,16 @@ function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
     ["diemNhanTrangBi", "diem_nhan_trang_bi"],
     null
   );
+  const thongSoBoSung = Object.entries(thongSoChiTiet)
+    .filter(([khoa, giaTri]) => (
+      !THONG_SO_DA_HIEN_THI.has(chuanHoaTen(khoa))
+      && (typeof giaTri === "string" || typeof giaTri === "number")
+      && giaTri !== ""
+    ))
+    .map(([khoa, giaTri]) => ({
+      nhan: TEN_THONG_SO[chuanHoaTen(khoa)] ?? khoa,
+      giaTri,
+    }));
 
   return {
     ...xeMau,
@@ -90,6 +129,17 @@ function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
       xeMau?.coVideoGioiThieu ?? false
     ),
     congSuat,
+    dongCo: layGiaTriSanPham(
+      sanPham,
+      ["dongCo", "dong_co"],
+      "Đang cập nhật"
+    ),
+    moMenXoan: layGiaTriSanPham(
+      sanPham,
+      ["moMenXoan", "mo_men_xoan"],
+      "Đang cập nhật"
+    ),
+    thongSoBoSung,
     toc0_100: layGiaTriSanPham(
       sanPham,
       ["toc0_100", "tangToc", "tang_toc_0_100", "acceleration"],
@@ -540,13 +590,21 @@ export default function XeChiTietPage() {
               </div>
 
               {[
+                ["Động cơ", xe.dongCo],
                 ["Công suất cực đại", xe.congSuat],
+                ["Mô-men xoắn", xe.moMenXoan],
                 ["Tăng tốc 0–100 km/h", xe.toc0_100],
                 ["Tốc độ tối đa", xe.tocDoToiDa],
                 ["Hộp số", xe.hopSo],
                 ["Hệ dẫn động", xe.heDanDong],
                 ["Nhiên liệu", xe.nhienLieu],
               ].map(([nhan, giaTri]) => (
+                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-sm last:border-0">
+                  <span className="text-[#63635E]">{nhan}</span>
+                  <span className="font-semibold">{giaTri}</span>
+                </div>
+              ))}
+              {xe.thongSoBoSung.map(({ nhan, giaTri }) => (
                 <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-sm last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
                   <span className="font-semibold">{giaTri}</span>
