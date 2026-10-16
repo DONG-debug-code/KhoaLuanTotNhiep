@@ -23,17 +23,17 @@ export default function KichHoatPage() {
   const inputRefs = useRef([]);
 
   const capNhatMa = (index, value) => {
-    const digits = value.replace(/\D/g, "");
-    if (!digits) {
+    const characters = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!characters) {
       setMaKichHoat((current) => current.map((digit, position) => position === index ? "" : digit));
       return;
     }
 
-    const incoming = digits.slice(0, SO_KY_TU - index);
+    const incoming = characters.slice(0, SO_KY_TU - index);
     setMaKichHoat((current) => {
       const chars = [...current];
-      [...incoming].forEach((digit, offset) => {
-        chars[index + offset] = digit;
+      [...incoming].forEach((character, offset) => {
+        chars[index + offset] = character;
       });
       return chars;
     });
@@ -41,11 +41,11 @@ export default function KichHoatPage() {
   };
 
   const xuLyDanMa = (event) => {
-    const digits = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, SO_KY_TU);
-    if (!digits) return;
+    const characters = event.clipboardData.getData("text").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, SO_KY_TU);
+    if (!characters) return;
     event.preventDefault();
-    setMaKichHoat([...digits].concat(Array(SO_KY_TU - digits.length).fill("")));
-    inputRefs.current[Math.min(digits.length, SO_KY_TU - 1)]?.focus();
+    setMaKichHoat([...characters].concat(Array(SO_KY_TU - characters.length).fill("")));
+    inputRefs.current[Math.min(characters.length, SO_KY_TU - 1)]?.focus();
   };
 
   const xuLyPhimMa = (index, event) => {
@@ -61,7 +61,7 @@ export default function KichHoatPage() {
     setLoi("");
     const code = maKichHoat.join("");
     if (code.length !== SO_KY_TU) {
-      setLoi("Vui lòng nhập đủ 6 chữ số xác thực.");
+      setLoi("Vui lòng nhập đủ 6 ký tự xác thực.");
       return;
     }
 
@@ -99,7 +99,7 @@ export default function KichHoatPage() {
     <AuthLayout
       eyebrow="Kích hoạt tài khoản"
       title="Xác thực email của bạn"
-      description="Nhập mã 6 chữ số đã được gửi tới email đăng ký để kích hoạt tài khoản khách hàng."
+      description="Nhập mã 6 ký tự đã được gửi tới email đăng ký để kích hoạt tài khoản khách hàng."
     >
       <AuthError>{loi}</AuthError>
       <form onSubmit={xuLyKichHoat} className="flex flex-col gap-5">
@@ -120,9 +120,12 @@ export default function KichHoatPage() {
                 key={index}
                 ref={(element) => { inputRefs.current[index] = element; }}
                 type="text"
-                inputMode="numeric"
+                inputMode="text"
                 autoComplete={index === 0 ? "one-time-code" : "off"}
-                aria-label={`Chữ số xác thực ${index + 1}`}
+                aria-label={`Ký tự xác thực ${index + 1}`}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 value={maKichHoat[index]}
                 onChange={(event) => capNhatMa(index, event.target.value)}
                 onPaste={xuLyDanMa}

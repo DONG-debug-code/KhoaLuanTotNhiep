@@ -209,6 +209,7 @@ export default function XeChiTietPage() {
   const dangTai = ketQua.id !== xeSlug;
   const xe = dangTai ? null : ketQua.xe;
   const loi = dangTai ? "" : ketQua.loi;
+  
 
   useEffect(() => {
     let active = true;
