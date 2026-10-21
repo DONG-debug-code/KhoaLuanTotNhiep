@@ -8,6 +8,34 @@ use Exception;
 
 class PhanQuyenController extends Controller
 {
+    public function getData()
+    {
+        try {
+            $roles = DB::table('chuc_vus')->orderBy('id')->get();
+            $functions = DB::table('chuc_nangs')->orderBy('id')->get();
+            $permissions = DB::table('phan_quyens')->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'chuc_vus' => $roles,
+                    'chuc_nangs' => $functions,
+                    'phan_quyens' => $permissions,
+                ],
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không thể tải ma trận phân quyền.',
+            ], 500);
+        }
+    }
+
+    public function createPhanQuyen(Request $request)
+    {
+        return $this->capNhatPhanQuyen($request);
+    }
+
     public function getQuyenTheoChucVu($id_chuc_vu)
     {
         try {

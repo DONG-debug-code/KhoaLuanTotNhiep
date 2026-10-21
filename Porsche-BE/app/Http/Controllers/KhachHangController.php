@@ -410,7 +410,17 @@ class KhachHangController extends Controller
                 ->where('id', $khachHangId)
                 ->first();
 
-            return response()->json(['status' => true, 'data' => $profile], 200);
+            $garage = DB::table('phieu_dat_lichs')
+                ->select('bien_so_xe', 'thong_tin_xe')
+                ->where('id_khach_hang', $khachHangId)
+                ->whereNotNull('bien_so_xe')
+                ->distinct()
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => ['profile' => $profile, 'garage' => $garage],
+            ], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Không tải được Profile.'], 500);
         }

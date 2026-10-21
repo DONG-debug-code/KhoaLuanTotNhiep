@@ -302,6 +302,15 @@ class ChuyenGiaController extends Controller
     {
         $request->validate(['id_khach_hang' => 'required|integer']);
         try {
+            $expertId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+            $hasAssignment = DB::table('phieu_dat_lichs')
+                ->where('id_khach_hang', $request->id_khach_hang)
+                ->where('id_chuyen_gia', $expertId)
+                ->exists();
+            if (!$hasAssignment) {
+                return response()->json(['status' => false, 'message' => 'Bạn không được phân công phụ trách khách hàng này.'], 403);
+            }
+
             $data = DB::table('ho_so_xes')
                 ->where('id_khach_hang', $request->id_khach_hang)
                 ->orderBy('id', 'desc')
@@ -309,6 +318,108 @@ class ChuyenGiaController extends Controller
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Không thể tải lịch sử độ xe.'], 500);
+        }
+    }
+
+    public function getDataHoSoXeCuaChuyenGia(Request $request): JsonResponse
+    {
+        try {
+            $expertId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+            $customerIds = DB::table('phieu_dat_lichs')
+                ->where('id_chuyen_gia', $expertId)
+                ->whereNotNull('id_khach_hang')
+                ->select('id_khach_hang');
+            $data = DB::table('ho_so_xes')
+                ->whereIn('id_khach_hang', $customerIds)
+                ->orderByDesc('id')
+                ->get();
+
+            return response()->json(['status' => true, 'data' => $data], 200);
+        } catch (Exception $e) {
+            Log::error('Không thể tải hồ sơ xe của chuyên gia.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể tải hồ sơ xe.'], 500);
+        }
+    }
+
+    public function createHoSoXe(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id_khach_hang' => 'required|integer|exists:khach_hangs,id',
+            'bien_so' => 'required|string|max:50',
+            'ten_xe' => 'required|string|max:255',
+            'so_khung' => 'nullable|string|max:100',
+            'thong_so_tuning' => 'nullable|string|max:5000',
+        ]);
+        $expertId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+
+        $hasAssignment = DB::table('phieu_dat_lichs')
+            ->where('id_khach_hang', $validated['id_khach_hang'])
+            ->where('id_chuyen_gia', $expertId)
+            ->exists();
+        if (!$hasAssignment) {
+            return response()->json(['status' => false, 'message' => 'Bạn không được phân công phụ trách khách hàng này.'], 403);
+        }
+
+        try {
+            DB::table('ho_so_xes')->insert([
+                'id_khach_hang' => $validated['id_khach_hang'],
+                'bien_so' => strtoupper($validated['bien_so']),
+                'ten_xe' => $validated['ten_xe'],
+                'so_khung' => strtoupper($validated['so_khung'] ?? ''),
+                'thong_so_tuning' => $validated['thong_so_tuning'] ?? null,
+                'trang_thai' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['status' => true, 'message' => 'Đã lập hồ sơ xe và lưu thông số tuning.'], 201);
+        } catch (Exception $e) {
+            Log::error('Không thể tạo hồ sơ xe từ tài khoản chuyên gia.', [
+                'expert_id' => $expertId,
+                'customer_id' => $validated['id_khach_hang'],
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['status' => false, 'message' => 'Không thể tạo hồ sơ xe.'], 500);
+        }
+    }
+
+    public function updateHoSoXe(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:ho_so_xes,id',
+            'bien_so' => 'required|string|max:50',
+            'ten_xe' => 'required|string|max:255',
+            'so_khung' => 'nullable|string|max:100',
+            'thong_so_tuning' => 'nullable|string|max:5000',
+        ]);
+        $expertId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+
+        $record = DB::table('ho_so_xes')->where('id', $validated['id'])->first();
+        $hasAssignment = $record && DB::table('phieu_dat_lichs')
+            ->where('id_khach_hang', $record->id_khach_hang)
+            ->where('id_chuyen_gia', $expertId)
+            ->exists();
+        if (!$hasAssignment) {
+            return response()->json(['status' => false, 'message' => 'Bạn không được phân công phụ trách hồ sơ xe này.'], 403);
+        }
+
+        try {
+            DB::table('ho_so_xes')->where('id', $validated['id'])->update([
+                'bien_so' => strtoupper($validated['bien_so']),
+                'ten_xe' => $validated['ten_xe'],
+                'so_khung' => strtoupper($validated['so_khung'] ?? ''),
+                'thong_so_tuning' => $validated['thong_so_tuning'] ?? null,
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['status' => true, 'message' => 'Đã cập nhật hồ sơ và thông số tuning.'], 200);
+        } catch (Exception $e) {
+            Log::error('Không thể cập nhật hồ sơ xe từ tài khoản chuyên gia.', [
+                'expert_id' => $expertId,
+                'vehicle_record_id' => $validated['id'],
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['status' => false, 'message' => 'Không thể cập nhật hồ sơ xe.'], 500);
         }
     }
 

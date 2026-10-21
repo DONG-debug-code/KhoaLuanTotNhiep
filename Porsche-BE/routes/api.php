@@ -202,6 +202,9 @@ Route::group(['prefix' => '/chuyen-gia', 'middleware' => ['auth:sanctum', 'exper
     Route::get('/khu-vuc-workshop/data', [ChuyenGiaController::class, 'getDataKhuVucWorkshop']);
     Route::get('/hang-phu-tung/data', [ChuyenGiaController::class, 'getDataHangPhuTung']);
     Route::get('/lich-lam-viec/data', [ChuyenGiaController::class, 'getDataLichLamViecCaNhan']);
+    Route::get('/ho-so-xe/data', [ChuyenGiaController::class, 'getDataHoSoXeCuaChuyenGia']);
+    Route::post('/ho-so-xe/create', [ChuyenGiaController::class, 'createHoSoXe']);
+    Route::post('/ho-so-xe/update', [ChuyenGiaController::class, 'updateHoSoXe']);
 });
 
 /*
@@ -230,6 +233,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::get('/lich-hen/data', [KhachHangController::class, 'getDataLichHenCuaToi']);
 
     // Đặt lịch Workshop & Nâng cấp
+    Route::get('/workshop/options', [PhieuDatLichController::class, 'getWorkshopBookingOptions']);
     Route::post('/dat-lich-kham', [PhieuDatLichController::class, 'datLichKhamBenhNhan']);
     Route::post('/huy-lich-kham', [PhieuDatLichController::class, 'huyLichKhamBenhNhan']);
     Route::post('/chuyen-gia/by-hang-phu-tung', [PhieuDatLichController::class, 'getBacSiTheoChuyenKhoa']);
@@ -239,6 +243,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('/ap-ma-giam-gia', [\App\Http\Controllers\DonHangController::class, 'apMaGiamGia']);
     Route::post('/don-hang/yeu-cau-huy', [\App\Http\Controllers\DonHangController::class, 'khachYeuCauHuy']);
     Route::get('/don-hang/cua-toi', [\App\Http\Controllers\DonHangController::class, 'donHangCuaToi']);
+    Route::get('/lich-su-mua-hang', [HoaDonController::class, 'getLichSuMuaHangKhachHang']);
 
     // 🤖 LỊCH SỬ CHAT VÀ XÓA LỊCH SỬ (Bắt buộc phải đăng nhập)
     Route::get('/ai/history', [AiController::class, 'getHistory']);
@@ -275,5 +280,3 @@ Route::get('/san-pham/{id}', [SanPhamController::class, 'show']);
 | ===================== ⚙️ V. CRONJOB / WEBHOOK AUTOMATION =====================
 |--------------------------------------------------------------------------
 */
-Route::get('/auto-thanh-toan-lich-hen', [PhieuDatLichController::class, 'autoThanhToanLichHen']);
-Route::get('/gui-mail-thong-bao-lich-hen', [PhieuDatLichController::class, 'GUImaillichhen']);

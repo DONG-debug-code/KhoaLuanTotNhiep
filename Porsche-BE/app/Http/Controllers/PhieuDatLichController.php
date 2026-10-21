@@ -228,6 +228,144 @@ class PhieuDatLichController extends Controller
     // II. NHÓM API PORTAL KHÁCH HÀNG (CLIENT INTERFACE PRODUCTION)
     // =========================================================================
 
+    public function getWorkshopBookingOptions(): JsonResponse
+    {
+        try {
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'chuyen_gias' => DB::table('chuyen_gias')
+                        ->where('trang_thai', 1)
+                        ->select('id', 'ho_ten', 'ma_so_tuner')
+                        ->orderBy('ho_ten')
+                        ->get(),
+                    'khu_vuc_workshops' => DB::table('khu_vuc_workshops')
+                        ->where('trang_thai', 1)
+                        ->select('id', 'ten_khu_vuc')
+                        ->orderBy('ten_khu_vuc')
+                        ->get(),
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Không thể tải lựa chọn đặt lịch Workshop.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể tải lịch chuyên gia và khu vực Workshop.'], 500);
+        }
+    }
+
+    public function datLichKhamBenhNhan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'bien_so_xe' => 'required|string|max:50',
+            'ten_xe' => 'required|string|max:255',
+            'ngay_dat' => 'required|date|after_or_equal:today',
+            'gio_dat' => 'required|date_format:H:i',
+            'ghi_chu' => 'nullable|string|max:1000',
+            'id_chuyen_gia' => 'required|integer|exists:chuyen_gias,id',
+            'id_khu_vuc_workshop' => 'required|integer|exists:khu_vuc_workshops,id',
+        ]);
+
+        $user = $request->user();
+        $customerId = $request->attributes->get('id_khach_hang') ?? $user->id;
+        if (Carbon::parse($validated['ngay_dat'] . ' ' . $validated['gio_dat'])->isPast()) {
+            return response()->json(['status' => false, 'message' => 'Khung giờ đặt lịch phải ở thời điểm trong tương lai.'], 422);
+        }
+
+        try {
+            $result = DB::transaction(function () use ($validated, $user, $customerId) {
+                $specialist = DB::table('chuyen_gias')
+                    ->where('id', $validated['id_chuyen_gia'])
+                    ->where('trang_thai', 1)
+                    ->lockForUpdate()
+                    ->first();
+                $workshop = DB::table('khu_vuc_workshops')
+                    ->where('id', $validated['id_khu_vuc_workshop'])
+                    ->where('trang_thai', 1)
+                    ->lockForUpdate()
+                    ->first();
+                if (!$specialist || !$workshop) {
+                    return ['error' => 'Chuyên gia hoặc Bay Workshop không còn hoạt động.'];
+                }
+
+                $slotQuery = DB::table('phieu_dat_lichs')
+                    ->whereDate('ngay_dat', $validated['ngay_dat'])
+                    ->where('gio_dat', $validated['gio_dat'])
+                    ->whereIn('trang_thai', [0, 1]);
+                if ((clone $slotQuery)->where('id_chuyen_gia', $specialist->id)->exists()) {
+                    return ['error' => 'Chuyên gia đã kín lịch ở khung giờ này.'];
+                }
+                if ((clone $slotQuery)->where('id_khu_vuc_workshop', $workshop->id)->exists()) {
+                    return ['error' => 'Bay Workshop đã kín lịch ở khung giờ này.'];
+                }
+
+                $vehicleDescription = trim($validated['ten_xe'] . ' · ' . strtoupper($validated['bien_so_xe']));
+                $appointmentId = DB::table('phieu_dat_lichs')->insertGetId([
+                    'ma_dat_lich' => 'PORSCHE-' . strtoupper(Str::random(8)),
+                    'id_khach_hang' => $customerId,
+                    'id_chuyen_gia' => $specialist->id,
+                    'id_khu_vuc_workshop' => $workshop->id,
+                    'ten_khach_hang' => $user->ho_ten ?? $user->name ?? '',
+                    'email' => $user->email,
+                    'dien_thoai' => $user->so_dien_thoai ?? '',
+                    'bien_so_xe' => strtoupper($validated['bien_so_xe']),
+                    'thong_tin_xe' => $vehicleDescription,
+                    'ngay_dat' => $validated['ngay_dat'],
+                    'gio_dat' => $validated['gio_dat'],
+                    'ghi_chu' => $validated['ghi_chu'] ?? '',
+                    'trang_thai' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                return ['appointment' => DB::table('phieu_dat_lichs')->where('id', $appointmentId)->first()];
+            });
+
+            if (isset($result['error'])) {
+                return response()->json(['status' => false, 'message' => $result['error']], 422);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đã ghi nhận yêu cầu đặt lịch Workshop.',
+                'data' => $result['appointment'],
+            ], 201);
+        } catch (\Throwable $e) {
+            Log::error('Không thể đặt lịch Workshop cho khách hàng.', [
+                'customer_id' => $customerId,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['status' => false, 'message' => 'Không thể tạo lịch hẹn. Vui lòng thử lại sau.'], 500);
+        }
+    }
+
+    public function huyLichKhamBenhNhan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $customerId = $request->attributes->get('id_khach_hang') ?? $request->user()->id;
+
+        $appointment = DB::table('phieu_dat_lichs')
+            ->where('id', $validated['id'])
+            ->where('id_khach_hang', $customerId)
+            ->first();
+
+        if (!$appointment) {
+            return response()->json(['status' => false, 'message' => 'Không tìm thấy lịch hẹn của tài khoản này.'], 404);
+        }
+        if (in_array((int) $appointment->trang_thai, [2, 3], true)) {
+            return response()->json(['status' => false, 'message' => 'Lịch đã hoàn thành hoặc đã hủy, không thể thay đổi.'], 422);
+        }
+        if ((int) $appointment->trang_thai === 1) {
+            return response()->json(['status' => false, 'message' => 'Lịch đã được tiếp nhận vào Workshop, vui lòng liên hệ showroom để được hỗ trợ.'], 422);
+        }
+
+        DB::table('phieu_dat_lichs')->where('id', $appointment->id)->update([
+            'trang_thai' => 3,
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Đã hủy lịch hẹn.'], 200);
+    }
+
     public function datLichKhamXe(Request $request): JsonResponse
     {
         $request->validate([
@@ -420,60 +558,6 @@ class PhieuDatLichController extends Controller
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Lỗi khi lấy danh sách kỹ sư.'], 500);
-        }
-    }
-
-
-    // =========================================================================
-    // III. NHÓM API UTILITIES / CRONJOB AUTOMATION
-    // =========================================================================
-
-    public function autoThanhToanLichHen(): JsonResponse
-    {
-        try {
-            $thoiGianGioiHan = Carbon::now()->subMinutes(30);
-
-            $lichQuasHan = DB::table('phieu_dat_lichs')
-                ->where('trang_thai', 0)
-                ->where('created_at', '<', $thoiGianGioiHan)
-                ->get();
-
-            $count = 0;
-            foreach ($lichQuasHan as $lich) {
-                DB::table('phieu_dat_lichs')->where('id', $lich->id)->update([
-                    'trang_thai' => 3,
-                    'updated_at' => Carbon::now()
-                ]);
-
-                Mail::to($lich->email)->queue(new LichHenMail($lich, 'Lịch hẹn của bạn đã tự động hủy do quá thời gian chờ cọc giữ chỗ'));
-                $count++;
-            }
-
-            return response()->json(['status' => true, 'message' => "Hệ thống tự động hủy quét xong. Đã xử lý giải phóng {$count} lịch hẹn quá hạn."], 200);
-        } catch (Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Lỗi quét tự động thanh toán: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function GUImaillichhen(): JsonResponse
-    {
-        try {
-            $ngayMai = Carbon::tomorrow()->toDateString();
-
-            $lichNgayMai = DB::table('phieu_dat_lichs')
-                ->where('trang_thai', 1)
-                ->where('ngay_dat', $ngayMai)
-                ->get();
-
-            $count = 0;
-            foreach ($lichNgayMai as $lich) {
-                Mail::to($lich->email)->queue(new LichHenMail($lich, 'Thư nhắc nhở: Lịch hẹn bảo dưỡng xe Porsche của bạn vào ngày mai!'));
-                $count++;
-            }
-
-            return response()->json(['status' => true, 'message' => "Quét gửi mail hoàn tất. Đã xếp hàng gửi thư nhắc nhở đến {$count} khách hàng."], 200);
-        } catch (Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Lỗi quét gửi thư tự động: ' . $e->getMessage()], 500);
         }
     }
 }
