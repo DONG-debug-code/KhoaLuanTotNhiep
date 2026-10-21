@@ -100,6 +100,16 @@ export default function Navbar({ luonSang = false }) {
 
   const tenHienThi = nguoiDung?.ho_ten || nguoiDung?.email || "Tài khoản";
   const chuCaiDau = tenHienThi.charAt(0).toUpperCase();
+  const duongDanTaiKhoan = nguoiDung?.vaiTro === "admin"
+    ? "/admin"
+    : nguoiDung?.vaiTro === "chuyen-gia"
+      ? "/chuyen-gia-workspace"
+      : "/garage";
+  const tenMenuTaiKhoan = nguoiDung?.vaiTro === "admin"
+    ? "Quản trị hệ thống"
+    : nguoiDung?.vaiTro === "chuyen-gia"
+      ? "Workshop của tôi"
+      : "Garage của tôi";
 
   return (
     <nav
@@ -167,12 +177,12 @@ export default function Navbar({ luonSang = false }) {
             {menuMo && (
               <div className="absolute right-0 top-[calc(100%+8px)] w-56 overflow-hidden rounded-xl border border-[#ECECE9] bg-white py-1.5 shadow-lg">
                 <Link
-                  to="/garage"
+                  to={duongDanTaiKhoan}
                   onClick={() => setMenuMo(false)}
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#17171A] hover:bg-[#F1F1EF]"
                 >
                   <User className="h-4 w-4" />
-                  Garage của tôi
+                  {tenMenuTaiKhoan}
                 </Link>
                 <button
                   onClick={xuLyDangXuat}

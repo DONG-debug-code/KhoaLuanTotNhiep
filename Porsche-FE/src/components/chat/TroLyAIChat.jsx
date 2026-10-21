@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Wrench, HeartPulse, History, X, Sparkles, Send } from "lucide-react";
+import { Wrench, HeartPulse, History, Trash2, X, Sparkles, Send } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { askPorscheAI, clearAIHistory, getAIHistory } from "../../api/WorkspaceApi";
 
 const TAB = {
   goiDo: {
@@ -34,6 +36,7 @@ const TAB = {
 };
 
 export default function TroLyAIChat() {
+  const { vaiTro } = useAuth();
   const [dangMo, setDangMo] = useState(false);
   const [tabDangChon, setTabDangChon] = useState("goiDo");
   const [lichSuTinNhan, setLichSuTinNhan] = useState({
@@ -41,6 +44,11 @@ export default function TroLyAIChat() {
     baoDuong: TAB.baoDuong.tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
   });
   const [noiDungNhap, setNoiDungNhap] = useState("");
+  const [dangGui, setDangGui] = useState(false);
+  const [dangTaiLichSu, setDangTaiLichSu] = useState(false);
+  const [dangXoaLichSu, setDangXoaLichSu] = useState(false);
+  const [loiChat, setLoiChat] = useState("");
+  const [lichSuDaTai, setLichSuDaTai] = useState(false);
   const khungCuoiRef = useRef(null);
 
   const tab = TAB[tabDangChon];
@@ -50,22 +58,77 @@ export default function TroLyAIChat() {
     khungCuoiRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [tinNhanHienTai, dangMo]);
 
-  const guiTinNhan = (noiDung) => {
-    if (!noiDung.trim()) return;
+  const guiTinNhan = async (noiDung) => {
+    const cauHoi = noiDung.trim();
+    if (!cauHoi || dangGui) return;
 
+    setLoiChat("");
+    setDangGui(true);
+    setLichSuDaTai(false);
+    setNoiDungNhap("");
     setLichSuTinNhan((truoc) => ({
       ...truoc,
-      [tabDangChon]: [
-        ...truoc[tabDangChon],
-        { nguoiGui: "khach", noiDung },
-        // Phản hồi mẫu — chưa nối BE/AI thật, chỉ để test luồng UI
-        {
-          nguoiGui: "ai",
-          noiDung: "Cảm ơn bạn. Đây là bản demo giao diện, câu trả lời thật sẽ được trợ lý AI xử lý khi kết nối hệ thống.",
-        },
-      ],
+      [tabDangChon]: [...truoc[tabDangChon], { nguoiGui: "khach", noiDung: cauHoi }],
     }));
-    setNoiDungNhap("");
+
+    try {
+      const traLoi = await askPorscheAI(cauHoi);
+      if (!traLoi) throw new Error("Trợ lý AI chưa gửi được câu trả lời. Vui lòng thử lại.");
+      setLichSuTinNhan((truoc) => ({
+        ...truoc,
+        [tabDangChon]: [...truoc[tabDangChon], { nguoiGui: "ai", noiDung: traLoi }],
+      }));
+    } catch (error) {
+      setLoiChat(
+        error.response?.data?.message
+          || error.message
+          || "Không thể kết nối Trợ lý AI. Vui lòng thử lại."
+      );
+    } finally {
+      setDangGui(false);
+    }
+  };
+
+  const taiLichSu = async () => {
+    if (vaiTro !== "khach-hang" || dangTaiLichSu) return;
+    setLoiChat("");
+    setDangTaiLichSu(true);
+    try {
+      const history = await getAIHistory();
+      const messages = history.slice().reverse().flatMap((item) => [
+        { nguoiGui: "khach", noiDung: item.input_user },
+        { nguoiGui: "ai", noiDung: item.output_ai },
+      ]);
+      setLichSuTinNhan((truoc) => ({
+        ...truoc,
+        [tabDangChon]: messages.length
+          ? messages
+          : TAB[tabDangChon].tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
+      }));
+      setLichSuDaTai(true);
+    } catch (error) {
+      setLoiChat(error.response?.data?.message || "Không thể tải lịch sử tư vấn.");
+    } finally {
+      setDangTaiLichSu(false);
+    }
+  };
+
+  const xoaLichSu = async () => {
+    if (vaiTro !== "khach-hang" || dangXoaLichSu) return;
+    setLoiChat("");
+    setDangXoaLichSu(true);
+    try {
+      await clearAIHistory();
+      setLichSuTinNhan((truoc) => ({
+        ...truoc,
+        [tabDangChon]: TAB[tabDangChon].tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
+      }));
+      setLichSuDaTai(false);
+    } catch (error) {
+      setLoiChat(error.response?.data?.message || "Không thể xóa lịch sử tư vấn.");
+    } finally {
+      setDangXoaLichSu(false);
+    }
   };
 
   return (
@@ -99,7 +162,12 @@ export default function TroLyAIChat() {
                 <div className="text-[12px] text-[#fff] font-sans">{tab.moTa}</div>
               </div>
 
-              <button className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A9992] hover:bg-white/10 hover:text-white">
+              <button
+                onClick={taiLichSu}
+                disabled={vaiTro !== "khach-hang" || dangTaiLichSu}
+                title={vaiTro === "khach-hang" ? "Tải lịch sử tư vấn" : "Đăng nhập tài khoản khách hàng để xem lịch sử"}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A9992] hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 <History className="h-4 w-4" />
               </button>
               <button
@@ -130,6 +198,20 @@ export default function TroLyAIChat() {
 
           {/* Nội dung chat */}
           <div className="flex-1 overflow-y-auto bg-[#fafaf9] px-4 py-5">
+            {lichSuDaTai && vaiTro === "khach-hang" ? (
+              <div className="mb-4 flex items-center justify-between rounded-lg border border-[#ECECE9] bg-white px-3 py-2 text-xs">
+                <span>Lịch sử tư vấn đã lưu</span>
+                <button
+                  type="button"
+                  onClick={xoaLichSu}
+                  disabled={dangXoaLichSu}
+                  className="flex items-center gap-1.5 font-semibold text-[#B60F0F] disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {dangXoaLichSu ? "Đang xóa..." : "Xóa lịch sử"}
+                </button>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-4">
               {tinNhanHienTai.map((tin, i) => (
                 <div
@@ -151,6 +233,11 @@ export default function TroLyAIChat() {
                   </div>
                 </div>
               ))}
+              {dangGui ? (
+                <div className="rounded-2xl border border-[#ECECE9] bg-[#f3f3f0] px-4 py-3 text-sm text-[#63635E]">
+                  Trợ lý đang soạn câu trả lời...
+                </div>
+              ) : null}
               <div ref={khungCuoiRef} />
             </div>
 
@@ -169,21 +256,26 @@ export default function TroLyAIChat() {
           </div>
 
           {/* Ô nhập */}
-          <div className="flex items-center gap-2.5 border-t border-[#ECECE9] bg-white p-3.5">
+          <div className="border-t border-[#ECECE9] bg-white p-3.5">
+            {loiChat ? <p role="alert" className="mb-2 text-xs text-red-700">{loiChat}</p> : null}
+            <div className="flex items-center gap-2.5">
             <input
               type="text"
               value={noiDungNhap}
               onChange={(e) => setNoiDungNhap(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && guiTinNhan(noiDungNhap)}
+              disabled={dangGui}
               placeholder="Nhập câu hỏi của bạn..."
               className="flex-1 rounded-full border border-[#ECECE9] bg-[#FAFAF9] px-4 py-2.5 text-sm outline-none focus:border-[#17171A]"
             />
             <button
-              onClick={() => guiTinNhan(noiDungNhap)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B60F0F] text-white"
+              onClick={() => void guiTinNhan(noiDungNhap)}
+              disabled={dangGui}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B60F0F] text-white disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
             </button>
+            </div>
           </div>
         </div>
       )}

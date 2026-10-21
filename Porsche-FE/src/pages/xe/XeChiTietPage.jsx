@@ -23,6 +23,12 @@ function chuanHoaDongXe(dongXe) {
   return chuanHoaTen(dongXe).replace(/^porsche/, "");
 }
 
+function chuanHoaMaMau(maMau) {
+  if (typeof maMau !== "string") return "";
+  const maMauChuanHoa = maMau.trim().startsWith("#") ? maMau.trim() : `#${maMau.trim()}`;
+  return /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(maMauChuanHoa) ? maMauChuanHoa : "";
+}
+
 function layGiaTriSanPham(sanPham, aliases, giaTriMacDinh = "") {
   for (const alias of aliases) {
     const giaTri = sanPham?.[alias];
@@ -77,6 +83,8 @@ function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
   const anhGallery = sanPham.anhGallery?.length
     ? sanPham.anhGallery
     : xeMau?.anhGallery ?? [];
+  const anh360Gallery = sanPham.anh360Gallery ?? [];
+  const mauSacs = sanPham.mauSacs ?? [];
   const congSuat = layGiaTriSanPham(
     sanPham,
     ["congSuat", "cong_suat", "cong_suat_cuc_dai", "power"],
@@ -123,6 +131,8 @@ function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
     nhan: layGiaTriSanPham(sanPham, ["nhan"], xeMau?.nhan),
     anh: anhGallery[0] || sanPham.anh || xeMau?.anh || "",
     anhGallery,
+    anh360Gallery,
+    mauSacs,
     coVideoGioiThieu: layGiaTriSanPham(
       sanPham,
       ["coVideoGioiThieu", "co_video_gioi_thieu"],
@@ -206,6 +216,7 @@ export default function XeChiTietPage() {
   const { xeSlug } = useParams();
   const [ketQua, setKetQua] = useState({ id: null, xe: null, xeTuongTu: [], loi: "" });
   const [anhDangXem, setAnhDangXem] = useState(0);
+  const [dangXem360, setDangXem360] = useState(false);
   const dangTai = ketQua.id !== xeSlug;
   const xe = dangTai ? null : ketQua.xe;
   const loi = dangTai ? "" : ketQua.loi;
@@ -216,8 +227,14 @@ export default function XeChiTietPage() {
     getSanPhamClientById(xeSlug)
       .then((result) => {
         if (!active) return;
+        setAnhDangXem(0);
+        setDangXem360(false);
         const xeMau = timXeTheoSlug(xeSlug);
-        const xe = result?.sanPham
+        const trangThaiSanPham = result?.sanPham?.trang_thai ?? result?.sanPham?.trangThai;
+        const dangKinhDoanh = trangThaiSanPham === undefined
+          ? Number(result?.sanPham?.soLuong) > 0
+          : String(trangThaiSanPham) === "1";
+        const xe = result?.sanPham && dangKinhDoanh
           ? taoXeTuSanPham(result.sanPham, xeMau, xeSlug)
           : null;
         const xeTuongTu = (result?.xeLienQuan ?? [])
@@ -271,11 +288,14 @@ export default function XeChiTietPage() {
 
   if (!xe) return <Navigate to="/" replace />;
 
+  const danhSachAnhDangXem = dangXem360 && xe.anh360Gallery.length
+    ? xe.anh360Gallery
+    : xe.anhGallery;
   const chuyenAnh = (huong) => {
-    const tongSo = xe.anhGallery.length;
+    const tongSo = danhSachAnhDangXem.length;
     setAnhDangXem((truoc) => (truoc + huong + tongSo) % tongSo);
   };
-  const xeTuongTu = dangTai ? [] : ketQua.xeTuongTu;
+  const xeTuongTu = dangTai ? [] : ketQua.xeTuongTu.slice(0, 4);
 
   return (
     <>
@@ -297,7 +317,7 @@ export default function XeChiTietPage() {
           <div>
             <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-[#ECECE9] bg-[#F1F1EF]">
               <img
-                src={xe.anhGallery[anhDangXem]}
+                src={danhSachAnhDangXem[anhDangXem]}
                 alt={xe.ten}
                 className="h-full w-full object-cover"
                 onError={(e) => (e.currentTarget.style.display = "none")}
@@ -314,7 +334,7 @@ export default function XeChiTietPage() {
                 </span>
               )}
 
-              {xe.anhGallery.length > 1 && (
+              {danhSachAnhDangXem.length > 1 && (
                 <>
                   <button
                     onClick={() => chuyenAnh(-1)}
@@ -332,28 +352,39 @@ export default function XeChiTietPage() {
               )}
 
               <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
-                {String(anhDangXem + 1).padStart(2, "0")} / {String(xe.anhGallery.length).padStart(2, "0")}
+                {String(anhDangXem + 1).padStart(2, "0")} / {String(danhSachAnhDangXem.length).padStart(2, "0")}
               </span>
 
+              {xe.anh360Gallery.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => { setDangXem360((value) => !value); setAnhDangXem(0); }}
+                  className="absolute bottom-4 right-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white"
+                >
+                  {dangXem360 ? "Ảnh thường" : "Xem ảnh 360°"}
+                </button>
+              ) : null}
+
               {xe.coVideoGioiThieu && (
-                <button className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
+                <button className="absolute bottom-4 left-4 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
                   <Play className="h-3.5 w-3.5" />
                   Video giới thiệu
                 </button>
               )}
             </div>
 
-            {xe.anhGallery.length > 1 && (
+            {danhSachAnhDangXem.length > 1 && (
               <div className="mt-3 flex gap-2.5">
-                {xe.anhGallery.map((anh, i) => (
+                {danhSachAnhDangXem.map((anh, i) => (
                   <button
                     key={i}
                     onClick={() => setAnhDangXem(i)}
+                    aria-label={`Xem ảnh ${i + 1}`}
                     className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 ${
                       anhDangXem === i ? "border-[#B60F0F]" : "border-transparent"
                     }`}
                   >
-                    <img src={anh} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
+                    <img src={anh} alt={`${xe.ten} - ảnh ${i + 1}`} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
                   </button>
                 ))}
               </div>
@@ -516,6 +547,28 @@ export default function XeChiTietPage() {
               </div>
             </div>
 
+            {xe.mauSacs.length > 0 ? (
+              <div className="mt-5 border-t border-[#ECECE9] pt-4">
+                <div className="mb-3 text-sm font-bold">Màu sơn & mã màu</div>
+                <div className="flex flex-wrap gap-3">
+                  {xe.mauSacs.map((mau, index) => {
+                    const maMau = chuanHoaMaMau(mau.maMau);
+                    return (
+                      <div key={`${mau.ten}-${index}`} className="flex items-center gap-2 rounded-lg bg-[#F1F1EF] px-3 py-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-5 w-5 rounded-full border border-black/15"
+                          style={maMau ? { backgroundColor: maMau } : undefined}
+                        />
+                        <span className="text-xs font-semibold">{mau.ten}</span>
+                        {maMau ? <code className="text-[11px] text-[#63635E]">{maMau.toUpperCase()}</code> : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-6 rounded-xl border border-[#E9D9AE] bg-[#FBF3E4] p-5">
               <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#8A6D1F]">
                 <Crown className="h-4 w-4" /> Kiểm định 111 điểm
@@ -625,6 +678,7 @@ export default function XeChiTietPage() {
                 ["Dòng xe", `Porsche ${xe.dong}`],
                 ["Năm sản xuất", xe.nam],
                 ["Màu ngoại thất", xe.ngoaiThat],
+                ["Mã màu sơn", xe.mauSacs.map((mau) => chuanHoaMaMau(mau.maMau)).filter(Boolean).join(", ") || "Đang cập nhật"],
                 ["Chất liệu nội thất", xe.noiThat],
                 ["Số km đã đi", xe.soKmDaDi],
                 ["Tình trạng", xe.tinhTrang],

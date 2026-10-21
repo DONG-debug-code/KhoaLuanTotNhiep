@@ -10,7 +10,11 @@ import {
 } from "../components/auth/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 
-const VAI_TRO = "khach-hang";
+const DUONG_DAN_VAI_TRO = {
+  "khach-hang": "/garage",
+  admin: "/admin",
+  "chuyen-gia": "/chuyen-gia-workspace",
+};
 
 export default function DangNhapPage() {
   const { dangNhap, dangTai } = useAuth();
@@ -18,17 +22,17 @@ export default function DangNhapPage() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [matKhau, setMatKhau] = useState("");
+  const [vaiTro, setVaiTro] = useState("khach-hang");
   const [loi, setLoi] = useState("");
   const [ghiNho, setGhiNho] = useState(false);
-  const duongDanTruocDo = location.state?.from?.pathname || "/";
 
   const xuLyDangNhap = async (event) => {
     event.preventDefault();
     setLoi("");
-    const ketQua = await dangNhap(VAI_TRO, email, matKhau);
+    const ketQua = await dangNhap(vaiTro, email, matKhau);
 
     if (ketQua.status) {
-      navigate(duongDanTruocDo, { replace: true });
+      navigate(location.state?.from?.pathname || DUONG_DAN_VAI_TRO[vaiTro], { replace: true });
     } else {
       setLoi(ketQua.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại email/mật khẩu.");
     }
@@ -42,6 +46,18 @@ export default function DangNhapPage() {
     >
       <AuthError>{loi}</AuthError>
       <form onSubmit={xuLyDangNhap} className="flex flex-col gap-[15px]">
+        <label className="text-sm font-semibold text-[#272A30]">
+          Đăng nhập với vai trò
+          <select
+            value={vaiTro}
+            onChange={(event) => setVaiTro(event.target.value)}
+            className="mt-1.5 w-full rounded-[9px] border border-[#C9CACE] bg-white px-4 py-3 text-sm font-normal outline-none focus:border-[#17171A]"
+          >
+            <option value="khach-hang">Khách hàng</option>
+            <option value="admin">Quản trị viên / nhân viên</option>
+            <option value="chuyen-gia">Chuyên gia Workshop</option>
+          </select>
+        </label>
         <AuthField
           label="Email"
           icon={Mail}

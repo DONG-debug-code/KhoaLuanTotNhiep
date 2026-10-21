@@ -17,6 +17,8 @@ import DangKyPage from './pages/DangKyPage'
 import KichHoatPage from './pages/KichHoatPage'
 import QuenMatKhauPage from './pages/QuenMatKhauPage'
 import DoiMatKhauPage from './pages/DoiMatKhauPage'
+import CustomerPortalPage from './pages/customer/CustomerPortalPage'
+import OperationsWorkspacePage from './pages/staff/OperationsWorkspacePage'
 
 function App() {
   return (
@@ -49,6 +51,30 @@ function App() {
         <Route path="/kich-hoat" element={<KichHoatPage />} />
         <Route path="/quen-mat-khau" element={<QuenMatKhauPage />} />
         <Route path="/doi-mat-khau" element={<DoiMatKhauPage />} />
+        <Route
+          path="/garage"
+          element={
+            <ProtectedRoute roles={["khach-hang"]}>
+              <CustomerPortalPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <OperationsWorkspacePage role="admin" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chuyen-gia-workspace"
+          element={
+            <ProtectedRoute roles={["chuyen-gia"]}>
+              <OperationsWorkspacePage role="chuyen-gia" />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <TroLyAIChat />
     </>

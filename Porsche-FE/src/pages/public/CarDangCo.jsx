@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Search } from "lucide-react";
 import { CarItem } from "./CarItem";
 import { getXeDangBanClient } from "../../api/PublicApi";
 
@@ -48,6 +48,9 @@ function chuyenDoiXe(sanPham) {
 export const CarDangCo = () => {
   const [danhSachXe, setDanhSachXe] = useState([]);
   const [locDang, setLocDang] = useState("Tất cả");
+  const [tuKhoa, setTuKhoa] = useState("");
+  const [giaTu, setGiaTu] = useState("");
+  const [giaDen, setGiaDen] = useState("");
   const [trang, setTrang] = useState(1);
   const [dangTai, setDangTai] = useState(true);
   const [loi, setLoi] = useState("");
@@ -72,9 +75,15 @@ export const CarDangCo = () => {
     };
   }, []);
 
-  const xeLoc = locDang === "Tất cả"
-    ? danhSachXe
-    : danhSachXe.filter((xe) => xe.dong === locDang);
+  const xeLoc = danhSachXe.filter((xe) => {
+    const khopDong = locDang === "Tất cả" || xe.dong === locDang;
+    const tuKhoaChuanHoa = tuKhoa.trim().toLocaleLowerCase();
+    const khopTuKhoa = !tuKhoaChuanHoa
+      || `${xe.ten} ${xe.dong} ${xe.nam}`.toLocaleLowerCase().includes(tuKhoaChuanHoa);
+    const khopGiaTu = !giaTu || (xe.giaSo !== null && xe.giaSo >= Number(giaTu));
+    const khopGiaDen = !giaDen || (xe.giaSo !== null && xe.giaSo <= Number(giaDen));
+    return khopDong && khopTuKhoa && khopGiaTu && khopGiaDen;
+  });
   const trangCuoi = Math.max(1, Math.ceil(xeLoc.length / SO_XE_MOI_TRANG));
   const xeHienThi = xeLoc.slice(
     (trang - 1) * SO_XE_MOI_TRANG,
@@ -102,7 +111,7 @@ export const CarDangCo = () => {
 
           <div className="text-left">
             <div className="text-[14px] items-start font-bold">
-              {xeHienThi.length} xe phù hợp
+              {xeLoc.length} xe phù hợp
             </div>
 
             <div className="text-[12px] text-[#8A8A85]">
@@ -134,13 +143,47 @@ export const CarDangCo = () => {
         ))}
       </div>
 
+      <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_180px]">
+        <label className="relative">
+          <span className="sr-only">Tìm xe theo tên hoặc dòng xe</span>
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A85]" />
+          <input
+            type="search"
+            value={tuKhoa}
+            onChange={(event) => { setTuKhoa(event.target.value); setTrang(1); }}
+            placeholder="Tìm tên xe hoặc dòng xe"
+            className="w-full rounded-xl border border-[#DCDCD7] bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-[#17171A]"
+          />
+        </label>
+        <label className="text-xs font-semibold text-[#63635E]">
+          Giá từ (VNĐ)
+          <input
+            type="number"
+            min="0"
+            value={giaTu}
+            onChange={(event) => { setGiaTu(event.target.value); setTrang(1); }}
+            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white px-3.5 py-2.5 text-sm font-normal text-[#17171A] outline-none focus:border-[#17171A]"
+          />
+        </label>
+        <label className="text-xs font-semibold text-[#63635E]">
+          Giá đến (VNĐ)
+          <input
+            type="number"
+            min="0"
+            value={giaDen}
+            onChange={(event) => { setGiaDen(event.target.value); setTrang(1); }}
+            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white px-3.5 py-2.5 text-sm font-normal text-[#17171A] outline-none focus:border-[#17171A]"
+          />
+        </label>
+      </div>
+
       {loi ? <p role="alert" className="px-6 text-sm text-red-700">{loi}</p> : null}
       {dangTai ? <p className="px-6 text-sm text-[#63635E]">Đang tải danh sách xe...</p> : null}
       {!dangTai && !loi && danhSachXe.length === 0 ? (
         <p className="px-6 text-sm text-[#63635E]">Hiện chưa có xe tại showroom.</p>
       ) : null}
       {!dangTai && !loi && danhSachXe.length > 0 && xeHienThi.length === 0 ? (
-        <p className="px-6 text-sm text-[#63635E]">Hiện chưa có xe thuộc dòng này.</p>
+        <p className="px-6 text-sm text-[#63635E]">Không có xe phù hợp với điều kiện tìm kiếm.</p>
       ) : null}
 
       <div className={`grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-4 pt-2 max-[860px]:px-5 ${

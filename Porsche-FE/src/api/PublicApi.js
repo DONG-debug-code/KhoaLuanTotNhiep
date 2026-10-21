@@ -208,6 +208,19 @@ function normalizeSanPham(sanPham) {
       return getImageUrl(path);
     })
     .filter(Boolean);
+  const raw360Images = getValue(
+    sanPham,
+    ["anh_360_gallery", "anh360Gallery", "anh_360", "images_360"],
+    []
+  );
+  const images360 = asArray(raw360Images)
+    .map((image) => {
+      const path = typeof image === "string"
+        ? image
+        : getValue(image, ["duong_dan", "url", "path", "anh"], "");
+      return getImageUrl(path);
+    })
+    .filter(Boolean);
   const rawColors = getValue(sanPham, ["mau_sacs", "mauSacs", "colors"], []);
   const colors = asArray(rawColors).map((color) => (
     typeof color === "string"
@@ -246,6 +259,7 @@ function normalizeSanPham(sanPham) {
     mauXe: modelName,
     mauSacs: colors,
     anhGallery: images,
+    anh360Gallery: images360,
     anh: images[0] ?? "",
     loaiSanPham: getValue(sanPham, ["loai_san_pham", "loaiSanPham", "category"]),
     thongSoChiTiet: specs && typeof specs === "object" ? specs : {},
@@ -352,13 +366,19 @@ export async function getXeDangBanClient() {
       page,
       per_page: 100,
       sap_xep: "moi_nhat",
+      con_hang: 1,
     });
     xe.push(...result.sanPham);
     lastPage = result.lastPage;
     page += 1;
   } while (page <= lastPage);
 
-  return xe.filter((item) => !item.slug);
+  return xe.filter((item) => {
+    const type = String(item.loaiSanPham ?? "").trim().toLocaleLowerCase();
+    const isExplicitVehicle = ["xe_nguyen_chiec", "xe", "car", "vehicle"].includes(type);
+    const isLegacyVehicle = !item.slug && (!type || type === "phan_cung");
+    return isExplicitVehicle || isLegacyVehicle;
+  });
 }
 
 export async function getSanPhamClientById(id) {
