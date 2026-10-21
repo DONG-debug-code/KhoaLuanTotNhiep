@@ -108,6 +108,28 @@ class PhieuDatLichController extends Controller
         }
     }
 
+    public function phanCongLichHen(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:phieu_dat_lichs,id',
+            'id_chuyen_gia' => 'required|integer|exists:chuyen_gias,id',
+            'id_khu_vuc_workshop' => 'required|integer|exists:khu_vuc_workshops,id',
+        ]);
+
+        try {
+            DB::table('phieu_dat_lichs')->where('id', $validated['id'])->update([
+                'id_chuyen_gia' => $validated['id_chuyen_gia'],
+                'id_khu_vuc_workshop' => $validated['id_khu_vuc_workshop'],
+                'updated_at' => Carbon::now(),
+            ]);
+
+            return response()->json(['status' => true, 'message' => 'Phân công lịch hẹn thành công.'], 200);
+        } catch (Exception $e) {
+            Log::error('Lỗi phân công lịch hẹn: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Không thể phân công lịch hẹn.'], 500);
+        }
+    }
+
     public function hoanThanhLichHen(Request $request): JsonResponse
     {
         $request->validate([

@@ -12,12 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
-    })
-    ->withMiddleware(function (Middleware $middleware) {
-        // Đăng ký alias để gọi ngoài file Route cho ngắn gọn
         $middleware->alias([
+            'permission' => \App\Http\Middleware\CheckPermission::class,
             'check.permission' => \App\Http\Middleware\CheckPermission::class,
+            'admin.access' => \App\Http\Middleware\EnsureAdminAccess::class,
+            'customer.access' => \App\Http\Middleware\EnsureCustomerAccess::class,
+            'expert.access' => \App\Http\Middleware\EnsureChuyenGiaAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -2,294 +2,434 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\donHangModel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\donHangModel;
-use Exception;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class DonHangController extends Controller
 {
-    /**
-     * 1. KHÁCH HÀNG: Đặt mua xe (Trừ kho ngay + Khóa hàng đợi Lock For Update)
-     */
-    public function datMuaXe(Request $request)
+    public function datMuaXe(Request $request): JsonResponse
     {
-        $request->validate([
-            'san_pham_id'          => 'required|exists:san_phams,id',
-            'phuong_thuc_tt'        => 'required|string',
+        $data = $request->validate([
+            'san_pham_id' => 'required|integer|exists:san_phams,id',
+            'phuong_thuc_tt' => 'required|string|max:50',
             'dia_chi_giao_hang_id' => 'nullable|integer',
-            'so_luong'             => 'nullable|integer|min:1',
-        ]);
-
-        $soLuongMua = $request->input('so_luong', 1);
-
-        DB::beginTransaction();
-        try {
-            $userId = auth()->id();
-
-            // Dùng lockForUpdate() để tránh 2 người cùng mua 1 chiếc xe cuối cùng đồng thời
-            $sanPham = DB::table('san_phams')
-                ->where('id', $request->san_pham_id)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$sanPham || $sanPham->so_luong < $soLuongMua) {
-                DB::rollBack();
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Xe hoặc sản phẩm này hiện tại không đủ số lượng trong kho!'
-                ], 400);
-            }
-
-            $tongTien = $sanPham->gia * $soLuongMua;
-            $giamGia = 0; 
-            $thanhTien = $tongTien - $giamGia;
-
-            $donHangId = DB::table('don_hangs')->insertGetId([
-                'users_id'             => $userId,
-                'tong_tien'            => $tongTien,
-                'giam_gia'             => $giamGia,
-                'thanh_tien'           => $thanhTien,
-                'trang_thai'           => donHangModel::TRANG_THAI_CHO_XAC_NHAN,
-                'phuong_thuc_tt'       => $request->phuong_thuc_tt,
-                'dia_chi_giao_hang_id' => $request->dia_chi_giao_hang_id,
-                'ngay_tao'             => now(),
-                'created_at'           => now(),
-                'updated_at'           => now(),
-            ]);
-
-            DB::table('chi_tiet_don_hangs')->insert([
-                'don_hang_id' => $donHangId,
-                'san_pham_id' => $sanPham->id,
-                'so_luong'    => $soLuongMua,
-                'don_gia'     => $sanPham->gia,
-                'thanh_tien'  => $thanhTien,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-
-            // Trừ kho xe ngay lập tức
-            DB::table('san_phams')->where('id', $sanPham->id)->decrement('so_luong', $soLuongMua);
-
-            DB::commit();
-
-            return response()->json([
-                'status'      => true,
-                'message'     => 'Đặt mua xe thành công. Đơn hàng đang ở trạng thái: Chờ xác nhận.',
-                'don_hang_id' => $donHangId
-            ], 201);
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['status' => false, 'message' => 'Không thể đặt xe: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * 2. KHÁCH HÀNG: Yêu cầu hủy đơn hàng (Ghi nhận lý do hủy)
-     */
-    public function khachYeuCauHuy(Request $request)
-    {
-        $request->validate([
-            'don_hang_id' => 'required|exists:don_hangs,id',
-            'ly_do_huy'   => 'required|string|max:500'
+            'so_luong' => 'nullable|integer|min:1',
+            'ma_voucher' => 'nullable|string|max:100',
         ]);
 
         try {
-            $userId = auth()->id();
-            $donHang = DB::table('don_hangs')
-                ->where('id', $request->don_hang_id)
-                ->where('users_id', $userId)
-                ->first();
+            $result = DB::transaction(function () use ($request, $data) {
+                $userId = (int) $request->user()->id;
+                $quantity = (int) ($data['so_luong'] ?? 1);
+                $product = DB::table('san_phams')
+                    ->where('id', $data['san_pham_id'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (!$donHang) {
-                return response()->json(['status' => false, 'message' => 'Không tìm thấy đơn hàng!'], 404);
-            }
+                if (!$product || (int) $product->so_luong < $quantity) {
+                    return ['error' => 'Số lượng sản phẩm trong kho không đủ.', 'code' => 422];
+                }
 
-            // Đơn đã hoàn thành hoặc đã hủy trước đó thì không được gửi yêu cầu nữa
-            if (in_array($donHang->trang_thai, [donHangModel::TRANG_THAI_HOAN_THANH, donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO])) {
-                return response()->json(['status' => false, 'message' => 'Đơn hàng đã hoàn tất hoặc đã hủy, không thể thay đổi!'], 400);
-            }
+                $sale = DB::table('chuong_trinh_sales as campaigns')
+                    ->join('chi_tiet_san_pham_sales as details', 'campaigns.id', '=', 'details.chuong_trinh_sale_id')
+                    ->where('details.san_pham_id', $product->id)
+                    ->where('campaigns.trang_thai', true)
+                    ->where('campaigns.ngay_bat_dau', '<=', now())
+                    ->where('campaigns.ngay_ket_thuc', '>=', now())
+                    ->whereRaw('(details.so_luong_sale - details.da_ban) >= ?', [$quantity])
+                    ->select('details.id', 'details.gia_khuyen_mai', 'details.gioi_han_moi_khach')
+                    ->lockForUpdate()
+                    ->first();
 
-            // Nếu đơn mới ở bước 'cho_xac_nhan' -> Hủy trực tiếp & hoàn tồn kho luôn
-            if ($donHang->trang_thai === donHangModel::TRANG_THAI_CHO_XAC_NHAN) {
-                DB::beginTransaction();
-                
-                DB::table('don_hangs')->where('id', $donHang->id)->update([
-                    'trang_thai' => donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                if ($sale) {
+                    $priorSaleQuantity = DB::table('chi_tiet_don_hangs as details')
+                        ->join('don_hangs as orders', 'orders.id', '=', 'details.don_hang_id')
+                        ->where('details.chi_tiet_sale_id', $sale->id)
+                        ->where('orders.users_id', $userId)
+                        ->whereNotIn('orders.trang_thai', [
+                            donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                        ])
+                        ->sum('details.so_luong');
+
+                    if ($priorSaleQuantity + $quantity > $sale->gioi_han_moi_khach) {
+                        $sale = null;
+                    }
+                }
+
+                $unitPrice = (float) ($sale->gia_khuyen_mai ?? $product->gia);
+                $subtotal = $unitPrice * $quantity;
+                $voucher = null;
+                $discount = 0;
+
+                if (!empty($data['ma_voucher'])) {
+                    [$voucher, $discount, $error] = $this->calculateVoucherDiscount(
+                        $data['ma_voucher'],
+                        $subtotal,
+                        true
+                    );
+                    if ($error !== null) {
+                        return ['error' => $error, 'code' => 422];
+                    }
+                }
+
+                $total = max(0, $subtotal - $discount);
+                $orderId = DB::table('don_hangs')->insertGetId([
+                    'users_id' => $userId,
+                    'tong_tien' => $subtotal,
+                    'giam_gia' => $discount,
+                    'thanh_tien' => $total,
+                    'trang_thai' => donHangModel::TRANG_THAI_CHO_XAC_NHAN,
+                    'phuong_thuc_tt' => $data['phuong_thuc_tt'],
+                    'dia_chi_giao_hang_id' => $data['dia_chi_giao_hang_id'] ?? null,
+                    'ngay_tao' => now(),
+                    'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                // Cộng lại số lượng xe vào kho
-                $chiTiets = DB::table('chi_tiet_don_hangs')->where('don_hang_id', $donHang->id)->get();
-                foreach ($chiTiets as $ct) {
-                    DB::table('san_phams')->where('id', $ct->san_pham_id)->increment('so_luong', $ct->so_luong);
+                DB::table('chi_tiet_don_hangs')->insert([
+                    'don_hang_id' => $orderId,
+                    'san_pham_id' => $product->id,
+                    'chi_tiet_sale_id' => $sale->id ?? null,
+                    'so_luong' => $quantity,
+                    'don_gia' => $unitPrice,
+                    'thanh_tien' => $total,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('san_phams')->where('id', $product->id)->update([
+                    'so_luong' => DB::raw('so_luong - ' . $quantity),
+                    'so_luong_kho' => DB::raw('so_luong_kho - ' . $quantity),
+                    'updated_at' => now(),
+                ]);
+
+                if ($sale) {
+                    DB::table('chi_tiet_san_pham_sales')->where('id', $sale->id)->increment('da_ban', $quantity);
                 }
 
-                DB::commit();
-                return response()->json(['status' => true, 'message' => 'Đã hủy đơn hàng thành công và cập nhật lại kho!'], 200);
-            }
-
-            // Nếu đơn đang giao -> Chuyển sang trạng thái chờ Trưởng phòng Kinh doanh duyệt
-            DB::table('don_hangs')->where('id', $donHang->id)->update([
-                'trang_thai' => donHangModel::TRANG_THAI_YEU_CAU_HUY,
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Yêu cầu hủy đơn của bạn đã được gửi. Đang chờ Trưởng phòng Kinh doanh xác nhận hoàn xe về xưởng!'
-            ], 200);
-
-        } catch (Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Lỗi xử lý: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * 3. QUẢN TRỊ / SALES: Cập nhật tiến trình & Ghi nhận Doanh thu (Trường hợp 1)
-     */
-    public function capNhatTrangThai(Request $request)
-    {
-        $request->validate([
-            'don_hang_id' => 'required|exists:don_hangs,id',
-            'trang_thai'  => 'required|in:cho_xac_nhan,da_xac_nhan,dang_giao,hoan_thanh',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $donHang = DB::table('don_hangs')->where('id', $request->don_hang_id)->first();
-
-            // Kiểm tra không cho phép sửa đơn hàng đã kết thúc
-            if ($donHang->trang_thai === donHangModel::TRANG_THAI_HOAN_THANH) {
-                return response()->json(['status' => false, 'message' => 'Đơn hàng này đã hoàn thành trước đó!'], 400);
-            }
-
-            if ($donHang->trang_thai === donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO) {
-                return response()->json(['status' => false, 'message' => 'Đơn hàng này đã bị hủy, không thể cập nhật trạng thái giao hàng!'], 400);
-            }
-
-            // TRƯỜNG HỢP 1: Giao hàng thành công -> Chuyển 'hoan_thanh' & Tạo Hóa đơn Doanh thu
-            if ($request->trang_thai === donHangModel::TRANG_THAI_HOAN_THANH) {
-                
-                $existsHoaDon = DB::table('hoa_dons')->where('don_hang_id', $donHang->id)->exists();
-                
-                if (!$existsHoaDon) {
-                    DB::table('hoa_dons')->insert([
-                        'ma_hoa_don'     => 'HD-' . time(),
-                        'don_hang_id'    => $donHang->id,
-                        'users_id'       => $donHang->users_id,
-                        'tong_tien'      => $donHang->thanh_tien,
-                        'trang_thai_tt'  => 'da_thanh_toan',
-                        'ngay_xuat'      => now(),
-                        'created_at'     => now(),
-                        'updated_at'     => now(),
+                if ($voucher) {
+                    DB::table('lich_su_su_dung_phieus')->insert([
+                        'user_id' => $userId,
+                        'phieu_id' => $voucher->id,
+                        'don_hang_id' => $orderId,
+                        'so_tien_giam' => $discount,
+                        'trang_thai' => 'da_su_dung',
+                        'thoi_diem_su_dung' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
+
+                DB::table('nhat_ky_khos')->insert([
+                    'user_id' => $userId,
+                    'san_pham_id' => $product->id,
+                    'loai' => 'xuat',
+                    'so_luong' => $quantity,
+                    'ly_do' => 'Đặt hàng #' . $orderId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return ['don_hang_id' => $orderId, 'thanh_tien' => $total];
+            });
+
+            if (isset($result['error'])) {
+                return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
             }
 
-            DB::table('don_hangs')->where('id', $request->don_hang_id)->update([
-                'trang_thai' => $request->trang_thai,
+            return response()->json([
+                'status' => true,
+                'message' => 'Đặt mua xe thành công. Đơn hàng đang chờ xác nhận.',
+                'data' => $result,
+            ], 201);
+        } catch (Throwable $e) {
+            Log::error('Không thể tạo đơn hàng.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể đặt mua sản phẩm.'], 500);
+        }
+    }
+
+    public function khachYeuCauHuy(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'don_hang_id' => 'required|integer|exists:don_hangs,id',
+            'ly_do_huy' => 'required|string|max:500',
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($request, $data) {
+                $order = DB::table('don_hangs')
+                    ->where('id', $data['don_hang_id'])
+                    ->where('users_id', $request->user()->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$order) {
+                    return ['error' => 'Không tìm thấy đơn hàng.', 'code' => 404];
+                }
+                if (in_array($order->trang_thai, [
+                    donHangModel::TRANG_THAI_HOAN_THANH,
+                    donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                    donHangModel::TRANG_THAI_YEU_CAU_HUY,
+                ], true)) {
+                    return ['error' => 'Đơn hàng đã hoàn tất, đã hủy hoặc đang chờ duyệt hủy.', 'code' => 409];
+                }
+
+                $cancelImmediately = $order->trang_thai === donHangModel::TRANG_THAI_CHO_XAC_NHAN;
+                DB::table('don_hangs')->where('id', $order->id)->update([
+                    'trang_thai' => $cancelImmediately
+                        ? donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO
+                        : donHangModel::TRANG_THAI_YEU_CAU_HUY,
+                    'ly_do_huy' => $data['ly_do_huy'],
+                    'updated_at' => now(),
+                ]);
+
+                if ($cancelImmediately) {
+                    $this->restoreOrderStock($order->id);
+                }
+
+                return ['cancelled' => $cancelImmediately];
+            });
+
+            if (isset($result['error'])) {
+                return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => $result['cancelled']
+                    ? 'Đơn hàng đã hủy và tồn kho đã được hoàn lại.'
+                    : 'Yêu cầu hủy đã được gửi để phê duyệt.',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Không thể xử lý yêu cầu hủy đơn hàng.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể xử lý yêu cầu hủy.'], 500);
+        }
+    }
+
+    public function capNhatTrangThai(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'don_hang_id' => 'required|integer|exists:don_hangs,id',
+            'trang_thai' => 'required|in:cho_xac_nhan,da_xac_nhan,dang_giao,hoan_thanh',
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($data) {
+                $order = DB::table('don_hangs')->where('id', $data['don_hang_id'])->lockForUpdate()->first();
+                if (in_array($order->trang_thai, [
+                    donHangModel::TRANG_THAI_HOAN_THANH,
+                    donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                    donHangModel::TRANG_THAI_YEU_CAU_HUY,
+                ], true)) {
+                    return ['error' => 'Đơn hàng đã kết thúc hoặc đang chờ duyệt hủy.', 'code' => 409];
+                }
+
+                if ($data['trang_thai'] === donHangModel::TRANG_THAI_HOAN_THANH
+                    && !DB::table('hoa_dons')->where('don_hang_id', $order->id)->exists()) {
+                    DB::table('hoa_dons')->insert([
+                        'ma_hoa_don' => 'HD-' . now()->format('YmdHis') . '-' . $order->id,
+                        'don_hang_id' => $order->id,
+                        'users_id' => $order->users_id,
+                        'tong_tien' => $order->thanh_tien,
+                        'trang_thai_tt' => 'da_thanh_toan',
+                        'ngay_xuat' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                DB::table('don_hangs')->where('id', $order->id)->update([
+                    'trang_thai' => $data['trang_thai'],
+                    'updated_at' => now(),
+                ]);
+
+                return ['ok' => true];
+            });
+
+            if (isset($result['error'])) {
+                return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
+            }
+
+            return response()->json(['status' => true, 'message' => 'Cập nhật trạng thái đơn hàng thành công.']);
+        } catch (Throwable $e) {
+            Log::error('Không thể cập nhật trạng thái đơn hàng.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể cập nhật trạng thái đơn hàng.'], 500);
+        }
+    }
+
+    public function duyetHuyVaHoanKho(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'don_hang_id' => 'required|integer|exists:don_hangs,id',
+            'dong_y_huy' => 'required|boolean',
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($data) {
+                $order = DB::table('don_hangs')->where('id', $data['don_hang_id'])->lockForUpdate()->first();
+                if ($order->trang_thai !== donHangModel::TRANG_THAI_YEU_CAU_HUY) {
+                    return ['error' => 'Đơn hàng không ở trạng thái chờ duyệt hủy.', 'code' => 409];
+                }
+
+                if ($data['dong_y_huy']) {
+                    DB::table('don_hangs')->where('id', $order->id)->update([
+                        'trang_thai' => donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                        'updated_at' => now(),
+                    ]);
+                    $this->restoreOrderStock($order->id);
+                } else {
+                    DB::table('don_hangs')->where('id', $order->id)->update([
+                        'trang_thai' => donHangModel::TRANG_THAI_DANG_GIAO,
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                return ['approved' => (bool) $data['dong_y_huy']];
+            });
+
+            if (isset($result['error'])) {
+                return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => $result['approved']
+                    ? 'Đã duyệt hủy đơn và hoàn tồn kho.'
+                    : 'Đã từ chối yêu cầu hủy; đơn hàng tiếp tục được giao.',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Không thể phê duyệt hủy đơn hàng.', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Không thể xử lý phê duyệt hủy.'], 500);
+        }
+    }
+
+    public function donHangCuaToi(Request $request): JsonResponse
+    {
+        $imageIds = DB::table('anh_san_phams')
+            ->select('san_pham_id', DB::raw('MIN(id) as image_id'))
+            ->groupBy('san_pham_id');
+
+        $orders = DB::table('don_hangs')
+            ->where('users_id', $request->user()->id)
+            ->orderByDesc('id')
+            ->get();
+
+        foreach ($orders as $order) {
+            $order->chi_tiet = DB::table('chi_tiet_don_hangs as details')
+                ->join('san_phams as products', 'details.san_pham_id', '=', 'products.id')
+                ->leftJoinSub($imageIds, 'product_images', 'product_images.san_pham_id', '=', 'products.id')
+                ->leftJoin('anh_san_phams as images', 'images.id', '=', 'product_images.image_id')
+                ->where('details.don_hang_id', $order->id)
+                ->select('details.*', 'products.ten as ten_san_pham', 'images.duong_dan as hinh_anh')
+                ->get();
+        }
+
+        return response()->json(['status' => true, 'data' => $orders]);
+    }
+
+    public function apMaGiamGia(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'ma_voucher' => 'required|string|max:100',
+            'tong_tien' => 'required|numeric|min:0',
+        ]);
+
+        [$voucher, $discount, $error] = $this->calculateVoucherDiscount($data['ma_voucher'], (float) $data['tong_tien']);
+        if ($error !== null) {
+            return response()->json(['status' => false, 'message' => $error], 422);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Áp dụng mã giảm giá thành công.',
+            'data' => [
+                'ma_voucher' => $voucher->code,
+                'so_tien_giam' => $discount,
+                'tong_tien_ban_dau' => (float) $data['tong_tien'],
+                'tong_tien_sau_giam' => max(0, (float) $data['tong_tien'] - $discount),
+            ],
+        ]);
+    }
+
+    private function calculateVoucherDiscount(string $code, float $subtotal, bool $lock = false): array
+    {
+        $query = DB::table('phieu_giam_gias')
+            ->where('code', strtoupper(trim($code)))
+            ->where('trang_thai', true);
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $voucher = $query->first();
+
+        if (!$voucher) {
+            return [null, 0, 'Mã giảm giá không tồn tại hoặc đã bị khóa.'];
+        }
+
+        $now = now();
+        if (($voucher->ngay_bat_dau && $now->lt($voucher->ngay_bat_dau))
+            || ($voucher->ngay_ket_thuc && $now->gt($voucher->ngay_ket_thuc))) {
+            return [null, 0, 'Mã giảm giá chưa có hiệu lực hoặc đã hết hạn.'];
+        }
+
+        if ($subtotal < (float) $voucher->gia_tri_don_hang_toi_thieu) {
+            return [null, 0, 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã giảm giá.'];
+        }
+
+        $used = DB::table('lich_su_su_dung_phieus')
+            ->where('phieu_id', $voucher->id)
+            ->where('trang_thai', 'da_su_dung')
+            ->count();
+        if ((int) $voucher->so_luong <= $used) {
+            return [null, 0, 'Mã giảm giá đã hết lượt sử dụng.'];
+        }
+
+        $discount = $voucher->loai === 'phan_tram'
+            ? $subtotal * (float) $voucher->gia_tri / 100
+            : (float) $voucher->gia_tri;
+
+        if ($voucher->giam_toi_da !== null && (float) $voucher->giam_toi_da > 0) {
+            $discount = min($discount, (float) $voucher->giam_toi_da);
+        }
+
+        return [$voucher, min($subtotal, max(0, $discount)), null];
+    }
+
+    private function restoreOrderStock(int $orderId): void
+    {
+        $details = DB::table('chi_tiet_don_hangs')->where('don_hang_id', $orderId)->get();
+
+        foreach ($details as $detail) {
+            DB::table('san_phams')->where('id', $detail->san_pham_id)->update([
+                'so_luong' => DB::raw('so_luong + ' . (int) $detail->so_luong),
+                'so_luong_kho' => DB::raw('so_luong_kho + ' . (int) $detail->so_luong),
                 'updated_at' => now(),
             ]);
 
-            DB::commit();
-
-            return response()->json([
-                'status'  => true,
-                'message' => ($request->trang_thai === 'hoan_thanh') 
-                    ? 'Đơn hàng đã HOÀN THÀNH. Hóa đơn và doanh thu đã được cộng vào hệ thống!' 
-                    : 'Cập nhật trạng thái đơn hàng thành công.'
-            ], 200);
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['status' => false, 'message' => 'Lỗi cập nhật: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * 4. TRƯỞNG PHÒNG KINH DOANH: Duyệt hủy đơn & Hoàn xe lại vào kho (Trường hợp 2)
-     */
-    public function duyetHuyVaHoanKho(Request $request)
-    {
-        $request->validate([
-            'don_hang_id' => 'required|exists:don_hangs,id',
-            'dong_y_huy'  => 'required|boolean',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $donHang = DB::table('don_hangs')->where('id', $request->don_hang_id)->first();
-
-            if ($donHang->trang_thai !== donHangModel::TRANG_THAI_YEU_CAU_HUY) {
-                return response()->json(['status' => false, 'message' => 'Đơn hàng này không ở trạng thái chờ duyệt hủy!'], 400);
+            if ($detail->chi_tiet_sale_id) {
+                DB::table('chi_tiet_san_pham_sales')
+                    ->where('id', $detail->chi_tiet_sale_id)
+                    ->where('da_ban', '>=', $detail->so_luong)
+                    ->decrement('da_ban', $detail->so_luong);
             }
 
-            if ($request->dong_y_huy) {
-                // TRƯỜNG HỢP 2: Chấp nhận hủy -> Hoàn xe (+1) vào kho & Không ghi nhận doanh thu
-                DB::table('don_hangs')->where('id', $donHang->id)->update([
-                    'trang_thai' => donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
-                    'updated_at' => now(),
-                ]);
-
-                $chiTiets = DB::table('chi_tiet_don_hangs')->where('don_hang_id', $donHang->id)->get();
-                foreach ($chiTiets as $ct) {
-                    DB::table('san_phams')
-                        ->where('id', $ct->san_pham_id)
-                        ->increment('so_luong', $ct->so_luong);
-                }
-
-                DB::commit();
-                return response()->json([
-                    'status'  => true,
-                    'message' => 'Trưởng phòng Kinh doanh đã DUYỆT HỦY ĐƠN. Số lượng xe đã được hoàn trả lại về kho.'
-                ], 200);
-
-            } else {
-                // Nếu bác bỏ yêu cầu hủy -> Cho đơn hàng tiếp tục giao
-                DB::table('don_hangs')->where('id', $donHang->id)->update([
-                    'trang_thai' => donHangModel::TRANG_THAI_DANG_GIAO,
-                    'updated_at' => now(),
-                ]);
-
-                DB::commit();
-                return response()->json([
-                    'status'  => true,
-                    'message' => 'Đã bác bỏ yêu cầu hủy. Đơn hàng tiếp tục trạng thái đang giao.'
-                ], 200);
-            }
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['status' => false, 'message' => 'Lỗi xử lý duyệt hủy: ' . $e->getMessage()], 500);
+            DB::table('nhat_ky_khos')->insert([
+                'user_id' => null,
+                'san_pham_id' => $detail->san_pham_id,
+                'loai' => 'nhap',
+                'so_luong' => $detail->so_luong,
+                'ly_do' => 'Hoàn kho đơn #' . $orderId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
-    }
 
-    /**
-     * 5. KHÁCH HÀNG: Danh sách đơn hàng của tôi
-     */
-    public function donHangCuaToi()
-    {
-        try {
-            $userId = auth()->id();
-            $donHangs = DB::table('don_hangs')
-                ->where('users_id', $userId)
-                ->orderBy('id', 'desc')
-                ->get();
-
-            foreach ($donHangs as $donHang) {
-                $donHang->chi_tiet = DB::table('chi_tiet_don_hangs')
-                    ->join('san_phams', 'chi_tiet_don_hangs.san_pham_id', '=', 'san_phams.id')
-                    ->where('chi_tiet_don_hangs.don_hang_id', $donHang->id)
-                    ->select('chi_tiet_don_hangs.*', 'san_phams.ten as ten_san_pham')
-                    ->get();
-            }
-
-            return response()->json(['status' => true, 'data' => $donHangs], 200);
-
-        } catch (Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Lỗi hệ thống: ' . $e->getMessage()], 500);
-        }
+        DB::table('lich_su_su_dung_phieus')
+            ->where('don_hang_id', $orderId)
+            ->where('trang_thai', 'da_su_dung')
+            ->update(['trang_thai' => 'huy', 'updated_at' => now()]);
     }
 }

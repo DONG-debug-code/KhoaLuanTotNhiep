@@ -72,15 +72,27 @@ class User extends Authenticatable
             : collect();
     }
 
-    public function hasPermission($permissionName)
+    public function hasPermission(string $permissionName): bool
     {
-        return $this->permissions()
-            ->contains('ten', $permissionName);
+        if ($this->hasRole($permissionName) || $this->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $this->vaiTro()
+            ->whereHas('permissions', function ($query) use ($permissionName) {
+                $query->where('permissions.ma_chuc_nang', $permissionName)
+                    ->orWhere('permissions.ten_chuc_nang', $permissionName);
+            })
+            ->exists();
     }
 
-    public function hasRole($roleName)
+    public function hasRole(string $roleName): bool
     {
-        return $this->vaiTro
-            && $this->vaiTro->ten === $roleName;
+        return $this->vaiTro()
+            ->where(function ($query) use ($roleName) {
+                $query->where('vai_tros.ten', $roleName)
+                    ->orWhere('vai_tros.ma_vai_tro', $roleName);
+            })
+            ->exists();
     }
 }

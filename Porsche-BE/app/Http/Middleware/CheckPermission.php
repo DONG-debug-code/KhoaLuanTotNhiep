@@ -16,18 +16,14 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        // 🌟 Sửa cách 1: Dùng Facade \Illuminate\Support\Facades\Auth trực tiếp
-        // Cách này giúp VS Code nhận biết hàm check() cực kỳ chuẩn
-        if (!\Illuminate\Support\Facades\Auth::check()) {
-            abort(401, 'Bạn chưa đăng nhập.');
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Bạn chưa đăng nhập.'], 401);
         }
 
-        /** @var \App\Models\User $user */ // 🌟 Mẹo: Dòng này để báo cho VS Code biết $user chắc chắn là Model User của bạn
-        $user = \Illuminate\Support\Facades\Auth::user();
-
-        // Bây giờ gọi hàm thỏa thích, VS Code sẽ không bao giờ gạch đỏ nữa
-        if (!$user->hasPermission($permission)) {
-            abort(403, 'Không có quyền');
+        if (!method_exists($user, 'hasPermission') || !$user->hasPermission($permission)) {
+            return response()->json(['status' => false, 'message' => 'Bạn không có quyền thực hiện chức năng này.'], 403);
         }
 
         return $next($request);

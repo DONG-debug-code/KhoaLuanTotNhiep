@@ -71,7 +71,7 @@ class AdminController extends Controller
     public function getProfile(Request $request): JsonResponse
     {
         try {
-            $adminId = $request->user() ? $request->user()->id : 1; // Fallback admin đầu tiên nếu chưa qua middleware mẫu
+            $adminId = $request->user()->id;
             $profile = DB::table('admins')->where('id', $adminId)->select('id', 'ho_ten', 'email', 'avatar')->first();
             return response()->json(['status' => true, 'data' => $profile], 200);
         } catch (Exception $e) {
@@ -84,7 +84,7 @@ class AdminController extends Controller
     {
         $request->validate(['ho_ten' => 'required|string']);
         try {
-            $adminId = $request->user() ? $request->user()->id : 1;
+            $adminId = $request->user()->id;
             DB::table('admins')->where('id', $adminId)->update(['ho_ten' => $request->ho_ten, 'updated_at' => now()]);
             return response()->json(['status' => true, 'message' => 'Đồng bộ hồ sơ quản trị viên thành công.'], 200);
         } catch (Exception $e) {
@@ -97,7 +97,7 @@ class AdminController extends Controller
     {
         $request->validate(['avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048']);
         try {
-            $adminId = $request->user() ? $request->user()->id : 1;
+            $adminId = $request->user()->id;
             if ($request->hasFile('avatar')) {
                 $file = $request->file('avatar');
                 $filename = 'admin_' . $adminId . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -118,7 +118,7 @@ class AdminController extends Controller
     {
         $request->validate(['old_password' => 'required|string', 'password' => 'required|string|min:6|confirmed']);
         try {
-            $adminId = $request->user() ? $request->user()->id : 1;
+            $adminId = $request->user()->id;
             $admin = DB::table('admins')->where('id', $adminId)->first();
             if (!Hash::check($request->old_password, $admin->password)) {
                 return response()->json(['status' => false, 'message' => 'Mật khẩu cũ không đúng.'], 400);

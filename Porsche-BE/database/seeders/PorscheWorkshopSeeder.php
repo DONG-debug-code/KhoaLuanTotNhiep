@@ -212,8 +212,9 @@ class PorscheWorkshopSeeder extends Seeder
             DB::table('san_phams')->insert([
                 'ten' => $p['ten'],
                 'slug' => Str::slug($p['ten']),
-                'loai' => $p['loai'],
+                'loai_san_pham' => $p['loai'],
                 'gia' => $p['gia'],
+                'so_luong' => $p['so_luong_kho'],
                 'so_luong_kho' => $p['so_luong_kho'],
                 'danh_muc_id' => $danhMucIds[$p['danh_muc']],
                 'thuong_hieu_id' => $thuongHieuIds[$p['thuong_hieu']],

@@ -249,13 +249,20 @@ class KhachHangController extends Controller
         DB::beginTransaction();
         try {
             $maKichHoat = Str::upper(Str::random(6));
+            $customerRoleId = DB::table('vai_tros')
+                ->where('ma_vai_tro', 'customer')
+                ->value('id');
+
+            if (!$customerRoleId) {
+                throw new Exception('Không tìm thấy vai trò khách hàng để tạo tài khoản.');
+            }
 
             $khachHangId = DB::table('users')->insertGetId([
                 'ho_ten'        => $request->ho_ten,
                 'email'         => $request->email,
                 'so_dien_thoai' => $request->so_dien_thoai,
                 'password'      => Hash::make($request->password),
-                'vai_tro_id'    => 3, // Khách hàng
+                'vai_tro_id'    => $customerRoleId,
                 'trang_thai'    => 0, // Chờ kích hoạt
                 'ma_kich_hoat'  => $maKichHoat,
                 'created_at'    => now(),

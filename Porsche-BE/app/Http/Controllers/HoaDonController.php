@@ -13,8 +13,8 @@ class HoaDonController extends Controller
     {
         try {
             $data = DB::table('hoa_dons')
-                ->join('khach_hangs', 'hoa_dons.id_khach_hang', '=', 'khach_hangs.id')
-                ->select('hoa_dons.*', 'khach_hangs.ho_ten as ten_khach_hang')
+                ->leftJoin('users', 'hoa_dons.users_id', '=', 'users.id')
+                ->select('hoa_dons.*', 'users.ho_ten as ten_khach_hang')
                 ->orderBy('hoa_dons.id', 'desc')
                 ->get();
             return response()->json(['status' => true, 'data' => $data], 200);

@@ -18,6 +18,8 @@ use App\Http\Controllers\ThongKeController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\SanPhamController;
+use App\Http\Controllers\ChuongTrinhSaleController;
+use App\Http\Controllers\Admin\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/admin/login', [AdminController::class, 'loginAdmin']);
 
-Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.access']], function () {
 
     // Hệ thống & Xuất dữ liệu
     Route::post('khach-hang/xuat-excel', [AdminController::class, 'xuatExcelKhachHang']);
@@ -44,10 +46,10 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function 
 
     // 🔑 CORE 1: QUẢN LÝ CHỨC VỤ (ROLES)
     Route::get('/chuc-vu/data', [ChucVuController::class, 'getData']);
-    Route::post('/chuc-vu/create', [ChucVuController::class, 'store']);
-    Route::post('/chuc-vu/delete', [ChucVuController::class, 'destroyChucVu']);
-    Route::post('/chuc-vu/update', [ChucVuController::class, 'updateChucVu']);
-    Route::post('/chuc-vu/change-status', [ChucVuController::class, 'changeStatusChucVu']);
+    Route::post('/chuc-vu/create', [ChucVuController::class, 'store'])->middleware('permission:super_admin');
+    Route::post('/chuc-vu/delete', [ChucVuController::class, 'destroyChucVu'])->middleware('permission:super_admin');
+    Route::post('/chuc-vu/update', [ChucVuController::class, 'updateChucVu'])->middleware('permission:super_admin');
+    Route::post('/chuc-vu/change-status', [ChucVuController::class, 'changeStatusChucVu'])->middleware('permission:super_admin');
     Route::post('/chuc-vu/search', [ChucVuController::class, 'searchChucVu']);
 
     // 🔑 CORE 2: QUẢN LÝ CHỨC NĂNG (PERMISSIONS SYSTEM)
@@ -55,17 +57,17 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function 
 
     // 🔑 CORE 3: CẤU HÌNH PHÂN QUYỀN
     Route::get('/phan-quyen/chi-tiet-data', [PhanQuyenController::class, 'getData']);
-    Route::post('/phan-quyen/create', [PhanQuyenController::class, 'createPhanQuyen']);
-    Route::post('/phan-quyen/delete', [PhanQuyenController::class, 'deletePhanQuyen']);
-    Route::post('/phan-quyen/update', [PhanQuyenController::class, 'updatePhanQuyen']);
+    Route::post('/phan-quyen/create', [PhanQuyenController::class, 'createPhanQuyen'])->middleware('permission:super_admin');
+    Route::post('/phan-quyen/delete', [PhanQuyenController::class, 'deletePhanQuyen'])->middleware('permission:super_admin');
+    Route::post('/phan-quyen/update', [PhanQuyenController::class, 'updatePhanQuyen'])->middleware('permission:super_admin');
 
     // 👥 QUẢN LÝ NHÂN VIÊN WORKSHOP (Kỹ thuật viên, Remap-er, Cố vấn dịch vụ)
     Route::get('/nhan-vien/data', [NhanVienController::class, 'getDataNhanVien']);
     Route::post('/nhan-vien/search', [NhanVienController::class, 'searchNhanVien']);
-    Route::post('/nhan-vien/create', [NhanVienController::class, 'storeNhanVien']);
-    Route::post('/nhan-vien/delete', [NhanVienController::class, 'destroyNhanVien']);
-    Route::post('/nhan-vien/update', [NhanVienController::class, 'updateNhanVien']);
-    Route::post('/nhan-vien/change-status', [NhanVienController::class, 'changeStatusNhanVien']);
+    Route::post('/nhan-vien/create', [NhanVienController::class, 'storeNhanVien'])->middleware('permission:super_admin');
+    Route::post('/nhan-vien/delete', [NhanVienController::class, 'destroyNhanVien'])->middleware('permission:super_admin');
+    Route::post('/nhan-vien/update', [NhanVienController::class, 'updateNhanVien'])->middleware('permission:super_admin');
+    Route::post('/nhan-vien/change-status', [NhanVienController::class, 'changeStatusNhanVien'])->middleware('permission:super_admin');
 
     // 🏎️ QUẢN LÝ KHÁCH HÀNG & CHỦ XE PORSCHE
     Route::get('/khach-hang/data', [KhachHangController::class, 'getDataKhachHang']);
@@ -94,9 +96,10 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function 
     // 📅 QUẢN LÝ LỊCH HẸN ĐỘ XE / BẢO DƯỠNG DETAIING
     Route::get('/lich-hen/data', [PhieuDatLichController::class, 'getLichHenData']);
     Route::post('/lich-hen/tim-kiem', [PhieuDatLichController::class, 'timKiemLichHen']);
-    Route::post('/lich-hen/hoan-thanh', [PhieuDatLichController::class, 'hoanThanhLichHen']);
+    Route::post('/lich-hen/hoan-thanh', [PhieuDatLichController::class, 'hoanThanhLichHen'])->middleware('permission:service_advisor');
     Route::post('/lich-hen/create', [PhieuDatLichController::class, 'createLichHen']);
-    Route::post('/lich-hen/xac-nhan', [PhieuDatLichController::class, 'xacNhanLichHen']);
+    Route::post('/lich-hen/xac-nhan', [PhieuDatLichController::class, 'xacNhanLichHen'])->middleware('permission:service_advisor');
+    Route::post('/lich-hen/phan-cong', [PhieuDatLichController::class, 'phanCongLichHen'])->middleware('permission:service_advisor');
     Route::post('/lich-hen/huy', [PhieuDatLichController::class, 'huyLichHen']);
     Route::post('/lich-hen/change-status', [PhieuDatLichController::class, 'changeStatusLichHen']);
 
@@ -112,6 +115,32 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function 
     Route::post('/chuyen-gia/delete', [ChuyenGiaController::class, 'destroyChuyenGia']);
     Route::post('/chuyen-gia/search', [ChuyenGiaController::class, 'searchChuyenGia']);
     Route::post('/chuyen-gia/change-status', [ChuyenGiaController::class, 'changeStatusChuyenGia']);
+
+    // Quản lý sản phẩm, tồn kho và nhật ký biến động kho
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::post('/products', [ProductController::class, 'store'])->middleware('permission:tao_san_pham');
+    Route::put('/products/{id}', [ProductController::class, 'update'])->middleware('permission:sua_san_pham');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->middleware('permission:xoa_san_pham');
+    Route::post('/products/{id}/restock', [ProductController::class, 'restock'])->middleware('permission:inventory_manager');
+    Route::post('/products/{id}/export-stock', [ProductController::class, 'exportStock'])->middleware('permission:inventory_manager');
+    Route::get('/products/{id}/stock-history', [ProductController::class, 'stockHistory'])->middleware('permission:inventory_manager');
+
+    // Quản lý Flash Sale và gói độ khuyến mãi
+    Route::prefix('chuong-trinh-sale')->middleware('permission:sales_manager')->group(function () {
+        Route::get('/data', [ChuongTrinhSaleController::class, 'index']);
+        Route::get('/detail/{id}', [ChuongTrinhSaleController::class, 'show']);
+        Route::post('/create', [ChuongTrinhSaleController::class, 'store']);
+        Route::post('/change-status', [ChuongTrinhSaleController::class, 'changeStatus']);
+        Route::delete('/delete/{id}', [ChuongTrinhSaleController::class, 'destroy']);
+    });
+    Route::post('/goi-do-xe/create', [GoiDoXeController::class, 'storeGoiDoXe'])->middleware('permission:sales_manager');
+
+    // Xử lý đơn hàng xe
+    Route::post('/don-hang/cap-nhat-trang-thai', [\App\Http\Controllers\DonHangController::class, 'capNhatTrangThai'])
+        ->middleware('permission:sales_executive');
+    Route::post('/don-hang/duyet-huy-hoan-kho', [\App\Http\Controllers\DonHangController::class, 'duyetHuyVaHoanKho'])
+        ->middleware('permission:sales_manager');
 
     // 📦 QUẢN LÝ PHÒNG TRƯNG BÀY / KHU VỰC WORKSHOP (BAY ĐỘ XE)
     Route::get('/khu-vuc-workshop/data', [GoiDoXeController::class, 'getDataKhuVuc']);
@@ -137,7 +166,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminMiddleware'], function 
     Route::post('/thong-ke/lich-do-xe-theo-khu-vuc', [ThongKeController::class, 'getLichLamViecTheoKhuVuc']);
 
     // Dashboard Executive
-    Route::get('/dashboard/data', [ThongKeController::class, 'getDashboardData']);
+    Route::get('/dashboard/data', [ThongKeController::class, 'getDashboardData'])->middleware('permission:executive');
     Route::get('/hoa-don/data', [HoaDonController::class, 'getDataHoaDon']);
     Route::post('/kiem-tra-phieu-dat-lich', [PhieuDatLichController::class, 'kiemTraMaDatLich']);
 });
@@ -153,7 +182,7 @@ Route::post('chuyen-gia/kich-hoat', [ChuyenGiaController::class, 'kichHoatChuyen
 Route::post('chuyen-gia/quen-mat-khau', [ChuyenGiaController::class, 'quenMatKhauChuyenGia']);
 Route::post('chuyen-gia/doi-mat-khau', [ChuyenGiaController::class, 'doiMatKhauChuyenGia']);
 
-Route::group(['prefix' => '/chuyen-gia', 'middleware' => 'ChuyenGiaMiddleware'], function () {
+Route::group(['prefix' => '/chuyen-gia', 'middleware' => ['auth:sanctum', 'expert.access']], function () {
     Route::post('logout', [ChuyenGiaController::class, 'logoutChuyenGia']);
     Route::get('/check-token', [ChuyenGiaController::class, 'checkTokenChuyenGia']);
 
@@ -186,7 +215,7 @@ Route::post('khach-hang/kich-hoat', [KhachHangController::class, 'kichHoatKhachH
 Route::post('khach-hang/quen-mat-khau', [KhachHangController::class, 'quenMatKhauKhachHang']);
 Route::post('khach-hang/doi-mat-khau', [KhachHangController::class, 'doiMatKhauKhachHang']);
 
-Route::group(['prefix' => '/khach-hang', 'middleware' => 'KhachHangMiddleware'], function () {
+Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'customer.access']], function () {
     Route::post('logout', [KhachHangController::class, 'logoutKhachHang']);
     Route::post('logout-all', [KhachHangController::class, 'logoutAllKhachHang']);
     Route::get('/check-token', [KhachHangController::class, 'checkTokenKhachHang']);
@@ -205,6 +234,12 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => 'KhachHangMiddleware'],
     Route::post('/huy-lich-kham', [PhieuDatLichController::class, 'huyLichKhamBenhNhan']);
     Route::post('/chuyen-gia/by-hang-phu-tung', [PhieuDatLichController::class, 'getBacSiTheoChuyenKhoa']);
 
+    // Đặt mua xe, áp dụng voucher và theo dõi đơn hàng
+    Route::post('/dat-mua-xe', [\App\Http\Controllers\DonHangController::class, 'datMuaXe']);
+    Route::post('/ap-ma-giam-gia', [\App\Http\Controllers\DonHangController::class, 'apMaGiamGia']);
+    Route::post('/don-hang/yeu-cau-huy', [\App\Http\Controllers\DonHangController::class, 'khachYeuCauHuy']);
+    Route::get('/don-hang/cua-toi', [\App\Http\Controllers\DonHangController::class, 'donHangCuaToi']);
+
     // 🤖 LỊCH SỬ CHAT VÀ XÓA LỊCH SỬ (Bắt buộc phải đăng nhập)
     Route::get('/ai/history', [AiController::class, 'getHistory']);
     Route::delete('/ai/clear-history', [AiController::class, 'clearHistory']);
@@ -217,6 +252,9 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => 'KhachHangMiddleware'],
 */
 // 🔥 🤖 ROUTE CHATBOT TRỢ LÝ AI (Công khai - Cho phép cả khách vãng lai trải nghiệm)
 Route::post('/ai/ask', [AiController::class, 'askAI']);
+
+Route::get('/flash-sale/active', [ChuongTrinhSaleController::class, 'getActiveFlashSale']);
+Route::get('/goi-do-xe/khuyen-mai-active', [GoiDoXeController::class, 'getGoiDoKhuyenMaiActive']);
 
 Route::get('/home-page/data', [HomePageController::class, 'homePageData']);
 Route::get('/client/hang-phu-tung/data', [HomePageController::class, 'getChuyenKhoaClient']);
