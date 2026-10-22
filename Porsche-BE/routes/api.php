@@ -240,6 +240,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
 
     // Đặt mua xe, áp dụng voucher và theo dõi đơn hàng
     Route::post('/dat-mua-xe', [\App\Http\Controllers\DonHangController::class, 'datMuaXe']);
+    Route::post('/dat-don-hang', [\App\Http\Controllers\DonHangController::class, 'datDonHang']);
     Route::post('/ap-ma-giam-gia', [\App\Http\Controllers\DonHangController::class, 'apMaGiamGia']);
     Route::post('/don-hang/yeu-cau-huy', [\App\Http\Controllers\DonHangController::class, 'khachYeuCauHuy']);
     Route::get('/don-hang/cua-toi', [\App\Http\Controllers\DonHangController::class, 'donHangCuaToi']);

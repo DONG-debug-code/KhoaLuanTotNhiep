@@ -21,7 +21,14 @@ class PhuTung extends Model
         'so_luong', // <--- Đã bổ sung cột số lượng tồn kho
         'loai',
         'mo_ta',
+        'bao_gom',
+        'dong_xe',
         'anh',
+    ];
+
+    protected $casts = [
+        'bao_gom' => 'array',
+        'dong_xe' => 'array',
     ];
 
     /**

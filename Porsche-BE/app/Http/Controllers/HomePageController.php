@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PhuTung;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -133,9 +134,9 @@ class HomePageController extends Controller
     public function getPhuTungClient(): JsonResponse
     {
         try {
-            $data = DB::table('phu_tungs')
+            $data = PhuTung::query()
                 ->orderBy('id')
-                ->get(['id', 'ten', 'gia', 'so_luong', 'loai', 'mo_ta', 'anh']);
+                ->get(['id', 'ten', 'gia', 'so_luong', 'loai', 'mo_ta', 'bao_gom', 'dong_xe', 'anh']);
 
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
@@ -147,9 +148,9 @@ class HomePageController extends Controller
     public function getPhuTungClientById($id): JsonResponse
     {
         try {
-            $data = DB::table('phu_tungs')
+            $data = PhuTung::query()
                 ->where('id', $id)
-                ->first(['id', 'ten', 'gia', 'so_luong', 'loai', 'mo_ta', 'anh']);
+                ->first(['id', 'ten', 'gia', 'so_luong', 'loai', 'mo_ta', 'bao_gom', 'dong_xe', 'anh']);
 
             if (!$data) {
                 return response()->json(['status' => false, 'message' => 'Không tìm thấy phụ tùng.'], 404);

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PhuTung;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Exception;
@@ -16,7 +16,7 @@ class PhuTungController extends Controller
     public function getDataPhuTung(): JsonResponse
     {
         try {
-            $data = DB::table('phu_tungs')->orderBy('id', 'desc')->get();
+            $data = PhuTung::query()->orderByDesc('id')->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             Log::error('Lỗi getDataPhuTung: ' . $e->getMessage());
@@ -31,7 +31,7 @@ class PhuTungController extends Controller
     {
         try {
             $key = $request->input('value');
-            $data = DB::table('phu_tungs')->where('ten', 'LIKE', "%{$key}%")->get();
+            $data = PhuTung::query()->where('ten', 'LIKE', "%{$key}%")->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             Log::error('Lỗi searchPhuTung: ' . $e->getMessage());
@@ -44,26 +44,21 @@ class PhuTungController extends Controller
      */
     public function storePhuTung(Request $request): JsonResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'ten'      => 'required|string|unique:phu_tungs,ten',
             'gia'      => 'required|numeric|min:0',
             'so_luong' => 'required|integer|min:0',
             'loai'     => 'required|string',
             'mo_ta'    => 'nullable|string',
+            'bao_gom' => 'nullable|array',
+            'bao_gom.*' => 'string',
+            'dong_xe' => 'nullable|array',
+            'dong_xe.*' => 'string',
             'anh'      => 'nullable|string',
         ]);
 
         try {
-            DB::table('phu_tungs')->insert([
-                'ten'        => $request->ten,
-                'gia'        => $request->gia,
-                'so_luong'   => $request->so_luong,
-                'loai'       => $request->loai,
-                'mo_ta'      => $request->mo_ta,
-                'anh'        => $request->anh ?? null,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            PhuTung::query()->create($data);
 
             return response()->json(['status' => true, 'message' => 'Thêm phụ tùng thành công.'], 201);
         } catch (Exception $e) {
@@ -77,26 +72,24 @@ class PhuTungController extends Controller
      */
     public function updatePhuTung(Request $request): JsonResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'id'       => 'required|integer|exists:phu_tungs,id',
             'ten'      => 'required|string|unique:phu_tungs,ten,' . $request->id,
             'gia'      => 'required|numeric|min:0',
             'so_luong' => 'required|integer|min:0',
             'loai'     => 'required|string',
             'mo_ta'    => 'nullable|string',
+            'bao_gom' => 'sometimes|nullable|array',
+            'bao_gom.*' => 'string',
+            'dong_xe' => 'sometimes|nullable|array',
+            'dong_xe.*' => 'string',
             'anh'      => 'nullable|string',
         ]);
 
         try {
-            DB::table('phu_tungs')->where('id', $request->id)->update([
-                'ten'        => $request->ten,
-                'gia'        => $request->gia,
-                'so_luong'   => $request->so_luong,
-                'loai'       => $request->loai,
-                'mo_ta'      => $request->mo_ta,
-                'anh'        => $request->anh ?? null,
-                'updated_at' => now()
-            ]);
+            $phuTung = PhuTung::query()->findOrFail($data['id']);
+            unset($data['id']);
+            $phuTung->update($data);
 
             return response()->json(['status' => true, 'message' => 'Cập nhật phụ tùng thành công.'], 200);
         } catch (Exception $e) {
@@ -110,10 +103,10 @@ class PhuTungController extends Controller
      */
     public function destroyPhuTung(Request $request): JsonResponse
     {
-        $request->validate(['id' => 'required|integer|exists:phu_tungs,id']);
+        $data = $request->validate(['id' => 'required|integer|exists:phu_tungs,id']);
 
         try {
-            DB::table('phu_tungs')->where('id', $request->id)->delete();
+            PhuTung::query()->whereKey($data['id'])->delete();
             return response()->json(['status' => true, 'message' => 'Xóa phụ tùng thành công.'], 200);
         } catch (Exception $e) {
             Log::error('Lỗi destroyPhuTung: ' . $e->getMessage());

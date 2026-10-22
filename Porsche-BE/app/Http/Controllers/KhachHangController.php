@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Schema;
 use Exception;
 
 class KhachHangController extends Controller
@@ -403,25 +404,37 @@ class KhachHangController extends Controller
 
     public function getProfile(Request $request): JsonResponse
     {
+        $khachHangId = $request->attributes->get('id_khach_hang') ?? $request->user()->id;
+
         try {
-            $khachHangId = $request->attributes->get('id_khach_hang') ?? $request->user()->id;
             $profile = DB::table('users')
                 ->select('id', 'ho_ten', 'email', 'so_dien_thoai', 'dia_chi', 'avatar', 'created_at')
                 ->where('id', $khachHangId)
                 ->first();
 
-            $garage = DB::table('phieu_dat_lichs')
-                ->select('bien_so_xe', 'thong_tin_xe')
-                ->where('id_khach_hang', $khachHangId)
-                ->whereNotNull('bien_so_xe')
-                ->distinct()
-                ->get();
+            $garage = collect();
+            if (
+                Schema::hasTable('phieu_dat_lichs')
+                && Schema::hasColumn('phieu_dat_lichs', 'id_khach_hang')
+                && Schema::hasColumn('phieu_dat_lichs', 'bien_so_xe')
+                && Schema::hasColumn('phieu_dat_lichs', 'thong_tin_xe')
+            ) {
+                $garage = DB::table('phieu_dat_lichs')
+                    ->select('bien_so_xe', 'thong_tin_xe')
+                    ->where('id_khach_hang', $khachHangId)
+                    ->whereNotNull('bien_so_xe')
+                    ->distinct()
+                    ->get();
+            }
 
             return response()->json([
                 'status' => true,
                 'data' => ['profile' => $profile, 'garage' => $garage],
             ], 200);
         } catch (Exception $e) {
+            Log::error('Lỗi getProfile khách hàng: ' . $e->getMessage(), [
+                'id_khach_hang' => $khachHangId,
+            ]);
             return response()->json(['status' => false, 'message' => 'Không tải được Profile.'], 500);
         }
     }
