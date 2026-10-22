@@ -76,9 +76,24 @@ export default function PhuTungChiTietPage() {
               <p className="mb-6 text-[15px] leading-[1.7] text-[#63635E]">
                 {phuTung.moTaNgan || "Chưa có mô tả cho phụ tùng này."}
               </p>
+              {phuTung.baoGom?.length ? (
+                <section className="mb-5">
+                  <h2 className="mb-2 text-sm font-bold text-[#17171A]">Bao gồm</h2>
+                  <ul className="list-inside list-disc space-y-1 text-sm leading-[1.6] text-[#63635E]">
+                    {phuTung.baoGom.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+                  </ul>
+                </section>
+              ) : null}
+              {phuTung.dongXeTuongThich?.length ? (
+                <section className="mb-5">
+                  <h2 className="mb-2 text-sm font-bold text-[#17171A]">Dòng xe phù hợp</h2>
+                  <p className="text-sm leading-[1.6] text-[#63635E]">{phuTung.dongXeTuongThich.join(", ")}</p>
+                </section>
+              ) : null}
               <div className="mb-5 text-2xl font-extrabold text-[#B60F0F]">
                 {phuTung.gia || "Liên hệ"}
               </div>
+              <p className="mb-2 text-xs text-[#85888d]">Giá trọn gói (đã gồm công lắp đặt)</p>
               <div className={`text-sm font-semibold ${phuTung.soLuong > 0 ? "text-[#2FA84F]" : "text-[#8A8A85]"}`}>
                 {phuTung.soLuong > 0 ? `Còn ${phuTung.soLuong} sản phẩm` : "Tạm hết hàng"}
               </div>

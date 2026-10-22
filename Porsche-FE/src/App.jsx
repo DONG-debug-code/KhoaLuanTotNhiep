@@ -18,6 +18,9 @@ import KichHoatPage from './pages/KichHoatPage'
 import QuenMatKhauPage from './pages/QuenMatKhauPage'
 import DoiMatKhauPage from './pages/DoiMatKhauPage'
 import CustomerPortalPage from './pages/customer/CustomerPortalPage'
+import GioHangPage from './pages/customer/GioHangPage'
+import ThanhToanPage from './pages/customer/ThanhToanPage'
+import DatHangThanhCongPage from './pages/customer/DatHangThanhCongPage'
 import OperationsWorkspacePage from './pages/staff/OperationsWorkspacePage'
 
 function App() {
@@ -46,6 +49,23 @@ function App() {
           element={<GoiDoChiTietPage />}
         />
         <Route path="/phu-tung/:phuTungId" element={<PhuTungChiTietPage />} />
+        <Route path="/gio-hang" element={<GioHangPage />} />
+        <Route
+          path="/thanh-toan"
+          element={
+            <ProtectedRoute roles={["khach-hang"]}>
+              <ThanhToanPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dat-hang-thanh-cong/:orderId"
+          element={
+            <ProtectedRoute roles={["khach-hang"]}>
+              <DatHangThanhCongPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/dang-ky" element={<DangKyPage />} />
         <Route path="/kich-hoat" element={<KichHoatPage />} />

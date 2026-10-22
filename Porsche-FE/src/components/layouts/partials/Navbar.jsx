@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { useCart } from "../../../context/CartContext";
 
 const NAV_LINKS = [
   { key: "home", ten: "Trang chủ", loai: "home" },
   { key: "xe-dang-ban", ten: "Xe đang bán", loai: "scroll", targetId: "xe-dang-ban" },
-  { key: "hang-phu-tung", ten: "Hãng phụ tùng", loai: "route", duongDan: "/hang-phu-tung" },
+  { key: "hang-phu-tung", ten: "Gói độ & phụ kiện", loai: "route", duongDan: "/hang-phu-tung" },
   { key: "chuyen-gia", ten: "Chuyên gia", loai: "route", duongDan: "/chuyen-gia" },
 ];
 
@@ -20,6 +21,7 @@ export default function Navbar({ luonSang = false }) {
   const menuRef = useRef(null);
 
   const { nguoiDung, daDangNhap, dangXuat } = useAuth();
+  const { itemCount } = useCart();
 
   useEffect(() => {
     if (luonSang) return;
@@ -160,6 +162,20 @@ export default function Navbar({ luonSang = false }) {
       </div>
 
       <div className="flex items-center gap-3.5">
+        <Link
+          to="/gio-hang"
+          aria-label={`Giỏ hàng, ${itemCount} sản phẩm`}
+          className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+            dangSang ? "text-[#17171A] hover:bg-[#F1F1EF]" : "text-white hover:bg-white/10"
+          }`}
+        >
+          <ShoppingBag className="h-5 w-5" />
+          {itemCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8102e] px-1 text-[10px] font-bold text-white">
+              {itemCount > 99 ? "99+" : itemCount}
+            </span>
+          ) : null}
+        </Link>
         {daDangNhap ? (
           <div ref={menuRef} className="relative">
             <button

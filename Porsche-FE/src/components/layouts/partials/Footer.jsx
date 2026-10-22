@@ -99,7 +99,7 @@ export default function Footer() {
 
             {/* Copyright bar */}
             <div className="flex flex-col justify-center gap-3 py-6 text-xs text-[#8A8A85] sm:flex-row sm:items-center">
-                <span>© 2026 DU_AN_XE. Bản thiết kế giao diện — dữ liệu hiển thị là dữ liệu demo.</span>
+                <span>© 2026 DU_AN_XE. Giá và tồn kho sản phẩm được xác nhận theo dữ liệu showroom.</span>
 
                 <div className="flex gap-5">
                     <a href="#" className="hover:text-[#17171A]">Điều khoản</a>

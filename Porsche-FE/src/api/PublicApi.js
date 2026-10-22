@@ -39,18 +39,40 @@ const getImageUrl = (value) => {
   return `${origin}/storage/${path}`;
 };
 
-const asArray = (value) => Array.isArray(value) ? value : value ? [value] : [];
+const CATEGORY_LABELS = {
+  phan_cung: "Phụ tùng hiệu năng",
+  phan_mem: "Phần mềm",
+  cong_nghe_moi: "Công nghệ mới",
+  he_thong_xa: "Hệ thống xả",
+  hieu_suat: "Hiệu năng",
+  ngoai_that: "Ngoại thất",
+  he_thong_treo: "Hệ thống treo",
+  mam_xe: "Mâm xe",
+  phanh: "Phanh",
+  noi_that: "Nội thất",
+  cham_soc_xe: "Chăm sóc xe",
+  cong_nghe: "Công nghệ",
+};
+
+const asArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return value ? [value] : [];
+    }
+    return value ? [value] : [];
+  }
+  return value ? [value] : [];
+};
 
 function normalizeGoiDo(goi) {
   const id = getValue(goi, ["id", "id_san_pham", "id_goi_do", "ma"], null);
   const rawPrice = getValue(goi, ["gia", "price"], null);
   const price = rawPrice === null || rawPrice === "" ? Number.NaN : Number(rawPrice);
   const rawCategory = getValue(goi, ["hangMuc", "hang_muc", "loai_san_pham", "category"]);
-  const categoryLabels = {
-    phan_cung: "Phụ tùng hiệu năng",
-    phan_mem: "Phần mềm",
-    cong_nghe_moi: "Công nghệ mới",
-  };
   const rawSpecs = getValue(goi, ["thong_so_chi_tiet", "thong_so", "specifications"], null);
   let specs = rawSpecs;
 
@@ -81,11 +103,12 @@ function normalizeGoiDo(goi) {
     slug: getValue(goi, ["slug", "slug_san_pham", "duong_dan"], String(id ?? "")),
     ten: getValue(goi, ["ten", "ten_san_pham", "name"], "Gói độ"),
     anh: getImageUrl(getValue(goi, ["anh", "hinh_anh", "image", "anh_san_pham"])),
-    hangMuc: categoryLabels[rawCategory] ?? rawCategory,
+    hangMuc: CATEGORY_LABELS[rawCategory] ?? rawCategory,
     dongXeTuongThich: models,
     moTaNgan: getValue(goi, ["moTaNgan", "mo_ta_ngan", "mo_ta", "description"]),
     chiTiet: getValue(goi, ["chiTiet", "chi_tiet", "mo_ta_chi_tiet", "mo_ta", "description"]),
     thongSoChiTiet: specs,
+    soLuong: Number(getValue(goi, ["so_luong", "so_luong_kho", "stock"], 0)),
     gia: Number.isFinite(price) ? `${price.toLocaleString("vi-VN")} đ` : rawPrice ?? "",
     giaSo: Number.isFinite(price) ? price : null,
   };
@@ -95,14 +118,13 @@ function normalizePhuTung(phuTung) {
   const id = getValue(phuTung, ["id", "id_phu_tung", "ma"], null);
   const rawPrice = getValue(phuTung, ["gia", "price"], null);
   const price = rawPrice === null || rawPrice === "" ? Number.NaN : Number(rawPrice);
-  const categoryLabels = {
-    ngoai_that: "Ngoại thất",
-    noi_that: "Nội thất",
-    hieu_suat: "Hiệu suất",
-    cong_nghe: "Công nghệ",
-    cong_nghe_moi: "Công nghệ mới",
-  };
   const rawCategory = getValue(phuTung, ["loai", "loai_phu_tung", "category"]);
+  const toText = (item) => {
+    if (item && typeof item === "object") {
+      return getValue(item, ["ten", "name", "label"], "");
+    }
+    return String(item);
+  };
 
   return {
     ...phuTung,
@@ -110,8 +132,10 @@ function normalizePhuTung(phuTung) {
     slug: String(id ?? ""),
     ten: getValue(phuTung, ["ten", "ten_phu_tung", "name"], "Phụ tùng Porsche"),
     anh: getImageUrl(getValue(phuTung, ["anh", "hinh_anh", "image"])),
-    hangMuc: categoryLabels[rawCategory] ?? rawCategory,
+    hangMuc: CATEGORY_LABELS[rawCategory] ?? rawCategory,
     moTaNgan: getValue(phuTung, ["mo_ta", "moTa", "description"]),
+    baoGom: asArray(getValue(phuTung, ["bao_gom", "baoGom"], [])).map(toText).filter(Boolean),
+    dongXeTuongThich: asArray(getValue(phuTung, ["dong_xe", "dongXe"], [])).map(toText).filter(Boolean),
     gia: Number.isFinite(price) ? `${price.toLocaleString("vi-VN")} đ` : rawPrice ?? "",
     giaSo: Number.isFinite(price) ? price : null,
     soLuong: Number(getValue(phuTung, ["so_luong", "so_luong_kho", "stock"], 0)),

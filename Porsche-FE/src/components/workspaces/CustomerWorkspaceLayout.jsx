@@ -5,6 +5,7 @@ import {
   Menu, MessageCircle, Settings, ShoppingBag, Sparkles, Store, UserRound, X,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getWorkspaceAssetUrl } from "../../api/WorkspaceApi";
 
 const NAV_ITEMS = [
   { key: "profile", label: "Hồ sơ cá nhân", icon: UserRound },
@@ -22,6 +23,7 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
   const navigate = useNavigate();
   const ten = nguoiDung?.ho_ten || nguoiDung?.email || "Khách hàng";
   const chuCaiDau = ten.trim().charAt(0).toUpperCase();
+  const avatarUrl = getWorkspaceAssetUrl(nguoiDung?.avatar);
 
   const xuLyDangXuat = async () => {
     await dangXuat();
@@ -115,8 +117,8 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
             </button>
             <div className="relative">
               <button type="button" onClick={() => setMenuNguoiDungMo((open) => !open)} className="flex items-center gap-2 rounded-full border border-[#ecebe7] bg-white py-1 pl-1 pr-2.5 text-left">
-                {nguoiDung?.avatar ? (
-                  <img src={nguoiDung.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
                 ) : (
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#deded9] text-sm font-bold text-[#50545a]">{chuCaiDau}</span>
                 )}

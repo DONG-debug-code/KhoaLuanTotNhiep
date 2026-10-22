@@ -1,58 +1,214 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { AlertCircle, Check, Package, Search, ShoppingBag, ShoppingCart } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
-import { GoiDoItem } from "../public/GoiDoItem";
-import { PhuTungItem } from "../public/PhuTungItem";
+import Footer from "../../components/layouts/partials/Footer";
 import { getGoiDoVaPhuTungClient } from "../../api/PublicApi";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
+const formatMoney = (value) => `${Number(value).toLocaleString("vi-VN")} ₫`;
+
+function toStoreItem(item, type) {
+  return {
+    ...item,
+    type,
+    soLuong: Number(item.soLuong) || 0,
+    giaSo: Number(item.giaSo),
+  };
+}
+
+function StoreProductCard({ product, onAdd, justAdded, canShop }) {
+  const detailPath = product.type === "phu_tung"
+    ? `/phu-tung/${product.id}`
+    : `/goi-do/${product.slug ?? product.id}`;
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white transition-shadow hover:shadow-lg">
+      <Link to={detailPath} className="group block">
+        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#e7e8e5]">
+          {product.anh ? (
+            <img
+              src={product.anh}
+              alt={product.ten}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(event) => { event.currentTarget.style.display = "none"; }}
+            />
+          ) : (
+            <Package className="h-14 w-14 text-[#9da1a4]" strokeWidth={1} />
+          )}
+          <span className="absolute left-3 top-3 rounded-full bg-[#080a0d] px-3 py-1.5 text-xs font-semibold text-white">
+            {product.type === "phu_tung" ? "Phụ tùng" : "Gói độ"}
+          </span>
+          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-[#555a60]">
+            Còn {product.soLuong}
+          </span>
+        </div>
+        <div className="p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#85888d]">
+            {product.hangMuc || "Phụ kiện Porsche"}
+          </p>
+          <h2 className="mt-2 line-clamp-2 min-h-12 font-bold text-[#17191c]">{product.ten}</h2>
+          {product.moTaNgan ? (
+            <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-[#777a80]">{product.moTaNgan}</p>
+          ) : null}
+        </div>
+      </Link>
+      <div className="flex items-center justify-between gap-3 border-t border-[#ecece9] px-4 py-4">
+        <div>
+          <span className="block text-xs text-[#85888d]">
+            {product.type === "phu_tung" ? "Giá trọn gói (đã gồm công lắp đặt)" : "Giá bán"}
+          </span>
+          <strong className="text-lg font-extrabold text-[#b10e27]">{formatMoney(product.giaSo)}</strong>
+        </div>
+        <button
+          type="button"
+          onClick={() => onAdd(product)}
+          disabled={product.soLuong < 1 || !canShop}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#292b2f] disabled:cursor-not-allowed disabled:bg-[#a9aaab]"
+        >
+          {justAdded ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+          {product.soLuong < 1 ? "Hết hàng" : !canShop ? "Đăng nhập để mua" : justAdded ? "Đã thêm" : "Thêm vào giỏ"}
+        </button>
+      </div>
+    </article>
+  );
+}
 
 export default function HangPhuTungPage() {
-  const [goiDo, setGoiDo] = useState([]);
-  const [phuTung, setPhuTung] = useState([]);
-  const [loiGoiDo, setLoiGoiDo] = useState("");
-  const [loiPhuTung, setLoiPhuTung] = useState("");
-  const [dangTai, setDangTai] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("Tất cả");
+  const [sort, setSort] = useState("popular");
+  const [addedKey, setAddedKey] = useState("");
+  const { addItem, itemCount, subtotal } = useCart();
+  const { daDangNhap, vaiTro } = useAuth();
+  const canShop = daDangNhap && vaiTro === "khach-hang";
 
   useEffect(() => {
+    let active = true;
     getGoiDoVaPhuTungClient()
       .then((data) => {
-        setGoiDo(data.goiDo);
-        setPhuTung(data.phuTung);
-        setLoiGoiDo(data.loiGoiDo);
-        setLoiPhuTung(data.loiPhuTung);
+        if (!active) return;
+        const items = [
+          ...data.goiDo.map((item) => toStoreItem(item, "goi_do")),
+          ...data.phuTung.map((item) => toStoreItem(item, "phu_tung")),
+        ].filter((item) => Number.isFinite(item.giaSo));
+        setProducts(items);
+        if (!items.length) {
+          setError([data.loiGoiDo, data.loiPhuTung].filter(Boolean).join(" ") || "Showroom hiện chưa có sản phẩm.");
+        }
       })
-      .finally(() => setDangTai(false));
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Không thể tải danh sách sản phẩm.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
+
+  const categories = useMemo(
+    () => ["Tất cả", ...new Set(products.map((item) => item.hangMuc).filter(Boolean))],
+    [products]
+  );
+
+  const visibleProducts = useMemo(() => {
+    const keyword = search.trim().toLocaleLowerCase();
+    const matching = products.filter((item) => {
+      const matchesCategory = category === "Tất cả" || item.hangMuc === category;
+      const searchableText = `${item.ten} ${item.hangMuc} ${item.moTaNgan}`.toLocaleLowerCase();
+      return matchesCategory && (!keyword || searchableText.includes(keyword));
+    });
+
+    if (sort === "price-asc") return [...matching].sort((a, b) => a.giaSo - b.giaSo);
+    if (sort === "price-desc") return [...matching].sort((a, b) => b.giaSo - a.giaSo);
+    return matching;
+  }, [category, products, search, sort]);
+
+  const addProduct = (product) => {
+    const added = addItem(product);
+    if (!added) {
+      setError(canShop
+        ? "Sản phẩm hiện không thể thêm vào giỏ hàng."
+        : "Vui lòng đăng nhập bằng tài khoản khách hàng để lưu giỏ hàng theo tài khoản.");
+      return;
+    }
+    setError("");
+    const key = `${product.type}:${product.id}`;
+    setAddedKey(key);
+    window.setTimeout(() => setAddedKey(""), 1200);
+  };
 
   return (
     <>
-      <Navbar luonSang/>
-      <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[130px] max-[860px]:px-5">
-        <h1 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px]">
-          Gói độ &amp; phụ tùng Porsche
-        </h1>
-        <p className="mb-10 max-w-[620px] text-[15px] leading-[1.7] text-[#63635E]">
-          Khám phá các gói nâng cấp hiệu suất, ngoại thất và công nghệ dành cho các dòng Porsche.
-        </p>
+      <Navbar luonSang />
+      <main className="min-h-screen bg-[#fafaf9] pt-[84px]">
+        <section className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-5 py-12 sm:px-8 lg:px-12">
+          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-6">
+            <div>
+              <p className="mb-3 text-sm text-[#777a80]">Trang chủ　›　Gói độ &amp; phụ kiện</p>
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Gói độ &amp; phụ kiện chính hãng</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#63666b]">
+                Sản phẩm, giá bán và số lượng tồn được tải trực tiếp từ hệ thống showroom.
+              </p>
+            </div>
+            <Link to="/gio-hang" className="flex items-center gap-3 rounded-xl border border-[#e5e5e1] bg-white p-3.5">
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-lg bg-[#080a0d] text-white">
+                <ShoppingBag className="h-5 w-5" />
+                {itemCount > 0 ? <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8102e] px-1 text-[10px] font-bold">{itemCount}</span> : null}
+              </span>
+              <span><strong className="block text-sm">Giỏ hàng của bạn</strong><small className="text-xs text-[#777a80]">{formatMoney(subtotal)} · {itemCount} món</small></span>
+            </Link>
+          </div>
+        </section>
 
-        <div className="mb-10">
-          <h2 className="mb-5 text-2xl font-bold">Gói độ</h2>
-          {loiGoiDo ? <p role="alert" className="mb-4 text-sm text-red-700">{loiGoiDo}</p> : null}
-          {dangTai ? <p className="text-sm text-[#63635E]">Đang tải gói độ...</p> : null}
-          {!dangTai && !loiGoiDo && goiDo.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có gói độ được đăng tải.</p> : null}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
-          <GoiDoItem goiDo={goiDo} />
+        <section className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-12">
+          {error ? <p role="alert" className="mb-5 flex items-center gap-2 rounded-xl bg-[#fae9eb] px-4 py-3 text-sm text-[#9d1026]"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p> : null}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <label className="flex min-w-[260px] flex-1 items-center gap-2 rounded-lg border border-[#dededb] bg-white px-3.5 py-3 sm:max-w-[520px]">
+              <Search className="h-4 w-4 text-[#85888d]" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên sản phẩm, hãng hoặc dòng xe..." className="w-full bg-transparent text-sm outline-none" />
+            </label>
+            <label className="flex items-center gap-3 text-sm text-[#777a80]">
+              Sắp xếp
+              <select value={sort} onChange={(event) => setSort(event.target.value)} className="rounded-lg border border-[#dededb] bg-white px-3 py-2.5 text-sm text-[#17191c]">
+                <option value="popular">Phổ biến</option>
+                <option value="price-asc">Giá tăng dần</option>
+                <option value="price-desc">Giá giảm dần</option>
+              </select>
+            </label>
           </div>
-        </div>
-        <div>
-          <h2 className="mb-5 text-2xl font-bold">Phụ tùng</h2>
-          {loiPhuTung ? <p role="alert" className="mb-4 text-sm text-red-700">{loiPhuTung}</p> : null}
-          {dangTai ? <p className="text-sm text-[#63635E]">Đang tải phụ tùng...</p> : null}
-          {!dangTai && !loiPhuTung && phuTung.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có phụ tùng được đăng tải.</p> : null}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
-            <PhuTungItem phuTung={phuTung} />
+
+          <div className="my-6 flex gap-2 overflow-x-auto rounded-full border border-[#e9e9e6] bg-[#f3f3f1] p-1.5">
+            {categories.map((item) => (
+              <button key={item} type="button" onClick={() => setCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium ${category === item ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-white"}`}>
+                {item}
+              </button>
+            ))}
           </div>
-        </div>
-      </div>
+          <p className="mb-4 text-sm text-[#777a80]">Hiển thị {visibleProducts.length}/{products.length} sản phẩm</p>
+
+          {loading ? <p className="py-12 text-center text-sm text-[#777a80]">Đang tải sản phẩm từ showroom...</p> : null}
+          {!loading && visibleProducts.length ? (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {visibleProducts.map((product) => (
+                <StoreProductCard
+                  key={`${product.type}:${product.id}`}
+                  product={product}
+                  onAdd={addProduct}
+                  justAdded={addedKey === `${product.type}:${product.id}`}
+                  canShop={canShop}
+                />
+              ))}
+            </div>
+          ) : null}
+          {!loading && !visibleProducts.length && !error ? <p className="rounded-xl border border-dashed border-[#d9d9d5] bg-white p-10 text-center text-sm text-[#777a80]">Không tìm thấy sản phẩm phù hợp.</p> : null}
+        </section>
+      </main>
+      <Footer />
     </>
   );
 }

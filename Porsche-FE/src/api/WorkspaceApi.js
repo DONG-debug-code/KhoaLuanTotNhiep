@@ -26,6 +26,15 @@ export async function getWorkspaceData(role, path, params) {
   return data?.data ?? data;
 }
 
+export function getWorkspaceAssetUrl(path) {
+  if (!path) return "";
+  try {
+    return new URL(path, `${new URL(BASE_URL).origin}/`).toString();
+  } catch {
+    throw new Error("Đường dẫn ảnh hồ sơ không hợp lệ.");
+  }
+}
+
 export async function postWorkspaceData(role, path, payload) {
   const { data } = await apiClient.post(`/${role}/${path}`, payload);
   return data;

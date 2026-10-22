@@ -5,9 +5,11 @@ import {
   MessageSquareText, RefreshCw, ShieldCheck, Smartphone, Sparkles,
   UserRound, UserRoundPen, Wrench,
 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import CustomerWorkspaceLayout from "../../components/workspaces/CustomerWorkspaceLayout";
+import { useAuth } from "../../context/AuthContext";
 import {
-  changeWorkspacePassword, clearAIHistory, getAIHistory, getWorkspaceData,
+  changeWorkspacePassword, clearAIHistory, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
   postWorkspaceData, updateWorkspaceProfile, uploadWorkspaceAvatar,
 } from "../../api/WorkspaceApi";
 
@@ -17,6 +19,15 @@ const PROFILE_TABS = [
   { key: "password", label: "Đổi mật khẩu", icon: LockKeyhole },
   { key: "devices", label: "Thiết bị đăng nhập", icon: Smartphone },
 ];
+
+const CUSTOMER_SECTIONS = new Set([
+  "profile",
+  "garage",
+  "appointments",
+  "orders",
+  "booking",
+  "ai-history",
+]);
 
 const APPOINTMENT_FILTERS = [
   { key: "all", label: "Tất cả" },
@@ -41,6 +52,44 @@ function rowsFrom(data) {
   return [];
 }
 
+function profileFrom(response, fallbackProfile) {
+  let data = response;
+  for (let depth = 0; depth < 5 && data && typeof data === "object"; depth += 1) {
+    const profile = data.profile ?? data.user;
+    if (profile && typeof profile === "object") {
+      return {
+        profile: {
+          ...profile,
+          ho_ten: profile.ho_ten || fallbackProfile?.ho_ten || "",
+          email: profile.email || fallbackProfile?.email || "",
+          so_dien_thoai: profile.so_dien_thoai || fallbackProfile?.so_dien_thoai || "",
+          dia_chi: profile.dia_chi || fallbackProfile?.dia_chi || "",
+          avatar: profile.avatar || fallbackProfile?.avatar || "",
+        },
+        garage: rowsFrom(data.garage),
+      };
+    }
+
+    if (["ho_ten", "email", "so_dien_thoai", "dia_chi"].some((key) => key in data)) {
+      return {
+        profile: {
+          ...data,
+          ho_ten: data.ho_ten || fallbackProfile?.ho_ten || "",
+          email: data.email || fallbackProfile?.email || "",
+          so_dien_thoai: data.so_dien_thoai || fallbackProfile?.so_dien_thoai || "",
+          dia_chi: data.dia_chi || fallbackProfile?.dia_chi || "",
+          avatar: data.avatar || fallbackProfile?.avatar || "",
+        },
+        garage: rowsFrom(data.garage),
+      };
+    }
+
+    data = data.data;
+  }
+
+  throw new Error("Máy chủ không trả về hồ sơ khách hàng. Vui lòng tải lại hoặc đăng nhập lại.");
+}
+
 function money(value) {
   const amount = Number(value);
   return Number.isFinite(amount) ? `${amount.toLocaleString("vi-VN")} ₫` : "—";
@@ -50,6 +99,14 @@ function formatDate(value) {
   if (!value) return "Chưa cập nhật";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("vi-VN");
+}
+
+function formatMemberSince(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : new Intl.DateTimeFormat("vi-VN", { month: "long", year: "numeric" }).format(date);
 }
 
 function appointmentState(status) {
@@ -90,6 +147,17 @@ function pageTitle(key) {
   }[key] || "Garage của tôi";
 }
 
+function orderStatusLabel(status) {
+  return {
+    cho_xac_nhan: "Chờ xác nhận",
+    da_xac_nhan: "Đã xác nhận",
+    dang_giao: "Đang giao",
+    hoan_thanh: "Hoàn thành",
+    yeu_cau_huy: "Chờ duyệt hủy",
+    da_huy_hoan_kho: "Đã hủy",
+  }[status] || status || "Đang xử lý";
+}
+
 function MetricCard({ label, value, icon: Icon, hint }) {
   return (
     <article className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
@@ -106,12 +174,33 @@ function MetricCard({ label, value, icon: Icon, hint }) {
 }
 
 function CustomerPortalPage() {
-  const [activeKey, setActiveKey] = useState("garage");
+  const { nguoiDung, capNhatNguoiDung } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const section = searchParams.get("section");
+  const activeKey = CUSTOMER_SECTIONS.has(section) ? section : "garage";
+  const setActiveKey = useCallback((key) => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (key === "garage") nextParams.delete("section");
+      else nextParams.set("section", key);
+      return nextParams;
+    }, { replace: true });
+  }, [setSearchParams]);
   const [profileTab, setProfileTab] = useState("details");
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(() => (
+    nguoiDung ? {
+      ho_ten: nguoiDung.ho_ten || "",
+      email: nguoiDung.email || "",
+      so_dien_thoai: nguoiDung.so_dien_thoai || "",
+      dia_chi: nguoiDung.dia_chi || "",
+      avatar: nguoiDung.avatar || "",
+      garage: [],
+    } : null
+  ));
   const [appointments, setAppointments] = useState([]);
   const [bookingOptions, setBookingOptions] = useState({ chuyen_gias: [], khu_vuc_workshops: [] });
   const [invoices, setInvoices] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -128,8 +217,8 @@ function CustomerPortalPage() {
     try {
       if (activeKey === "profile" || activeKey === "garage") {
         const profileResponse = await getWorkspaceData("khach-hang", "profile/data");
-        const data = profileResponse?.data ?? profileResponse;
-        setProfile({ ...(data?.profile ?? data), garage: rowsFrom(data?.garage) });
+        const customerProfile = profileFrom(profileResponse, nguoiDung);
+        setProfile({ ...customerProfile.profile, garage: customerProfile.garage });
 
         if (activeKey === "garage") {
           const [appointmentsResponse, invoiceResponse] = await Promise.all([
@@ -147,14 +236,14 @@ function CustomerPortalPage() {
           getWorkspaceData("khach-hang", "profile/data"),
         ]);
         const options = response?.data ?? response;
-        const profileData = profileResponse?.data ?? profileResponse;
+        const customerProfile = profileFrom(profileResponse, nguoiDung);
         setBookingOptions({
           chuyen_gias: rowsFrom(options?.chuyen_gias),
           khu_vuc_workshops: rowsFrom(options?.khu_vuc_workshops),
         });
-        setProfile({ ...(profileData?.profile ?? profileData), garage: rowsFrom(profileData?.garage) });
+        setProfile({ ...customerProfile.profile, garage: customerProfile.garage });
       } else if (activeKey === "orders") {
-        setInvoices(rowsFrom(await getWorkspaceData("khach-hang", "lich-su-mua-hang")));
+        setOrders(rowsFrom(await getWorkspaceData("khach-hang", "don-hang/cua-toi")));
       } else if (activeKey === "ai-history") {
         setHistory(await getAIHistory());
       }
@@ -163,7 +252,7 @@ function CustomerPortalPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeKey]);
+  }, [activeKey, nguoiDung]);
 
   useEffect(() => {
     let active = true;
@@ -183,6 +272,10 @@ function CustomerPortalPage() {
   const serviceSpend = useMemo(() => invoices.reduce((total, invoice) => {
     return total + (Number(invoice.tong_tien ?? invoice.thanh_tien ?? invoice.so_tien) || 0);
   }, 0), [invoices]);
+  const orderSpend = useMemo(() => orders.reduce(
+    (total, order) => total + (Number(order.thanh_tien) || 0),
+    0
+  ), [orders]);
 
   const updateProfileField = (event) => {
     const { name, value } = event.target;
@@ -195,11 +288,13 @@ function CustomerPortalPage() {
     setError("");
     setNotice("");
     try {
-      await updateWorkspaceProfile("khach-hang", {
+      const thongTinCapNhat = {
         ho_ten: profile?.ho_ten ?? "",
         so_dien_thoai: profile?.so_dien_thoai ?? "",
         dia_chi: profile?.dia_chi ?? "",
-      });
+      };
+      await updateWorkspaceProfile("khach-hang", thongTinCapNhat);
+      capNhatNguoiDung(thongTinCapNhat);
       setNotice("Đã cập nhật hồ sơ cá nhân.");
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || "Không thể cập nhật hồ sơ.");
@@ -222,6 +317,7 @@ function CustomerPortalPage() {
     try {
       const result = await uploadWorkspaceAvatar("khach-hang", file);
       setProfile((current) => ({ ...current, avatar: result.avatar_url }));
+      capNhatNguoiDung({ avatar: result.avatar_url });
       setNotice("Đã cập nhật ảnh đại diện.");
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || "Không thể tải ảnh lên.");
@@ -315,17 +411,18 @@ function CustomerPortalPage() {
     appointmentFilter === "all" || appointmentState(item.trang_thai) === appointmentFilter
   ));
 
+  const avatarUrl = getWorkspaceAssetUrl(profile?.avatar);
   const profileSummary = (
     <section className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-5 text-center">
       <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[#f0f0ed] bg-[#e6e7e4] text-3xl font-bold text-[#555a60]">
-        {profile?.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
       </div>
       <h2 className="mt-3 text-lg font-bold">{profile?.ho_ten || "Khách hàng"}</h2>
       <span className="mt-1 inline-flex rounded-full bg-[#faedce] px-3 py-1 text-xs font-medium text-[#775a2d]">Thành viên Porsche</span>
       <div className="my-5 space-y-3 border-y border-[#ecece9] py-4 text-left text-sm text-[#5f6369]">
         <p className="flex items-center gap-2.5 break-all"><MessageSquareText className="h-4 w-4 shrink-0 text-[#8c9298]" />{profile?.email || "—"}</p>
         <p className="flex items-center gap-2.5"><Smartphone className="h-4 w-4 shrink-0 text-[#8c9298]" />{profile?.so_dien_thoai || "Chưa cập nhật"}</p>
-        <p className="flex items-center gap-2.5"><Clock3 className="h-4 w-4 shrink-0 text-[#8c9298]" />Thành viên từ {profile?.created_at ? formatDate(profile.created_at) : "—"}</p>
+        <p className="flex items-center gap-2.5"><Clock3 className="h-4 w-4 shrink-0 text-[#8c9298]" />Thành viên từ {formatMemberSince(profile?.created_at)}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-[#f4f4f1] px-2 py-3"><strong className="block text-xl">{profile?.garage?.length ?? 0}</strong><span className="text-xs text-[#777a80]">Xe của tôi</span></div>
@@ -468,7 +565,7 @@ function CustomerPortalPage() {
                 <p className="mt-1 text-sm text-[#777a80]">Chọn ảnh cá nhân để cập nhật ảnh đại diện (JPG, PNG hoặc WebP, tối đa 2 MB).</p>
                 <div className="mt-5 flex flex-wrap items-center gap-5">
                   <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[#e7e8e5] text-3xl font-bold text-[#555a60]">
-                    {profile?.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
+                    {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
                   </div>
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-sm font-semibold">
                     <UserRoundPen className="h-4 w-4" /> Tải ảnh lên
@@ -552,37 +649,40 @@ function CustomerPortalPage() {
       {!loading && activeKey === "orders" ? (
         <section>
           <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Tổng hóa đơn" value={invoices.length} icon={FileText} />
-            <MetricCard label="Tổng đã thanh toán" value={serviceSpend ? money(serviceSpend) : "—"} icon={CreditCard} />
+            <MetricCard label="Tổng đơn hàng" value={orders.length} icon={FileText} />
+            <MetricCard label="Giá trị đơn đặt" value={orderSpend ? money(orderSpend) : "—"} icon={CreditCard} />
             <MetricCard label="Xe trong garage" value={profile?.garage?.length ?? "—"} icon={CarFront} />
-            <MetricCard label="Lịch dịch vụ" value={appointments.length || "—"} icon={Wrench} />
+            <MetricCard label="Đơn đang xử lý" value={orders.filter((order) => !["hoan_thanh", "da_huy_hoan_kho"].includes(order.trang_thai)).length} icon={Wrench} />
           </div>
-          {invoices.length ? (
+          {orders.length ? (
             <div className="space-y-3">
-              {invoices.map((invoice, index) => (
-                <details key={invoice.id ?? index} className="group rounded-2xl border border-[#e9e9e6] bg-white p-5">
+              {orders.map((order, index) => (
+                <details key={order.id ?? index} className="group rounded-2xl border border-[#e9e9e6] bg-white p-5">
                   <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fae9eb] text-[#c8102e]"><CarFront className="h-5 w-5" /></span>
                       <div>
-                        <p className="font-semibold">{invoice.ma_hoa_don || `Hóa đơn #${invoice.id ?? index + 1}`}</p>
-                        <p className="mt-1 text-xs text-[#777a80]">{formatDate(invoice.created_at || invoice.ngay_lap)} · {invoice.ghi_chu || "Hóa đơn dịch vụ"}</p>
+                        <p className="font-semibold">Đơn hàng #{order.id ?? index + 1}</p>
+                        <p className="mt-1 text-xs text-[#777a80]">{formatDate(order.created_at || order.ngay_tao)} · {order.chi_tiet?.length ?? 0} dòng sản phẩm</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-right"><small className="block text-xs text-[#85888d]">Tổng thanh toán</small><strong>{money(invoice.tong_tien ?? invoice.thanh_tien ?? invoice.so_tien)}</strong></span>
+                      <span className="text-right"><small className="block text-xs text-[#85888d]">{orderStatusLabel(order.trang_thai)}</small><strong>{money(order.thanh_tien)}</strong></span>
                       <span className="rounded-lg border border-[#d7d7d3] px-3 py-2 text-xs font-semibold">Xem chi tiết</span>
                     </div>
                   </summary>
                   <div className="mt-4 border-t border-[#ededeb] pt-4 text-sm text-[#5f6369]">
-                    <p><span className="font-semibold">Mã hóa đơn:</span> {invoice.ma_hoa_don || invoice.id || "—"}</p>
-                    <p className="mt-2"><span className="font-semibold">Ngày lập:</span> {formatDate(invoice.created_at || invoice.ngay_lap)}</p>
-                    <p className="mt-2"><span className="font-semibold">Trạng thái:</span> {invoice.trang_thai || "Đã thanh toán"}</p>
+                    <p><span className="font-semibold">Trạng thái đơn:</span> {orderStatusLabel(order.trang_thai)}</p>
+                    <p className="mt-2"><span className="font-semibold">Thanh toán:</span> {order.trang_thai_thanh_toan === "da_thanh_toan" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
+                    {order.chi_tiet?.map((detail) => (
+                      <p key={detail.id} className="mt-2 flex justify-between gap-4"><span>{detail.ten_san_pham || "Sản phẩm showroom"} × {detail.so_luong}</span><span className="font-medium">{money(detail.thanh_tien)}</span></p>
+                    ))}
+                    <p className="mt-2"><span className="font-semibold">Hình thức nhận:</span> {order.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận tại showroom" : order.phuong_thuc_nhan === "giao_tan_noi" ? `Giao tận nơi${order.dia_chi_nguoi_nhan ? ` · ${order.dia_chi_nguoi_nhan}` : ""}` : "—"}</p>
                   </div>
                 </details>
               ))}
             </div>
-          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-sm text-[#777a80]">Chưa có hóa đơn mua hàng hoặc dịch vụ.</div>}
+          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-sm text-[#777a80]">Bạn chưa có đơn hàng nào.</div>}
         </section>
       ) : null}
 

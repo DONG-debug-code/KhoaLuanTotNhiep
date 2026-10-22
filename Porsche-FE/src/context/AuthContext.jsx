@@ -20,6 +20,12 @@ export function AuthProvider({ children }) {
 
     const [dangTai, setDangTai] = useState(false);
 
+    const capNhatNguoiDung = useCallback((thongTinCapNhat) => {
+        const nguoiDungCapNhat = { ...nguoiDung, ...thongTinCapNhat };
+        localStorage.setItem("nguoiDung", JSON.stringify(nguoiDungCapNhat));
+        setNguoiDung(nguoiDungCapNhat);
+    }, [nguoiDung]);
+
     /**
      * Đăng nhập thật qua API. Trả về nguyên response {status, message, ...}
      * để trang DangNhapPage tự quyết định hiện lỗi gì, không ném exception.
@@ -94,6 +100,7 @@ export function AuthProvider({ children }) {
                 dangTai,
                 dangNhap,
                 dangXuat,
+                capNhatNguoiDung,
             }}
         >
             {children}
