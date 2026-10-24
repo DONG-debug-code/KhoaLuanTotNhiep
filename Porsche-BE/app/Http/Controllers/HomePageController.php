@@ -65,11 +65,14 @@ class HomePageController extends Controller
     public function getBacSiClient(): JsonResponse
     {
         try {
-            $data = DB::table('chuyen_gias')
-                ->join('hang_phu_tungs', 'chuyen_gias.id_hang_phu_tung', '=', 'hang_phu_tungs.id')
-                ->select('chuyen_gias.*', 'hang_phu_tungs.ten_hang')
-                ->where('chuyen_gias.trang_thai', 1)
-                ->get();
+            $experts = DB::table('chuyen_gias')->where('trang_thai', 1)->orderBy('id')->get();
+            $ratings = DB::table('danh_gia_chuyen_gias')
+                ->selectRaw('id_chuyen_gia, AVG(so_sao) as diem, COUNT(*) as so_luong')
+                ->groupBy('id_chuyen_gia')
+                ->get()
+                ->keyBy('id_chuyen_gia');
+
+            $data = $experts->map(fn ($expert) => $this->presentExpert($expert, $ratings->get($expert->id)))->values();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             Log::error('Lỗi getBacSiClient: ' . $e->getMessage());
@@ -80,15 +83,73 @@ class HomePageController extends Controller
     public function getBacSiClientByIds($id): JsonResponse
     {
         try {
-            $data = DB::table('chuyen_gias')->where('id', $id)->where('trang_thai', 1)->first();
-            if (!$data) {
+            $expert = DB::table('chuyen_gias')->where('id', $id)->where('trang_thai', 1)->first();
+            if (!$expert) {
                 return response()->json(['status' => false, 'message' => 'Không tìm thấy thông tin chuyên gia.'], 404);
             }
+
+            $rating = DB::table('danh_gia_chuyen_gias')
+                ->selectRaw('AVG(so_sao) as diem, COUNT(*) as so_luong')
+                ->where('id_chuyen_gia', $expert->id)
+                ->first();
+
+            $data = $this->presentExpert($expert, $rating);
+            $data['danh_gia_chi_tiet'] = DB::table('danh_gia_chuyen_gias')
+                ->where('id_chuyen_gia', $expert->id)
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get(['ten_khach_hang', 'so_sao', 'noi_dung', 'created_at']);
+            $data['lich_lam_viec'] = DB::table('lich_lam_viecs')
+                ->where('id_chuyen_gia', $expert->id)
+                ->whereDate('ngay_lam_viec', '>=', now()->toDateString())
+                ->orderBy('ngay_lam_viec')
+                ->orderBy('ca_lam_viec')
+                ->limit(30)
+                ->get(['ngay_lam_viec', 'ca_lam_viec']);
+            $data['lich_su_cong_viec'] = DB::table('lich_su_cong_viec_chuyen_gias')
+                ->where('id_chuyen_gia', $expert->id)
+                ->orderByDesc('ngay_hoan_thanh')
+                ->limit(10)
+                ->get(['tieu_de', 'ten_xe', 'mo_ta', 'ngay_hoan_thanh']);
+
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             Log::error('Lỗi getBacSiClientByIds: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Lỗi tải chi tiết chuyên gia.'], 500);
         }
+    }
+
+    private function presentExpert(object $expert, ?object $rating): array
+    {
+        $list = function ($value): array {
+            $decoded = is_string($value) ? json_decode($value, true) : $value;
+            return is_array($decoded) ? array_values($decoded) : [];
+        };
+        $photo = $expert->anh ?? null;
+        if ($photo && !preg_match('#^(https?:)?//#i', $photo)) {
+            $photo = url(ltrim($photo, '/'));
+        }
+
+        return [
+            'id' => $expert->id,
+            'ho_ten' => $expert->ho_ten,
+            'email' => $expert->email ?? null,
+            'so_dien_thoai' => $expert->so_dien_thoai ?? null,
+            'gioi_tinh' => $expert->gioi_tinh ?? null,
+            'ngay_sinh' => $expert->ngay_sinh ?? null,
+            'dia_chi' => $expert->dia_chi ?? null,
+            'ma_so_tuner' => $expert->ma_so_tuner ?? null,
+            'chuc_danh' => $expert->chuc_danh ?? null,
+            'mo_ta' => $expert->mo_ta ?? null,
+            'anh' => $photo,
+            'so_nam_kinh_nghiem' => (int) ($expert->so_nam_kinh_nghiem ?? 0),
+            'so_du_an_hoan_thanh' => (int) ($expert->so_du_an_hoan_thanh ?? 0),
+            'chuyen_mon' => $list($expert->chuyen_mon ?? null),
+            'dong_xe' => $list($expert->dong_xe ?? null),
+            'trang_thai' => $expert->tinh_trang ?? 'san-sang',
+            'diem_danh_gia' => $rating && $rating->so_luong ? round((float) $rating->diem, 1) : null,
+            'so_danh_gia' => (int) ($rating->so_luong ?? 0),
+        ];
     }
 
     public function getGoiDoClient(): JsonResponse

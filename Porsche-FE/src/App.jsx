@@ -22,6 +22,7 @@ import GioHangPage from './pages/customer/GioHangPage'
 import ThanhToanPage from './pages/customer/ThanhToanPage'
 import DatHangThanhCongPage from './pages/customer/DatHangThanhCongPage'
 import OperationsWorkspacePage from './pages/staff/OperationsWorkspacePage'
+import ChuyenGiaWorkspacePage from './pages/chuyengia/ChuyenGiaWorkspacePage'
 
 function App() {
   return (
@@ -91,7 +92,7 @@ function App() {
           path="/chuyen-gia-workspace"
           element={
             <ProtectedRoute roles={["chuyen-gia"]}>
-              <OperationsWorkspacePage role="chuyen-gia" />
+              <ChuyenGiaWorkspacePage />
             </ProtectedRoute>
           }
         />

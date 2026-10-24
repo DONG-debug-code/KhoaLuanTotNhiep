@@ -48,9 +48,9 @@ apiClient.interceptors.response.use(
   }
 );
 
-/** Đăng nhập theo vai trò. Trả nguyên data từ BE: {status, message, access_token, user?} */
-export async function dangNhapTheoVaiTro(vaiTro, email, password) {
-  const { data } = await axios.post(`${BASE_URL}/${vaiTro}/login`, { email, password });
+/** Đăng nhập: BE tự xác định vai trò theo tên miền email. Trả {status, message, access_token, vai_tro, user?} */
+export async function dangNhapTheoEmail(email, password) {
+  const { data } = await axios.post(`${BASE_URL}/dang-nhap`, { email, password });
   return data;
 }
 

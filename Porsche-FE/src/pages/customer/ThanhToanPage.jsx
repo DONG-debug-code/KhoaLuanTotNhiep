@@ -25,6 +25,10 @@ const PAYMENT_METHODS = [
   { value: "tien_mat_khi_nhan_hang", label: "Tiền mặt khi nhận hàng", hint: "Thanh toán cho nhân viên giao hàng khi nhận đơn.", Icon: Store },
 ];
 
+const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+const DEFAULT_DELIVERY_MAX = 5000000;
+const fieldClass = "mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]";
+
 function CheckoutStep({ active }) {
   const steps = ["Thông tin", "Nhận hàng & thanh toán", "Xác nhận"];
   return (
@@ -61,6 +65,8 @@ export default function ThanhToanPage() {
     phuong_thuc_tt: "the",
   });
   const [voucherCode, setVoucherCode] = useState("");
+  const [booking, setBooking] = useState({ bien_so_xe: "", ten_xe: "", ngay_dat: "", gio_dat: "", id_chuyen_gia: "", id_khu_vuc_workshop: "" });
+  const [workshopOptions, setWorkshopOptions] = useState({ chuyen_gias: [], khu_vuc_workshops: [], delivery_max_subtotal: DEFAULT_DELIVERY_MAX });
   const [vouchers, setVouchers] = useState([]);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [error, setError] = useState("");
@@ -89,6 +95,40 @@ export default function ThanhToanPage() {
       });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    getWorkspaceData("khach-hang", "workshop/options")
+      .then((response) => {
+        const data = response?.data ?? response;
+        if (!active || !data) return;
+        setWorkshopOptions({
+          chuyen_gias: Array.isArray(data.chuyen_gias) ? data.chuyen_gias : [],
+          khu_vuc_workshops: Array.isArray(data.khu_vuc_workshops) ? data.khu_vuc_workshops : [],
+          delivery_max_subtotal: Number(data.delivery_max_subtotal) || DEFAULT_DELIVERY_MAX,
+        });
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const deliveryEligible = useMemo(
+    () => items.every((item) => item.type !== "goi_do") && subtotal <= workshopOptions.delivery_max_subtotal,
+    [items, subtotal, workshopOptions.delivery_max_subtotal],
+  );
+  const setBookingField = (event) => setBooking((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const [today] = useState(() => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+
+  const validateReceiving = () => {
+    if (form.phuong_thuc_nhan === "giao_tan_noi") {
+      if (!deliveryEligible) return "Đơn hàng này cần lắp đặt tại showroom. Vui lòng chọn nhận tại showroom.";
+      if (!form.dia_chi_nguoi_nhan.trim()) return "Vui lòng nhập địa chỉ giao hàng.";
+      return "";
+    }
+    if (Object.values(booking).some((value) => !String(value).trim())) return "Vui lòng nhập đầy đủ thông tin xe và chọn lịch lắp đặt tại showroom.";
+    if (new Date(`${booking.ngay_dat}T${booking.gio_dat}`).getTime() <= Date.now()) return "Khung giờ lắp đặt phải ở thời điểm trong tương lai.";
+    return "";
+  };
 
   const discount = Number(appliedVoucher?.so_tien_giam) || 0;
   const availableVouchers = useMemo(() => vouchers.filter(isVoucherAvailable), [vouchers]);
@@ -129,6 +169,7 @@ export default function ThanhToanPage() {
           quantity: item.quantity,
         })),
         ...form,
+        lich_lap_dat: form.phuong_thuc_nhan === "nhan_tai_showroom" ? booking : undefined,
         ma_voucher: appliedVoucher?.ma_voucher || undefined,
       });
       if (!response?.status || !response.data?.don_hang_id) {
@@ -216,17 +257,49 @@ export default function ThanhToanPage() {
             {step === 2 ? (
               <div className="space-y-5">
                 <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Truck className="h-5 w-5" /></span><div><h2 className="font-bold">Hình thức nhận hàng</h2><p className="mt-1 text-xs text-[#777a80]">Chọn nhận tại showroom hoặc giao hàng tận nơi.</p></div></div>
+                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Truck className="h-5 w-5" /></span><div><h2 className="font-bold">Hình thức nhận hàng</h2>                                    <p className="mt-1 text-xs text-[#777a80]">Nhận tại showroom để đặt lịch lắp đặt, hoặc giao tận nơi cho phụ kiện nhỏ lẻ.</p></div></div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
-                      { value: "nhan_tai_showroom", title: "Nhận tại showroom", description: "Showroom xác nhận địa điểm và thời gian nhận.", Icon: Store },
-                      { value: "giao_tan_noi", title: "Giao hàng tận nơi", description: "Phí giao hàng sẽ được showroom xác nhận trước khi xử lý.", Icon: Truck },
-                    ].map(({ value, title, description, Icon }) => (
-                      <button key={value} type="button" onClick={() => setForm((current) => ({ ...current, phuong_thuc_nhan: value }))} className={`rounded-xl border p-4 text-left ${form.phuong_thuc_nhan === value ? "border-[#17191c] bg-[#f5f5f3]" : "border-[#e9e9e6]"}`}>
+                                        { value: "nhan_tai_showroom", title: "Nhận & lắp đặt tại showroom", description: "Đặt lịch hẹn để kỹ thuật viên lắp đặt phụ tùng cho xe của bạn.", Icon: Store, disabled: false },
+                                        { value: "giao_tan_noi", title: "Giao hàng tận nơi", description: deliveryEligible ? "Dành cho phụ kiện nhỏ lẻ, bạn có thể tự lắp. Phí giao hàng được showroom xác nhận." : `Chỉ áp dụng cho phụ kiện nhỏ lẻ (không gồm gói độ) có tổng tiền hàng tối đa ${money(workshopOptions.delivery_max_subtotal)}.`, Icon: Truck, disabled: !deliveryEligible },
+                                      ].map(({ value, title, description, Icon, disabled }) => (
+                                        <button key={value} type="button" disabled={disabled} onClick={() => setForm((current) => ({ ...current, phuong_thuc_nhan: value }))} className={`rounded-xl border p-4 text-left disabled:cursor-not-allowed disabled:opacity-50 ${form.phuong_thuc_nhan === value ? "border-[#17191c] bg-[#f5f5f3]" : "border-[#e9e9e6]"}`}>
                         <Icon className="mb-3 h-5 w-5 text-[#555a60]" /><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-[#777a80]">{description}</span>
                       </button>
                     ))}
                   </div>
+                                    {form.phuong_thuc_nhan === "nhan_tai_showroom" ? (
+                                      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                                        <p className="rounded-xl bg-[#f3f3f1] p-3 text-xs leading-5 text-[#63666b] sm:col-span-2">Lịch lắp đặt sẽ được lưu vào mục Lịch hẹn của bạn và gửi qua email xác nhận.</p>
+                                        <label className="text-sm font-medium">Dòng xe *
+                                          <input required name="ten_xe" maxLength={255} value={booking.ten_xe} onChange={setBookingField} placeholder="VD: Porsche 911 Carrera" className={fieldClass} />
+                                        </label>
+                                        <label className="text-sm font-medium">Biển số xe *
+                                          <input required name="bien_so_xe" maxLength={50} value={booking.bien_so_xe} onChange={setBookingField} placeholder="VD: 51A-123.45" className={fieldClass} />
+                                        </label>
+                                        <label className="text-sm font-medium">Ngày lắp đặt *
+                                          <input required type="date" name="ngay_dat" min={today} value={booking.ngay_dat} onChange={setBookingField} className={fieldClass} />
+                                        </label>
+                                        <label className="text-sm font-medium">Giờ *
+                                          <select required name="gio_dat" value={booking.gio_dat} onChange={setBookingField} className={fieldClass}>
+                                            <option value="">Chọn giờ</option>
+                                            {TIME_SLOTS.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
+                                          </select>
+                                        </label>
+                                        <label className="text-sm font-medium">Chuyên gia lắp đặt *
+                                          <select required name="id_chuyen_gia" value={booking.id_chuyen_gia} onChange={setBookingField} className={fieldClass}>
+                                            <option value="">Chọn chuyên gia</option>
+                                            {workshopOptions.chuyen_gias.map((expert) => <option key={expert.id} value={expert.id}>{expert.ho_ten}</option>)}
+                                          </select>
+                                        </label>
+                                        <label className="text-sm font-medium">Khu vực workshop *
+                                          <select required name="id_khu_vuc_workshop" value={booking.id_khu_vuc_workshop} onChange={setBookingField} className={fieldClass}>
+                                            <option value="">Chọn khu vực</option>
+                                            {workshopOptions.khu_vuc_workshops.map((area) => <option key={area.id} value={area.id}>{area.ten_khu_vuc}</option>)}
+                                          </select>
+                                        </label>
+                                      </div>
+                                    ) : null}
                   {form.phuong_thuc_nhan === "giao_tan_noi" ? (
                     <label className="mt-5 block text-sm font-medium">Địa chỉ giao hàng *
                       <span className="mt-1.5 flex items-center gap-2 rounded-lg border border-[#dededb] px-3.5"><MapPin className="h-4 w-4 shrink-0 text-[#85888d]" /><input required name="dia_chi_nguoi_nhan" maxLength={1000} value={form.dia_chi_nguoi_nhan} onChange={setField} autoComplete="street-address" placeholder="Số nhà, đường, phường, quận, tỉnh/thành" className="w-full py-3 font-normal outline-none" /></span>
@@ -246,7 +319,7 @@ export default function ThanhToanPage() {
                 </section>
                 <div className="flex justify-between gap-3">
                   <button type="button" onClick={() => setStep(1)} className="rounded-lg border border-[#dededb] px-4 py-3 text-sm font-semibold">← Quay lại</button>
-                  <button type="button" onClick={() => { if (form.phuong_thuc_nhan === "giao_tan_noi" && !form.dia_chi_nguoi_nhan.trim()) { setError("Vui lòng nhập địa chỉ giao hàng."); return; } setError(""); setStep(3); }} className="rounded-lg bg-[#c8102e] px-5 py-3 text-sm font-bold text-white">Tiếp tục →</button>
+                  <button type="button" onClick={() => { const problem = validateReceiving(); if (problem) { setError(problem); return; } setError(""); setStep(3); }} className="rounded-lg bg-[#c8102e] px-5 py-3 text-sm font-bold text-white">Tiếp tục →</button>
                 </div>
               </div>
             ) : null}
@@ -269,7 +342,10 @@ export default function ThanhToanPage() {
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wide text-[#85888d]">Nhận hàng & thanh toán</h3>
                     <dl className="mt-3 space-y-3 text-sm">
-                      <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Hình thức nhận</dt><dd className="text-right font-medium">{form.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận tại showroom" : "Giao hàng tận nơi"}</dd></div>
+                      <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Hình thức nhận</dt><dd className="text-right font-medium">{form.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận & lắp đặt tại showroom" : "Giao hàng tận nơi"}</dd></div>
+                      {form.phuong_thuc_nhan === "nhan_tai_showroom" ? (
+                        <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Lịch lắp đặt</dt><dd className="text-right font-medium">{booking.gio_dat} · {booking.ngay_dat ? new Date(booking.ngay_dat).toLocaleDateString("vi-VN") : ""}<br />{booking.ten_xe} · {booking.bien_so_xe.toUpperCase()}</dd></div>
+                      ) : null}
                       <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Thanh toán</dt><dd className="text-right font-medium">{PAYMENT_METHODS.find((method) => method.value === form.phuong_thuc_tt)?.label}</dd></div>
                       <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Số món</dt><dd className="text-right font-medium">{items.reduce((count, item) => count + item.quantity, 0)} món sản phẩm</dd></div>
                       {form.ghi_chu_don_hang ? <div className="flex justify-between gap-3"><dt className="text-[#777a80]">Ghi chú</dt><dd className="text-right font-medium">{form.ghi_chu_don_hang}</dd></div> : null}

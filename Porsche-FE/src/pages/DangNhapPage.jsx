@@ -22,7 +22,6 @@ export default function DangNhapPage() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [matKhau, setMatKhau] = useState("");
-  const [vaiTro, setVaiTro] = useState("khach-hang");
   const [loi, setLoi] = useState("");
   const [ghiNho, setGhiNho] = useState(false);
   const pendingCartItem = location.state?.pendingCartItem;
@@ -30,17 +29,16 @@ export default function DangNhapPage() {
   const xuLyDangNhap = async (event) => {
     event.preventDefault();
     setLoi("");
-    if (pendingCartItem && vaiTro !== "khach-hang") {
-      setLoi("Vui lòng đăng nhập bằng tài khoản khách hàng để thêm sản phẩm vào giỏ.");
-      return;
-    }
-    const ketQua = await dangNhap(vaiTro, email, matKhau);
+    const ketQua = await dangNhap(email, matKhau);
 
     if (ketQua.status) {
-      const returnPath = location.state?.from?.pathname || DUONG_DAN_VAI_TRO[vaiTro];
+      const laKhach = ketQua.vai_tro === "khach-hang";
+      const returnPath = laKhach
+        ? location.state?.from?.pathname || DUONG_DAN_VAI_TRO["khach-hang"]
+        : DUONG_DAN_VAI_TRO[ketQua.vai_tro] || "/";
       navigate(returnPath, {
         replace: true,
-        state: pendingCartItem ? { pendingCartItem } : location.state?.from?.state,
+        state: laKhach ? (pendingCartItem ? { pendingCartItem } : location.state?.from?.state) : undefined,
       });
     } else {
       setLoi(ketQua.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại email/mật khẩu.");
@@ -55,18 +53,6 @@ export default function DangNhapPage() {
     >
       <AuthError>{loi}</AuthError>
       <form onSubmit={xuLyDangNhap} className="flex flex-col gap-[15px]">
-        <label className="text-sm font-semibold text-[#272A30]">
-          Đăng nhập với vai trò
-          <select
-            value={vaiTro}
-            onChange={(event) => setVaiTro(event.target.value)}
-            className="mt-1.5 w-full rounded-[9px] border border-[#C9CACE] bg-white px-4 py-3 text-sm font-normal outline-none focus:border-[#17171A]"
-          >
-            <option value="khach-hang">Khách hàng</option>
-            <option value="admin">Quản trị viên / nhân viên</option>
-            <option value="chuyen-gia">Chuyên gia Workshop</option>
-          </select>
-        </label>
         <AuthField
           label="Email"
           icon={Mail}

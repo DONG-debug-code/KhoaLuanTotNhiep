@@ -20,6 +20,9 @@ class AdminController extends Controller
             if (!$admin || !Hash::check($request->password, $admin->password)) {
                 return response()->json(['status' => false, 'message' => 'Thông tin đăng nhập Admin sai.'], 401);
             }
+            if (isset($admin->trang_thai) && (int) $admin->trang_thai !== 1) {
+                return response()->json(['status' => false, 'message' => 'Tài khoản đang bị khóa.'], 403);
+            }
 
             $token = Str::random(60);
             DB::table('personal_access_tokens')->insert([
@@ -32,7 +35,7 @@ class AdminController extends Controller
                 'updated_at'     => now()
             ]);
 
-            return response()->json(['status' => true, 'access_token' => $token, 'message' => 'Hệ thống Admin kết nối thành công.'], 200);
+            return response()->json(['status' => true, 'access_token' => $token, 'message' => 'Hệ thống Admin kết nối thành công.', 'user' => ['ho_ten' => $admin->ho_ten, 'email' => $admin->email]], 200);
         } catch (Exception $e) {
             Log::error('Lỗi loginAdmin: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Lỗi máy chủ cục bộ.'], 500);

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\NhanVienController;
 use App\Http\Controllers\ChuyenGiaController;
+use App\Http\Controllers\ChuyenGiaWorkspaceController;
 use App\Http\Controllers\KhachHangController;
 use App\Http\Controllers\ChucVuController;
 use App\Http\Controllers\ChucNangController;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::post('/dang-nhap', [\App\Http\Controllers\DangNhapController::class, 'login']);
 Route::post('/admin/login', [AdminController::class, 'loginAdmin']);
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.access']], function () {
@@ -198,7 +200,16 @@ Route::group(['prefix' => '/chuyen-gia', 'middleware' => ['auth:sanctum', 'exper
     Route::post('/profile/change-password', [ChuyenGiaController::class, 'changePassword']);
 
     // Quản lý Workflow & Tiến độ nâng cấp xe
+    Route::get('/bang-lam-viec', [ChuyenGiaWorkspaceController::class, 'bangLamViec']);
+    Route::get('/khu-vuc-workshop/tong-quan', [ChuyenGiaWorkspaceController::class, 'khuVucWorkshop']);
+    Route::get('/khach-hang-phu-trach', [ChuyenGiaWorkspaceController::class, 'khachHangPhuTrach']);
+    Route::post('/khach-hang-phu-trach/thong-so', [ChuyenGiaWorkspaceController::class, 'luuThongSoTuning']);
+    Route::post('/khach-hang-phu-trach/ghi-chu', [ChuyenGiaWorkspaceController::class, 'luuGhiChuKhach']);
+    Route::post('/lich-dat-do/tien-do', [ChuyenGiaWorkspaceController::class, 'capNhatTienDo']);
     Route::get('/lich-dat-do/data', [ChuyenGiaController::class, 'getDataLichHenDoXe']);
+    Route::post('/lich-dat-do/cap-nhat', [ChuyenGiaController::class, 'capNhatTrangThaiLichHen']);
+    Route::post('/lich-lam-viec/dang-ky', [ChuyenGiaController::class, 'dangKyCaLamViec']);
+    Route::post('/lich-lam-viec/xoa', [ChuyenGiaController::class, 'xoaCaLamViec']);
     Route::get('/khu-vuc-workshop/data', [ChuyenGiaController::class, 'getDataKhuVucWorkshop']);
     Route::get('/hang-phu-tung/data', [ChuyenGiaController::class, 'getDataHangPhuTung']);
     Route::get('/lich-lam-viec/data', [ChuyenGiaController::class, 'getDataLichLamViecCaNhan']);
@@ -270,6 +281,7 @@ Route::get('/client/hang-phu-tung/data', [HomePageController::class, 'getChuyenK
 Route::get('/client/hang-phu-tung/chi-tiet/{id}', [HomePageController::class, 'getChuyenKhoaClientById']);
 Route::get('/client/chuyen-gia-tuning/data', [HomePageController::class, 'getBacSiClient']);
 Route::get('/client/chuyen-gia-tuning/chi-tiet/{id}', [HomePageController::class, 'getBacSiClientByIds']);
+Route::get('/client/chuyen-gia-tuning/{id}/khung-gio', [PhieuDatLichController::class, 'getKhungGioChuyenGia'])->whereNumber('id');
 Route::get('/client/goi-do/data', [HomePageController::class, 'getGoiDoClient']);
 Route::get('/client/goi-do/chi-tiet/{id}', [HomePageController::class, 'getGoiDoClientById']);
 Route::get('/client/phu-tung/data', [HomePageController::class, 'getPhuTungClient']);

@@ -43,4 +43,9 @@ return [
         'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
     ],
 
+    'checkout' => [
+        // Giao tận nơi chỉ áp dụng cho phụ kiện nhỏ lẻ có tổng tiền hàng không vượt mức này.
+        'delivery_max_subtotal' => (int) env('DELIVERY_MAX_SUBTOTAL', 5000000),
+    ],
+
 ];

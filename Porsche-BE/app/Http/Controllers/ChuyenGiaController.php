@@ -442,6 +442,7 @@ class ChuyenGiaController extends Controller
         try {
             $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
             $profile = DB::table('chuyen_gias')->where('id', $chuyenGiaId)->first();
+            unset($profile->password, $profile->ma_kich_hoat);
             return response()->json(['status' => true, 'data' => $profile], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Lỗi đọc hồ sơ Chuyên gia.'], 500);
@@ -505,11 +506,98 @@ class ChuyenGiaController extends Controller
     {
         try {
             $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
-            $data = DB::table('phieu_dat_lichs')->where('id_chuyen_gia', $chuyenGiaId)->orderBy('id', 'desc')->get();
+            $data = DB::table('phieu_dat_lichs')
+                ->leftJoin('khu_vuc_workshops', 'khu_vuc_workshops.id', '=', 'phieu_dat_lichs.id_khu_vuc_workshop')
+                ->where('phieu_dat_lichs.id_chuyen_gia', $chuyenGiaId)
+                ->select('phieu_dat_lichs.*', 'khu_vuc_workshops.ten_khu_vuc')
+                ->orderBy('phieu_dat_lichs.ngay_dat', 'desc')
+                ->orderBy('phieu_dat_lichs.gio_dat', 'desc')
+                ->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Không thể tải danh sách lịch đặt độ xe.'], 500);
         }
+    }
+
+    // Chuyên gia xử lý lịch của chính mình: xác nhận (1), hoàn thành (2), từ chối/hủy (3).
+    public function capNhatTrangThaiLichHen(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+            'trang_thai' => 'required|integer|in:1,2,3',
+            'ghi_chu_chuyen_gia' => 'nullable|string|max:1000',
+        ]);
+        $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+
+        $lich = DB::table('phieu_dat_lichs')->where('id', $validated['id'])->where('id_chuyen_gia', $chuyenGiaId)->first();
+        if (!$lich) {
+            return response()->json(['status' => false, 'message' => 'Không tìm thấy lịch hẹn được phân công cho bạn.'], 404);
+        }
+
+        $allowed = [0 => [1, 3], 1 => [2, 3]];
+        if (!in_array((int) $validated['trang_thai'], $allowed[(int) $lich->trang_thai] ?? [], true)) {
+            return response()->json(['status' => false, 'message' => 'Không thể chuyển lịch hẹn sang trạng thái này.'], 422);
+        }
+
+        DB::table('phieu_dat_lichs')->where('id', $lich->id)->update([
+            'trang_thai' => $validated['trang_thai'],
+            'giai_doan' => match ((int) $validated['trang_thai']) {
+                2 => 'da_ban_giao',
+                3 => 'cho_nhan_xe',
+                default => $lich->giai_doan ?? 'cho_nhan_xe',
+            },
+            'ghi_chu_chuyen_gia' => $validated['ghi_chu_chuyen_gia'] ?? $lich->ghi_chu_chuyen_gia ?? null,
+            'updated_at' => now(),
+        ]);
+
+        $subjects = [1 => 'Chuyên gia đã xác nhận lịch hẹn của bạn', 2 => 'Lịch hẹn của bạn đã hoàn thành', 3 => 'Lịch hẹn của bạn đã bị hủy'];
+        try {
+            if ($lich->email) {
+                Mail::to($lich->email)->send(new \App\Mail\LichHenMail(DB::table('phieu_dat_lichs')->where('id', $lich->id)->first(), $subjects[(int) $validated['trang_thai']]));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Không gửi được email cập nhật lịch hẹn.', ['error' => $e->getMessage()]);
+        }
+
+        return response()->json(['status' => true, 'message' => 'Đã cập nhật lịch hẹn.'], 200);
+    }
+
+    public function dangKyCaLamViec(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ngay_lam_viec' => 'required|date|after_or_equal:today',
+            'ca_lam_viec' => 'required|string|in:Ca sáng (08:00 - 12:00),Ca chiều (13:00 - 17:00)',
+        ]);
+        $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+
+        DB::table('lich_lam_viecs')->updateOrInsert(
+            ['id_chuyen_gia' => $chuyenGiaId, 'ngay_lam_viec' => $validated['ngay_lam_viec'], 'ca_lam_viec' => $validated['ca_lam_viec']],
+            ['updated_at' => now(), 'created_at' => now()]
+        );
+
+        return response()->json(['status' => true, 'message' => 'Đã đăng ký ca làm việc.'], 201);
+    }
+
+    public function xoaCaLamViec(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['id' => 'required|integer']);
+        $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
+
+        $ca = DB::table('lich_lam_viecs')->where('id', $validated['id'])->where('id_chuyen_gia', $chuyenGiaId)->first();
+        if (!$ca) {
+            return response()->json(['status' => false, 'message' => 'Không tìm thấy ca làm việc.'], 404);
+        }
+        $hasBooking = DB::table('phieu_dat_lichs')
+            ->where('id_chuyen_gia', $chuyenGiaId)
+            ->whereDate('ngay_dat', $ca->ngay_lam_viec)
+            ->whereIn('trang_thai', [0, 1])
+            ->exists();
+        if ($hasBooking) {
+            return response()->json(['status' => false, 'message' => 'Ngày này đã có lịch hẹn khách hàng, không thể xóa ca.'], 422);
+        }
+
+        DB::table('lich_lam_viecs')->where('id', $ca->id)->delete();
+        return response()->json(['status' => true, 'message' => 'Đã xóa ca làm việc.'], 200);
     }
 
     public function getDataKhuVucWorkshop(): JsonResponse
@@ -536,7 +624,9 @@ class ChuyenGiaController extends Controller
     {
         try {
             $chuyenGiaId = $request->attributes->get('id_chuyen_gia') ?? $request->user()->id;
-            $data = DB::table('lich_lam_viecs')->where('id_chuyen_gia', $chuyenGiaId)->get();
+            $data = DB::table('lich_lam_viecs')->where('id_chuyen_gia', $chuyenGiaId)
+                ->whereDate('ngay_lam_viec', '>=', now()->toDateString())
+                ->orderBy('ngay_lam_viec')->orderBy('ca_lam_viec')->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);

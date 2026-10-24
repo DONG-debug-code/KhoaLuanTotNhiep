@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Mail\LichHenMail;
 use Carbon\Carbon;
@@ -22,7 +23,10 @@ class PhieuDatLichController extends Controller
     {
         try {
             $data = DB::table('phieu_dat_lichs')
-                ->orderBy('id', 'desc')
+                ->leftJoin('chuyen_gias', 'chuyen_gias.id', '=', 'phieu_dat_lichs.id_chuyen_gia')
+                ->leftJoin('khu_vuc_workshops', 'khu_vuc_workshops.id', '=', 'phieu_dat_lichs.id_khu_vuc_workshop')
+                ->select('phieu_dat_lichs.*', 'chuyen_gias.ho_ten as ten_chuyen_gia', 'khu_vuc_workshops.ten_khu_vuc')
+                ->orderBy('phieu_dat_lichs.id', 'desc')
                 ->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
@@ -236,6 +240,7 @@ class PhieuDatLichController extends Controller
                 'data' => [
                     'chuyen_gias' => DB::table('chuyen_gias')
                         ->where('trang_thai', 1)
+                        ->when(Schema::hasColumn('chuyen_gias', 'tinh_trang'), fn ($query) => $query->where('tinh_trang', '!=', 'tam-nghi'))
                         ->select('id', 'ho_ten', 'ma_so_tuner')
                         ->orderBy('ho_ten')
                         ->get(),
@@ -244,6 +249,7 @@ class PhieuDatLichController extends Controller
                         ->select('id', 'ten_khu_vuc')
                         ->orderBy('ten_khu_vuc')
                         ->get(),
+                    'delivery_max_subtotal' => (int) config('services.checkout.delivery_max_subtotal'),
                 ],
             ], 200);
         } catch (\Throwable $e) {
@@ -260,8 +266,9 @@ class PhieuDatLichController extends Controller
             'ngay_dat' => 'required|date|after_or_equal:today',
             'gio_dat' => 'required|date_format:H:i',
             'ghi_chu' => 'nullable|string|max:1000',
+            'loai_lich' => 'nullable|string|in:tu-van,do-xe',
             'id_chuyen_gia' => 'required|integer|exists:chuyen_gias,id',
-            'id_khu_vuc_workshop' => 'required|integer|exists:khu_vuc_workshops,id',
+            'id_khu_vuc_workshop' => 'nullable|integer|exists:khu_vuc_workshops,id',
         ]);
 
         $user = $request->user();
@@ -277,13 +284,19 @@ class PhieuDatLichController extends Controller
                     ->where('trang_thai', 1)
                     ->lockForUpdate()
                     ->first();
-                $workshop = DB::table('khu_vuc_workshops')
+                $workshop = empty($validated['id_khu_vuc_workshop']) ? null : DB::table('khu_vuc_workshops')
                     ->where('id', $validated['id_khu_vuc_workshop'])
                     ->where('trang_thai', 1)
                     ->lockForUpdate()
                     ->first();
-                if (!$specialist || !$workshop) {
+                if (!$specialist || (!empty($validated['id_khu_vuc_workshop']) && !$workshop)) {
                     return ['error' => 'Chuyên gia hoặc Bay Workshop không còn hoạt động.'];
+                }
+                if (($specialist->tinh_trang ?? null) === 'tam-nghi') {
+                    return ['error' => 'Chuyên gia đang tạm nghỉ, vui lòng chọn chuyên gia khác.'];
+                }
+                if (!$this->expertWorksAt($specialist->id, $validated['ngay_dat'], $validated['gio_dat'])) {
+                    return ['error' => 'Chuyên gia không có ca làm việc ở khung giờ này.'];
                 }
 
                 $slotQuery = DB::table('phieu_dat_lichs')
@@ -293,7 +306,7 @@ class PhieuDatLichController extends Controller
                 if ((clone $slotQuery)->where('id_chuyen_gia', $specialist->id)->exists()) {
                     return ['error' => 'Chuyên gia đã kín lịch ở khung giờ này.'];
                 }
-                if ((clone $slotQuery)->where('id_khu_vuc_workshop', $workshop->id)->exists()) {
+                if ($workshop && (clone $slotQuery)->where('id_khu_vuc_workshop', $workshop->id)->exists()) {
                     return ['error' => 'Bay Workshop đã kín lịch ở khung giờ này.'];
                 }
 
@@ -302,7 +315,8 @@ class PhieuDatLichController extends Controller
                     'ma_dat_lich' => 'PORSCHE-' . strtoupper(Str::random(8)),
                     'id_khach_hang' => $customerId,
                     'id_chuyen_gia' => $specialist->id,
-                    'id_khu_vuc_workshop' => $workshop->id,
+                    'id_khu_vuc_workshop' => $workshop?->id,
+                    'loai_lich' => $validated['loai_lich'] ?? 'tu-van',
                     'ten_khach_hang' => $user->ho_ten ?? $user->name ?? '',
                     'email' => $user->email,
                     'dien_thoai' => $user->so_dien_thoai ?? '',
@@ -322,9 +336,17 @@ class PhieuDatLichController extends Controller
                 return response()->json(['status' => false, 'message' => $result['error']], 422);
             }
 
+            try {
+                if (!empty($result['appointment']->email)) {
+                    Mail::to($result['appointment']->email)->send(new LichHenMail($result['appointment'], 'Xác nhận đặt lịch với chuyên gia Porsche Workshop'));
+                }
+            } catch (\Throwable $mailError) {
+                Log::warning('Không gửi được email đặt lịch chuyên gia.', ['error' => $mailError->getMessage()]);
+            }
+
             return response()->json([
                 'status' => true,
-                'message' => 'Đã ghi nhận yêu cầu đặt lịch Workshop.',
+                'message' => 'Đã ghi nhận yêu cầu đặt lịch với chuyên gia.',
                 'data' => $result['appointment'],
             ], 201);
         } catch (\Throwable $e) {
@@ -334,6 +356,51 @@ class PhieuDatLichController extends Controller
             ]);
             return response()->json(['status' => false, 'message' => 'Không thể tạo lịch hẹn. Vui lòng thử lại sau.'], 500);
         }
+    }
+
+    // Ca làm có dạng "Ca sáng (08:00 - 12:00)"; chuyên gia chưa khai báo lịch ngày đó thì không nhận được lịch.
+    private function expertWorksAt(int $expertId, string $date, string $time): bool
+    {
+        $shifts = DB::table('lich_lam_viecs')
+            ->where('id_chuyen_gia', $expertId)
+            ->whereDate('ngay_lam_viec', $date)
+            ->pluck('ca_lam_viec');
+
+        foreach ($shifts as $shift) {
+            if (!preg_match('/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/', $shift, $m)) {
+                return true;
+            }
+            $start = sprintf('%02d:%02d', $m[1], $m[2]);
+            $end = sprintf('%02d:%02d', $m[3], $m[4]);
+            if ($time >= $start && $time < $end) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getKhungGioChuyenGia(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate(['ngay' => 'required|date|after_or_equal:today']);
+        $booked = DB::table('phieu_dat_lichs')
+            ->where('id_chuyen_gia', $id)
+            ->whereDate('ngay_dat', $validated['ngay'])
+            ->whereIn('trang_thai', [0, 1])
+            ->pluck('gio_dat')
+            ->map(fn ($time) => substr($time, 0, 5))
+            ->all();
+
+        $slots = [];
+        foreach (['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'] as $time) {
+            $past = Carbon::parse($validated['ngay'] . ' ' . $time)->isPast();
+            $slots[] = [
+                'gio' => $time,
+                'con_trong' => !$past && !in_array($time, $booked, true) && $this->expertWorksAt($id, $validated['ngay'], $time),
+            ];
+        }
+
+        return response()->json(['status' => true, 'data' => $slots], 200);
     }
 
     public function huyLichKhamBenhNhan(Request $request): JsonResponse

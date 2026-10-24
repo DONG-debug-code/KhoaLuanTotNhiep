@@ -185,6 +185,52 @@ class CommerceUpgradeTest extends TestCase
             $table->timestamp('ngay_xuat')->nullable();
             $table->timestamps();
         });
+
+        Schema::dropIfExists('phieu_dat_lichs');
+        Schema::dropIfExists('chuyen_gias');
+        Schema::dropIfExists('khu_vuc_workshops');
+        Schema::create('chuyen_gias', function (Blueprint $table) {
+            $table->id();
+            $table->string('ho_ten');
+            $table->integer('trang_thai')->default(1);
+        });
+        Schema::create('khu_vuc_workshops', function (Blueprint $table) {
+            $table->id();
+            $table->string('ten_khu_vuc');
+            $table->integer('trang_thai')->default(1);
+        });
+        Schema::create('phieu_dat_lichs', function (Blueprint $table) {
+            $table->id();
+            $table->string('ma_dat_lich');
+            $table->unsignedBigInteger('id_khach_hang')->nullable();
+            $table->unsignedBigInteger('id_chuyen_gia')->nullable();
+            $table->unsignedBigInteger('id_khu_vuc_workshop')->nullable();
+            $table->unsignedBigInteger('id_don_hang')->nullable();
+            $table->string('ten_khach_hang')->nullable();
+            $table->string('email')->nullable();
+            $table->string('dien_thoai')->nullable();
+            $table->string('bien_so_xe')->nullable();
+            $table->string('thong_tin_xe')->nullable();
+            $table->date('ngay_dat');
+            $table->string('gio_dat');
+            $table->text('ghi_chu')->nullable();
+            $table->integer('trang_thai')->default(0);
+            $table->timestamps();
+        });
+        DB::table('chuyen_gias')->insert(['id' => 1, 'ho_ten' => 'Tuner A', 'trang_thai' => 1]);
+        DB::table('khu_vuc_workshops')->insert(['id' => 1, 'ten_khu_vuc' => 'Bay 1', 'trang_thai' => 1]);
+    }
+
+    private function installationBooking(array $overrides = []): array
+    {
+        return array_merge([
+            'bien_so_xe' => '51A-12345',
+            'ten_xe' => 'Porsche 911',
+            'ngay_dat' => now()->addDays(3)->toDateString(),
+            'gio_dat' => '09:00',
+            'id_chuyen_gia' => 1,
+            'id_khu_vuc_workshop' => 1,
+        ], $overrides);
     }
 
     public function test_active_flash_sale_returns_product_image(): void
@@ -362,6 +408,7 @@ class CommerceUpgradeTest extends TestCase
             'email_nguoi_nhan' => 'buyer@example.com',
             'so_dien_thoai_nguoi_nhan' => '0900000000',
             'phuong_thuc_nhan' => 'nhan_tai_showroom',
+            'lich_lap_dat' => $this->installationBooking(),
             'phuong_thuc_tt' => 'the',
         ]);
         $request->setUserResolver(fn () => $user);
@@ -390,6 +437,7 @@ class CommerceUpgradeTest extends TestCase
             'email_nguoi_nhan' => 'buyer@example.com',
             'so_dien_thoai_nguoi_nhan' => '0900000000',
             'phuong_thuc_nhan' => 'nhan_tai_showroom',
+            'lich_lap_dat' => $this->installationBooking(),
             'phuong_thuc_tt' => 'the',
         ]);
         $request->setUserResolver(fn () => $user);
@@ -398,6 +446,110 @@ class CommerceUpgradeTest extends TestCase
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame(0, DB::table('don_hangs')->count());
+    }
+
+    public function test_showroom_pickup_creates_installation_appointment_and_emails_customer(): void
+    {
+        Mail::fake();
+        $this->seedPackage(1, 2500000);
+        $user = new User();
+        $user->id = 42;
+
+        $response = app(DonHangController::class)->datDonHang($this->orderRequest($user, [
+            'phuong_thuc_nhan' => 'nhan_tai_showroom',
+            'lich_lap_dat' => $this->installationBooking(),
+            'phuong_thuc_tt' => 'tien_mat_khi_nhan_hang',
+        ]));
+        $data = $response->getData(true)['data'];
+        $appointment = DB::table('phieu_dat_lichs')->first();
+
+        $this->assertSame(201, $response->getStatusCode());
+        $this->assertSame((int) $data['don_hang_id'], (int) $appointment->id_don_hang);
+        $this->assertSame(42, (int) $appointment->id_khach_hang);
+        $this->assertSame(0, (int) $appointment->trang_thai);
+        Mail::assertSent(\App\Mail\LichHenMail::class, fn ($mail) => $mail->hasTo('buyer@example.com'));
+    }
+
+    public function test_showroom_pickup_requires_a_free_installation_slot(): void
+    {
+        Mail::fake();
+        $this->seedPackage(1, 2500000);
+        $user = new User();
+        $user->id = 42;
+        $payload = [
+            'phuong_thuc_nhan' => 'nhan_tai_showroom',
+            'lich_lap_dat' => $this->installationBooking(),
+            'phuong_thuc_tt' => 'tien_mat_khi_nhan_hang',
+        ];
+
+        $first = app(DonHangController::class)->datDonHang($this->orderRequest($user, $payload));
+        $second = app(DonHangController::class)->datDonHang($this->orderRequest($user, $payload));
+
+        $this->assertSame(201, $first->getStatusCode());
+        $this->assertSame(422, $second->getStatusCode());
+        $this->assertSame(1, DB::table('don_hangs')->count());
+        $this->assertSame(1, DB::table('phieu_dat_lichs')->count());
+        $this->assertSame(2, (int) DB::table('san_phams')->value('so_luong'));
+    }
+
+    public function test_home_delivery_is_limited_to_small_accessories(): void
+    {
+        $this->seedPackage(1, 2500000);
+        $user = new User();
+        $user->id = 42;
+
+        $response = app(DonHangController::class)->datDonHang($this->orderRequest($user, [
+            'phuong_thuc_nhan' => 'giao_tan_noi',
+            'dia_chi_nguoi_nhan' => '1 Lê Lợi, Quận 1',
+            'phuong_thuc_tt' => 'tien_mat_khi_nhan_hang',
+        ]));
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertSame(0, DB::table('don_hangs')->count());
+    }
+
+    public function test_failed_card_payment_cancels_installation_appointment(): void
+    {
+        $this->configureVnpay();
+        $this->seedPackage(1, 2500000);
+        $user = new User();
+        $user->id = 42;
+        $response = app(DonHangController::class)->datDonHang($this->orderRequest($user, [
+            'phuong_thuc_nhan' => 'nhan_tai_showroom',
+            'lich_lap_dat' => $this->installationBooking(),
+            'phuong_thuc_tt' => 'the',
+        ]));
+        $orderId = $response->getData(true)['data']['don_hang_id'];
+
+        app(DonHangController::class)->cancelUnpaidCardOrder((int) $orderId, 'failed');
+
+        $this->assertSame(3, (int) DB::table('phieu_dat_lichs')->value('trang_thai'));
+    }
+
+    private function seedPackage(int $id, int $price): void
+    {
+        DB::table('san_phams')->insert([
+            'id' => $id,
+            'ten' => 'Gói chăm sóc xe',
+            'gia' => $price,
+            'so_luong' => 3,
+            'so_luong_kho' => 3,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function orderRequest(User $user, array $overrides): Request
+    {
+        $request = Request::create('/api/khach-hang/dat-don-hang', 'POST', array_merge([
+            'items' => [['type' => 'goi_do', 'id' => 1, 'quantity' => 1]],
+            'ten_nguoi_nhan' => 'Khách đặt hàng',
+            'email_nguoi_nhan' => 'buyer@example.com',
+            'so_dien_thoai_nguoi_nhan' => '0900000000',
+        ], $overrides));
+        $request->setUserResolver(fn () => $user);
+
+        return $request;
     }
 
     public function test_successful_vnpay_ipn_confirms_order_and_sends_receipt_once(): void

@@ -333,6 +333,17 @@ export default function OperationsWorkspacePage({ role }) {
           <button type="button" disabled={dangLuu} onClick={() => void xoaBanGhi("slide/delete", row, `slide ${row.tieu_de}`)} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#B60F0F]">Xóa</button>
         </div>
       );
+    } else if (!isAdmin && activeKey === "appointments") {
+      const status = Number(row.trang_thai);
+      actions = (
+        <div className="flex justify-end gap-2">
+          {status === 0 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 1 })} className="rounded-lg bg-[#17171A] px-2.5 py-1.5 text-xs font-semibold text-white">Xác nhận</button> : null}
+          {status === 1 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 2 })} className="rounded-lg bg-[#2FA84F] px-2.5 py-1.5 text-xs font-semibold text-white">Hoàn thành</button> : null}
+          {status === 0 || status === 1 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 3 })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#B60F0F]">Từ chối</button> : null}
+        </div>
+      );
+    } else if (!isAdmin && activeKey === "roster") {
+      actions = <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-lam-viec/xoa", { id: row.id })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#B60F0F]">Xóa ca</button>;
     } else if (!isAdmin && activeKey === "customers") {
       actions = <button type="button" disabled={dangTai} onClick={() => void xemLichSuKhach(row)} className="rounded-lg border border-[#ECECE9] px-3 py-1.5 text-xs font-semibold">Lịch sử độ xe</button>;
     } else if (!isAdmin && activeKey === "vehicle-records") {
@@ -466,6 +477,18 @@ export default function OperationsWorkspacePage({ role }) {
           <input name="so_luong_kho" required type="number" min="0" placeholder="Tồn kho ban đầu" value={formData.so_luong_kho ?? ""} onChange={capNhatForm} className="rounded-lg border border-[#DCDCD7] px-3 py-2.5 text-sm" />
           <input name="danh_muc_id" type="number" min="1" placeholder="ID danh mục (nếu có)" value={formData.danh_muc_id ?? ""} onChange={capNhatForm} className="rounded-lg border border-[#DCDCD7] px-3 py-2.5 text-sm" />
           <button disabled={dangLuu} className="rounded-lg bg-[#17171A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Thêm sản phẩm</button>
+        </form>
+      ) : null}
+
+      {!isAdmin && activeKey === "roster" ? (
+        <form onSubmit={(event) => void guiForm(event, "lich-lam-viec/dang-ky")} className="mb-5 grid gap-3 rounded-xl bg-[#FAFAF9] p-4 md:grid-cols-[1fr_1fr_auto]">
+          <input name="ngay_lam_viec" required type="date" min={new Date().toISOString().slice(0, 10)} value={formData.ngay_lam_viec ?? ""} onChange={capNhatForm} className="rounded-lg border border-[#DCDCD7] px-3 py-2.5 text-sm" />
+          <select name="ca_lam_viec" required value={formData.ca_lam_viec ?? ""} onChange={capNhatForm} className="rounded-lg border border-[#DCDCD7] bg-white px-3 py-2.5 text-sm">
+            <option value="" disabled>Chọn ca</option>
+            <option value="Ca sáng (08:00 - 12:00)">Ca sáng (08:00 - 12:00)</option>
+            <option value="Ca chiều (13:00 - 17:00)">Ca chiều (13:00 - 17:00)</option>
+          </select>
+          <button disabled={dangLuu} className="rounded-lg bg-[#17171A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Đăng ký ca</button>
         </form>
       ) : null}
 

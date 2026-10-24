@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             SanPhamMauSacSeeder::class,
             AnhSanPhamSeeder::class,
             PhuTungSeeder::class,
+            WorkshopBookingSeeder::class, // gồm cả ChuyenGiaSeeder
 
             // =========================================================================
             // Giai đoạn 3: Bản độ xe & Khuyến mãi (Voucher)

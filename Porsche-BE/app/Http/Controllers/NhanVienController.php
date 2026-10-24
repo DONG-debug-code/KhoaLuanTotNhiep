@@ -14,10 +14,10 @@ class NhanVienController extends Controller
     public function getDataNhanVien(): JsonResponse
     {
         try {
-            $data = DB::table('nhan_viens')
-                ->join('chuc_vus', 'nhan_viens.id_chuc_vu', '=', 'chuc_vus.id')
-                ->select('nhan_viens.id', 'nhan_viens.ho_ten', 'nhan_viens.email', 'nhan_viens.so_dien_thoai', 'nhan_viens.trang_thai', 'chuc_vus.ten_chuc_vu')
-                ->orderBy('nhan_viens.id', 'desc')
+            $data = DB::table('admins')
+                ->join('vai_tros', 'admins.vai_tro_id', '=', 'vai_tros.id')
+                ->select('admins.id', 'admins.ho_ten', 'admins.email', 'admins.so_dien_thoai', 'admins.trang_thai', 'vai_tros.ten as ten_chuc_vu')
+                ->orderBy('admins.id', 'desc')
                 ->get();
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
@@ -30,7 +30,7 @@ class NhanVienController extends Controller
     {
         try {
             $key = $request->input('value');
-            $data = DB::table('nhan_viens')
+            $data = DB::table('admins')
                 ->where('ho_ten', 'LIKE', "%{$key}%")
                 ->orWhere('email', 'LIKE', "%{$key}%")
                 ->get();
@@ -45,18 +45,18 @@ class NhanVienController extends Controller
     {
         $request->validate([
             'ho_ten'        => 'required|string|max:255',
-            'email'         => 'required|email|unique:nhan_viens,email',
+            'email'         => ['required', 'email', 'unique:admins,email', fn ($a, $v, $fail) => \App\Support\AccountRole::fromEmail($v) === \App\Support\AccountRole::STAFF ?: $fail('Email nhân viên phải thuộc tên miền @staff (ví dụ ten@staff.vn).')],
             'so_dien_thoai' => 'required|string',
             'password'      => 'required|string|min:6',
             'id_chuc_vu'    => 'required|integer'
         ]);
         try {
-            DB::table('nhan_viens')->insert([
+            DB::table('admins')->insert([
                 'ho_ten'        => $request->ho_ten,
                 'email'         => $request->email,
                 'so_dien_thoai' => $request->so_dien_thoai,
                 'password'      => Hash::make($request->password),
-                'id_chuc_vu'    => $request->id_chuc_vu,
+                'vai_tro_id'    => $request->id_chuc_vu,
                 'trang_thai'    => 1,
                 'created_at'    => now(),
                 'updated_at'    => now()
@@ -70,9 +70,9 @@ class NhanVienController extends Controller
 
     public function destroyNhanVien(Request $request): JsonResponse
     {
-        $request->validate(['id' => 'required|integer|exists:nhan_viens,id']);
+        $request->validate(['id' => 'required|integer|exists:admins,id']);
         try {
-            DB::table('nhan_viens')->where('id', $request->id)->delete();
+            DB::table('admins')->where('id', $request->id)->delete();
             return response()->json(['status' => true, 'message' => 'Xóa tài khoản nhân viên thành công.'], 200);
         } catch (Exception $e) {
             Log::error('Lỗi destroyNhanVien: ' . $e->getMessage());
@@ -83,9 +83,9 @@ class NhanVienController extends Controller
     public function updateNhanVien(Request $request): JsonResponse
     {
         $request->validate([
-            'id'         => 'required|integer|exists:nhan_viens,id',
+            'id'         => 'required|integer|exists:admins,id',
             'ho_ten'     => 'required|string|max:255',
-            'email'      => 'required|email|unique:nhan_viens,email,' . $request->id,
+            'email'      => ['required', 'email', 'unique:admins,email,' . $request->id, fn ($a, $v, $fail) => \App\Support\AccountRole::fromEmail($v) === \App\Support\AccountRole::STAFF ?: $fail('Email nhân viên phải thuộc tên miền @staff (ví dụ ten@staff.vn).')],
             'id_chuc_vu' => 'required|integer'
         ]);
         try {
@@ -93,13 +93,13 @@ class NhanVienController extends Controller
                 'ho_ten'     => $request->ho_ten,
                 'email'      => $request->email,
                 'so_dien_thoai' => $request->so_dien_thoai,
-                'id_chuc_vu' => $request->id_chuc_vu,
+                'vai_tro_id' => $request->id_chuc_vu,
                 'updated_at' => now()
             ];
             if ($request->filled('password')) {
                 $update['password'] = Hash::make($request->password);
             }
-            DB::table('nhan_viens')->where('id', $request->id)->update($update);
+            DB::table('admins')->where('id', $request->id)->update($update);
             return response()->json(['status' => true, 'message' => 'Cập nhật thông tin nhân viên thành công.'], 200);
         } catch (Exception $e) {
             Log::error('Lỗi updateNhanVien: ' . $e->getMessage());
@@ -109,11 +109,11 @@ class NhanVienController extends Controller
 
     public function changeStatusNhanVien(Request $request): JsonResponse
     {
-        $request->validate(['id' => 'required|integer|exists:nhan_viens,id']);
+        $request->validate(['id' => 'required|integer|exists:admins,id']);
         try {
-            $user = DB::table('nhan_viens')->where('id', $request->id)->first();
+            $user = DB::table('admins')->where('id', $request->id)->first();
             $newStatus = $user->trang_thai == 1 ? 0 : 1;
-            DB::table('nhan_viens')->where('id', $request->id)->update(['trang_thai' => $newStatus, 'updated_at' => now()]);
+            DB::table('admins')->where('id', $request->id)->update(['trang_thai' => $newStatus, 'updated_at' => now()]);
             return response()->json(['status' => true, 'message' => 'Đổi trạng thái nhân sự thành công.', 'trang_thai' => $newStatus], 200);
         } catch (Exception $e) {
             Log::error('Lỗi changeStatusNhanVien: ' . $e->getMessage());

@@ -242,7 +242,11 @@ class KhachHangController extends Controller
     {
         $request->validate([
             'ho_ten'        => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email',
+            'email'         => ['required', 'email', 'unique:users,email', function ($attribute, $value, $fail) {
+                if (\App\Support\AccountRole::isReservedForInternal($value)) {
+                    $fail('Email này thuộc tên miền nội bộ, vui lòng dùng email cá nhân (ví dụ @gmail.com).');
+                }
+            }],
             'so_dien_thoai' => 'required|string|min:10|max:15',
             'password'      => 'required|string|min:6|confirmed'
         ]);

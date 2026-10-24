@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
+import { ChuyenGiaAnh } from "../public/ChuyenGiaItem";
+import ChuyenGiaDatLichForm from "./ChuyenGiaDatLichForm";
 import { getChuyenGiaTuningClientById, getGoiDoClient } from "../../api/PublicApi";
 
 export default function ChuyenGiaChiTietPage() {
@@ -75,13 +77,8 @@ export default function ChuyenGiaChiTietPage() {
         </Link>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[380px_1fr]">
-          <div className="overflow-hidden rounded-2xl border border-[#ECECE9]">
-            <img
-              src={chuyenGia.anh}
-              alt={chuyenGia.ten}
-              className="aspect-[4/3] w-full object-cover"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
+          <div className="group overflow-hidden rounded-2xl border border-[#ECECE9]">
+            <ChuyenGiaAnh chuyenGia={chuyenGia} className="aspect-[4/3] w-full" />
           </div>
 
           <div>
@@ -115,10 +112,67 @@ export default function ChuyenGiaChiTietPage() {
               </div>
             </div>
 
-            <button className="rounded-lg bg-[#17171A] px-6 py-3.5 text-sm font-semibold text-white">
+            <div className="mb-6 grid gap-2 text-sm text-[#3B3B38] sm:grid-cols-2">
+              {chuyenGia.maSoTuner ? <div><span className="text-[#8A8A85]">Mã tuner: </span>{chuyenGia.maSoTuner}</div> : null}
+              {chuyenGia.email ? <div><span className="text-[#8A8A85]">Email: </span>{chuyenGia.email}</div> : null}
+              {chuyenGia.soDienThoai ? <div><span className="text-[#8A8A85]">SĐT: </span>{chuyenGia.soDienThoai}</div> : null}
+              {chuyenGia.gioiTinh ? <div><span className="text-[#8A8A85]">Giới tính: </span>{chuyenGia.gioiTinh}</div> : null}
+              {chuyenGia.ngaySinh ? <div><span className="text-[#8A8A85]">Ngày sinh: </span>{chuyenGia.ngaySinh}</div> : null}
+              {chuyenGia.diaChi ? <div><span className="text-[#8A8A85]">Địa chỉ: </span>{chuyenGia.diaChi}</div> : null}
+              <div><span className="text-[#8A8A85]">Dự án hoàn thành: </span>{chuyenGia.soDuAn}</div>
+              <div><span className="text-[#8A8A85]">Đánh giá: </span>{chuyenGia.diemDanhGia ? `${chuyenGia.diemDanhGia}/5 (${chuyenGia.soDanhGia} đánh giá)` : "Chưa có"}</div>
+            </div>
+
+            <a href="#dat-lich" className="inline-block rounded-lg bg-[#17171A] px-6 py-3.5 text-sm font-semibold text-white">
               Đặt lịch tư vấn với {chuyenGia.ten.split(" ").pop()}
-            </button>
+            </a>
           </div>
+        </div>
+
+        <ChuyenGiaDatLichForm chuyenGia={chuyenGia} />
+
+        <div className="mt-12 grid gap-8 lg:grid-cols-3">
+          <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
+            <h2 className="mb-4 text-lg font-extrabold">Lịch làm việc</h2>
+            {chuyenGia.lichLamViec.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có lịch làm việc.</p> : (
+              <ul className="space-y-2 text-sm">
+                {chuyenGia.lichLamViec.map((lich, index) => (
+                  <li key={lich.id ?? index} className="flex justify-between gap-3">
+                    <span>{lich.ngay_lam_viec}</span>
+                    <span className="text-[#63635E]">{lich.ca_lam_viec}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
+            <h2 className="mb-4 text-lg font-extrabold">Đánh giá</h2>
+            {chuyenGia.danhGia.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có đánh giá.</p> : (
+              <ul className="space-y-3 text-sm">
+                {chuyenGia.danhGia.map((dg, index) => (
+                  <li key={dg.id ?? index}>
+                    <div className="font-semibold">{dg.ten_khach_hang || "Khách hàng"} · {dg.so_sao}/5</div>
+                    <div className="text-[#63635E]">{dg.noi_dung}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
+            <h2 className="mb-4 text-lg font-extrabold">Lịch sử công việc</h2>
+            {chuyenGia.lichSuCongViec.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có công việc.</p> : (
+              <ul className="space-y-3 text-sm">
+                {chuyenGia.lichSuCongViec.map((cv, index) => (
+                  <li key={cv.id ?? index}>
+                    <div className="font-semibold">{cv.tieu_de}</div>
+                    <div className="text-[#63635E]">{[cv.ten_xe, cv.ngay_hoan_thanh].filter(Boolean).join(" · ")}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
 
         {/* Gói độ liên quan */}

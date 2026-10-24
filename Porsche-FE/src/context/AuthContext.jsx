@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
-    dangNhapTheoVaiTro,
+    dangNhapTheoEmail,
     dangXuatTheoVaiTro,
     getApiErrorMessage,
     kiemTraTokenTheoVaiTro,
@@ -30,14 +30,14 @@ export function AuthProvider({ children }) {
      * Đăng nhập thật qua API. Trả về nguyên response {status, message, ...}
      * để trang DangNhapPage tự quyết định hiện lỗi gì, không ném exception.
      */
-    const dangNhap = useCallback(async (vaiTroDangNhap, email, password) => {
+    const dangNhap = useCallback(async (email, password) => {
         setDangTai(true);
         try {
-            const ketQua = await dangNhapTheoVaiTro(vaiTroDangNhap, email, password);
+            const ketQua = await dangNhapTheoEmail(email, password);
 
             if (ketQua.status && ketQua.access_token) {
                 const thongTinNguoiDung = {
-                    vaiTro: vaiTroDangNhap,
+                    vaiTro: ketQua.vai_tro,
                     access_token: ketQua.access_token,
                     // khách hàng có sẵn user {ho_ten, email} trong response login;
                     // admin/chuyên gia chưa có -> tạm để email, phần còn lại tự getProfile sau

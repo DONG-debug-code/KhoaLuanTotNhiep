@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\donHangModel;
 use App\Services\VnpayService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Throwable;
 
 class DonHangController extends Controller
@@ -172,9 +174,21 @@ class DonHangController extends Controller
             'ghi_chu_don_hang' => 'nullable|string|max:1000',
             'phuong_thuc_tt' => 'required|string|in:the,tien_mat_khi_nhan_hang',
             'ma_voucher' => 'nullable|string|max:100',
+            'lich_lap_dat' => 'required_if:phuong_thuc_nhan,nhan_tai_showroom|nullable|array',
+            'lich_lap_dat.bien_so_xe' => 'required_with:lich_lap_dat|string|max:50',
+            'lich_lap_dat.ten_xe' => 'required_with:lich_lap_dat|string|max:255',
+            'lich_lap_dat.ngay_dat' => 'required_with:lich_lap_dat|date|after_or_equal:today',
+            'lich_lap_dat.gio_dat' => 'required_with:lich_lap_dat|date_format:H:i',
+            'lich_lap_dat.id_chuyen_gia' => 'required_with:lich_lap_dat|integer|exists:chuyen_gias,id',
+            'lich_lap_dat.id_khu_vuc_workshop' => 'required_with:lich_lap_dat|integer|exists:khu_vuc_workshops,id',
         ]);
 
-        if ($data['phuong_thuc_tt'] === 'the' && !app(VnpayService::class)->isConfigured()) {
+        $booking = $data['phuong_thuc_nhan'] === 'nhan_tai_showroom' ? $data['lich_lap_dat'] : null;
+        if ($booking && Carbon::parse($booking['ngay_dat'] . ' ' . $booking['gio_dat'])->isPast()) {
+            return response()->json(['status' => false, 'message' => 'Khung giờ lắp đặt phải ở thời điểm trong tương lai.'], 422);
+        }
+
+        if ($data['phuong_thuc_tt'] === 'the' &&  !app(VnpayService::class)->isConfigured()) {
             return response()->json([
                 'status' => false,
                 'message' => 'Thanh toán thẻ chưa được cấu hình đầy đủ. Vui lòng chọn tiền mặt hoặc liên hệ showroom.',
@@ -182,7 +196,7 @@ class DonHangController extends Controller
         }
 
         try {
-            $result = DB::transaction(function () use ($request, $data) {
+            $result =             DB::transaction(function () use ($request, $data, $booking) {
                 $userId = (int) $request->user()->id;
                 $items = collect($data['items'])
                     ->groupBy(fn ($item) => $item['type'] . ':' . $item['id'])
@@ -254,6 +268,37 @@ class DonHangController extends Controller
                     }
                 }
 
+                if ($data['phuong_thuc_nhan'] === 'giao_tan_noi') {
+                    $maxDelivery = (int) config('services.checkout.delivery_max_subtotal');
+                    if ($orderItems && collect($orderItems)->contains(fn ($item) => $item['type'] === 'goi_do')) {
+                        return ['error' => 'Gói độ cần lắp đặt tại showroom, không hỗ trợ giao tận nơi. Vui lòng chọn nhận tại showroom để đặt lịch lắp đặt.', 'code' => 422];
+                    }
+                    if ($subtotal > $maxDelivery) {
+                        return ['error' => 'Giao tận nơi chỉ áp dụng cho phụ kiện nhỏ lẻ có tổng tiền hàng tối đa ' . number_format($maxDelivery, 0, ',', '.') . ' ₫. Vui lòng chọn nhận tại showroom để đặt lịch lắp đặt.', 'code' => 422];
+                    }
+                }
+
+                $appointment = null;
+                if ($booking) {
+                    $slotQuery = DB::table('phieu_dat_lichs')
+                        ->whereDate('ngay_dat', $booking['ngay_dat'])
+                        ->where('gio_dat', $booking['gio_dat'])
+                        ->whereIn('trang_thai', [0, 1]);
+                    $specialist = DB::table('chuyen_gias')
+                        ->where('id', $booking['id_chuyen_gia'])->where('trang_thai', 1)->lockForUpdate()->first();
+                    $workshop = DB::table('khu_vuc_workshops')
+                        ->where('id', $booking['id_khu_vuc_workshop'])->where('trang_thai', 1)->lockForUpdate()->first();
+                    if (!$specialist || !$workshop) {
+                        return ['error' => 'Chuyên gia hoặc khu vực lắp đặt không còn hoạt động.', 'code' => 422];
+                    }
+                    if ((clone $slotQuery)->where('id_chuyen_gia', $specialist->id)->exists()) {
+                        return ['error' => 'Chuyên gia đã kín lịch ở khung giờ này. Vui lòng chọn khung giờ khác.', 'code' => 422];
+                    }
+                    if ((clone $slotQuery)->where('id_khu_vuc_workshop', $workshop->id)->exists()) {
+                        return ['error' => 'Khu vực lắp đặt đã kín lịch ở khung giờ này. Vui lòng chọn khung giờ khác.', 'code' => 422];
+                    }
+                }
+
                 $shippingFee = $data['phuong_thuc_nhan'] === 'nhan_tai_showroom' ? 0 : null;
                 $total = max(0, $subtotal - $discount) + ($shippingFee ?? 0);
                 $orderId = DB::table('don_hangs')->insertGetId([
@@ -314,6 +359,29 @@ class DonHangController extends Controller
                     ]);
                 }
 
+                if ($booking) {
+                    $user = $request->user();
+                    $appointmentId = DB::table('phieu_dat_lichs')->insertGetId([
+                        'ma_dat_lich' => 'PORSCHE-' . strtoupper(Str::random(8)),
+                        'id_khach_hang' => $request->attributes->get('id_khach_hang') ?? $userId,
+                        'id_chuyen_gia' => $specialist->id,
+                        'id_khu_vuc_workshop' => $workshop->id,
+                        'id_don_hang' => $orderId,
+                        'ten_khach_hang' => $data['ten_nguoi_nhan'],
+                        'email' => $data['email_nguoi_nhan'],
+                        'dien_thoai' => $data['so_dien_thoai_nguoi_nhan'],
+                        'bien_so_xe' => strtoupper($booking['bien_so_xe']),
+                        'thong_tin_xe' => trim($booking['ten_xe'] . ' · ' . strtoupper($booking['bien_so_xe'])),
+                        'ngay_dat' => $booking['ngay_dat'],
+                        'gio_dat' => $booking['gio_dat'],
+                        'ghi_chu' => 'Lắp đặt phụ tùng đơn hàng #' . $orderId,
+                        'trang_thai' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $appointment = DB::table('phieu_dat_lichs')->where('id', $appointmentId)->first();
+                }
+
                 if ($voucher) {
                     DB::table('lich_su_su_dung_phieus')->insert([
                         'user_id' => $userId,
@@ -329,6 +397,7 @@ class DonHangController extends Controller
 
                 return [
                     'don_hang_id' => $orderId,
+                    'lich_hen' => $appointment,
                     'ma_don_hang' => 'DH-' . now()->format('ymd') . '-' . str_pad((string) $orderId, 5, '0', STR_PAD_LEFT),
                     'tong_tien' => $subtotal,
                     'giam_gia' => $discount,
@@ -342,6 +411,20 @@ class DonHangController extends Controller
 
             if (isset($result['error'])) {
                 return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
+            }
+
+            if (!empty($result['lich_hen'])) {
+                try {
+                    Mail::to($result['lich_hen']->email)->send(new \App\Mail\LichHenMail(
+                        $result['lich_hen'],
+                        'Xác nhận lịch lắp đặt phụ tùng tại showroom'
+                    ));
+                } catch (Throwable $e) {
+                    Log::warning('Không thể gửi email lịch lắp đặt.', [
+                        'order_id' => $result['don_hang_id'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             if ($data['phuong_thuc_tt'] === 'the') {
@@ -731,6 +814,13 @@ class DonHangController extends Controller
             ->where('don_hang_id', $orderId)
             ->where('trang_thai', 'da_su_dung')
             ->update(['trang_thai' => 'huy', 'updated_at' => now()]);
+
+        if (Schema::hasColumn('phieu_dat_lichs', 'id_don_hang')) {
+            DB::table('phieu_dat_lichs')
+                ->where('id_don_hang', $orderId)
+                ->whereIn('trang_thai', [0, 1])
+                ->update(['trang_thai' => 3, 'updated_at' => now()]);
+        }
     }
 
     public function cancelUnpaidCardOrder(int $orderId, string $paymentStatus): void

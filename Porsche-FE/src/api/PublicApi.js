@@ -203,6 +203,18 @@ function normalizeChuyenGia(chuyenGia) {
     anh: getImageUrl(getValue(chuyenGia, ["anh", "hinh_anh", "avatar", "image"])),
     soNamKinhNghiem: getValue(chuyenGia, ["soNamKinhNghiem", "so_nam_kinh_nghiem", "kinh_nghiem"]),
     moTa: getValue(chuyenGia, ["moTa", "mo_ta", "description"]),
+    email: getValue(chuyenGia, ["email"]),
+    soDienThoai: getValue(chuyenGia, ["so_dien_thoai", "soDienThoai"]),
+    gioiTinh: getValue(chuyenGia, ["gioi_tinh"]),
+    ngaySinh: getValue(chuyenGia, ["ngay_sinh"]),
+    diaChi: getValue(chuyenGia, ["dia_chi"]),
+    maSoTuner: getValue(chuyenGia, ["ma_so_tuner"]),
+    soDuAn: Number(getValue(chuyenGia, ["so_du_an_hoan_thanh"], 0)),
+    diemDanhGia: getValue(chuyenGia, ["diem_danh_gia"], null),
+    soDanhGia: Number(getValue(chuyenGia, ["so_danh_gia"], 0)),
+    danhGia: asArray(getValue(chuyenGia, ["danh_gia_chi_tiet"], [])),
+    lichLamViec: asArray(getValue(chuyenGia, ["lich_lam_viec"], [])),
+    lichSuCongViec: asArray(getValue(chuyenGia, ["lich_su_cong_viec"], [])),
   };
 }
 
