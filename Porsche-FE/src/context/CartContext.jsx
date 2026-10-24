@@ -44,24 +44,25 @@ function CartSession({ children, accountKey }) {
     if (accountKey) localStorage.setItem(accountKey, JSON.stringify(items));
   }, [accountKey, items]);
 
-  const addItem = useCallback((product) => {
+  const addItem = useCallback((product, quantity = 1) => {
     if (!accountKey || !product?.id || !Number.isFinite(Number(product.giaSo)) || Number(product.giaSo) <= 0) {
       return false;
     }
 
     const stock = Math.max(0, Number(product.soLuong) || 0);
-    if (!stock) return false;
+    const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
+    if (!stock || requestedQuantity > stock) return false;
 
     setItems((current) => {
       const existing = current.find((item) => item.type === product.type && item.id === product.id);
       if (existing) {
         return current.map((item) => (
             item.type === product.type && item.id === product.id
-              ? { ...item, quantity: Math.min(stock, item.quantity + 1), soLuong: stock }
+              ? { ...item, quantity: Math.min(stock, item.quantity + requestedQuantity), soLuong: stock }
               : item
         ));
       }
-      return [...current, { ...product, quantity: 1 }];
+      return [...current, { ...product, quantity: requestedQuantity }];
     });
     return true;
   }, [accountKey]);

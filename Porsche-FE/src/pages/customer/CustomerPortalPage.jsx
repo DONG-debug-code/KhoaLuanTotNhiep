@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle, ArrowLeft, ArrowRight, CalendarCheck, CalendarDays, CarFront,
   Check, CheckCircle2, Clock3, CreditCard, FileText, LockKeyhole,
-  MessageSquareText, RefreshCw, ShieldCheck, Smartphone, Sparkles,
+  MessageSquareText, RefreshCw, Smartphone, Sparkles, Tag,
   UserRound, UserRoundPen, Wrench,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -17,7 +17,7 @@ const PROFILE_TABS = [
   { key: "details", label: "Thông tin cá nhân", icon: UserRound },
   { key: "avatar", label: "Ảnh đại diện", icon: UserRoundPen },
   { key: "password", label: "Đổi mật khẩu", icon: LockKeyhole },
-  { key: "devices", label: "Thiết bị đăng nhập", icon: Smartphone },
+  { key: "vouchers", label: "Voucher", icon: Tag },
 ];
 
 const CUSTOMER_SECTIONS = new Set([
@@ -67,6 +67,7 @@ function profileFrom(response, fallbackProfile) {
           avatar: profile.avatar || fallbackProfile?.avatar || "",
         },
         garage: rowsFrom(data.garage),
+        vouchers: rowsFrom(data.vouchers),
       };
     }
 
@@ -81,6 +82,7 @@ function profileFrom(response, fallbackProfile) {
           avatar: data.avatar || fallbackProfile?.avatar || "",
         },
         garage: rowsFrom(data.garage),
+        vouchers: rowsFrom(data.vouchers),
       };
     }
 
@@ -195,6 +197,7 @@ function CustomerPortalPage() {
       dia_chi: nguoiDung.dia_chi || "",
       avatar: nguoiDung.avatar || "",
       garage: [],
+      vouchers: [],
     } : null
   ));
   const [appointments, setAppointments] = useState([]);
@@ -218,7 +221,7 @@ function CustomerPortalPage() {
       if (activeKey === "profile" || activeKey === "garage") {
         const profileResponse = await getWorkspaceData("khach-hang", "profile/data");
         const customerProfile = profileFrom(profileResponse, nguoiDung);
-        setProfile({ ...customerProfile.profile, garage: customerProfile.garage });
+        setProfile({ ...customerProfile.profile, garage: customerProfile.garage, vouchers: customerProfile.vouchers });
 
         if (activeKey === "garage") {
           const [appointmentsResponse, invoiceResponse] = await Promise.all([
@@ -241,7 +244,7 @@ function CustomerPortalPage() {
           chuyen_gias: rowsFrom(options?.chuyen_gias),
           khu_vuc_workshops: rowsFrom(options?.khu_vuc_workshops),
         });
-        setProfile({ ...customerProfile.profile, garage: customerProfile.garage });
+        setProfile({ ...customerProfile.profile, garage: customerProfile.garage, vouchers: customerProfile.vouchers });
       } else if (activeKey === "orders") {
         setOrders(rowsFrom(await getWorkspaceData("khach-hang", "don-hang/cua-toi")));
       } else if (activeKey === "ai-history") {
@@ -537,7 +540,7 @@ function CustomerPortalPage() {
         <div className="grid items-start gap-6 xl:grid-cols-[318px_minmax(0,1fr)]">
           {profileSummary}
           <section className="min-w-0">
-            <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-[#e9e9e6] bg-white p-1.5 sm:grid-cols-4">
+            <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-[#e9e9e6] bg-white p-1.5 sm:grid-cols-2 lg:grid-cols-4">
               {PROFILE_TABS.map(({ key, label, icon: Icon }) => (
                 <button key={key} type="button" onClick={() => setProfileTab(key)} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-xs font-medium transition-colors sm:text-sm ${profileTab === key ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-[#f3f3f1]"}`}>
                   <Icon className="h-4 w-4 shrink-0" />{label}
@@ -588,16 +591,41 @@ function CustomerPortalPage() {
               </form>
             ) : null}
 
-            {profileTab === "devices" ? (
+            {profileTab === "vouchers" ? (
               <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 text-[#777a80]" />
-                  <div>
-                    <h2 className="font-bold">Thiết bị đăng nhập</h2>
-                    <p className="mt-1 text-sm leading-6 text-[#777a80]">Hệ thống hiện chưa cung cấp API liệt kê hoặc kết thúc phiên đăng nhập theo từng thiết bị. Bạn có thể đổi mật khẩu để bảo vệ tài khoản.</p>
+                <h2 className="font-bold">Voucher của bạn</h2>
+                <p className="mt-1 text-sm text-[#777a80]">Mã giảm giá đã được cấp sẽ được áp dụng khi đặt hàng nếu đáp ứng điều kiện.</p>
+                {profile?.vouchers?.length ? (
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    {profile.vouchers.map((voucher) => {
+                      const discount = voucher.loai === "phan_tram"
+                        ? `${voucher.gia_tri}%${Number(voucher.giam_toi_da) > 0 ? ` · tối đa ${money(voucher.giam_toi_da)}` : ""}`
+                        : money(voucher.gia_tri);
+                      return (
+                        <article key={voucher.id} className="rounded-xl border border-dashed border-[#d7d7d3] bg-[#fafaf8] p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-[#777a80]">Mã voucher</p>
+                              <p className="mt-1 font-mono text-lg font-bold tracking-wide text-[#c8102e]">{voucher.code}</p>
+                            </div>
+                            <Tag className="h-5 w-5 shrink-0 text-[#c8102e]" />
+                          </div>
+                          <p className="mt-3 text-sm font-semibold">Giảm {discount}</p>
+                          {Number(voucher.gia_tri_don_hang_toi_thieu) > 0 ? (
+                            <p className="mt-1 text-xs text-[#777a80]">Đơn tối thiểu {money(voucher.gia_tri_don_hang_toi_thieu)}</p>
+                          ) : null}
+                          {voucher.ngay_ket_thuc ? (
+                            <p className="mt-1 text-xs text-[#777a80]">Hạn sử dụng: {formatDate(voucher.ngay_ket_thuc)}</p>
+                          ) : null}
+                        </article>
+                      );
+                    })}
                   </div>
-                </div>
-                <button type="button" onClick={() => setProfileTab("password")} className="mt-5 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-sm font-semibold">Đổi mật khẩu</button>
+                ) : (
+                  <div className="mt-5 rounded-xl border border-dashed border-[#d9d9d5] p-6 text-center text-sm text-[#777a80]">
+                    Bạn chưa có voucher nào. Voucher sẽ được cấp khi đăng ký tài khoản.
+                  </div>
+                )}
               </section>
             ) : null}
           </section>

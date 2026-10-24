@@ -25,14 +25,23 @@ export default function DangNhapPage() {
   const [vaiTro, setVaiTro] = useState("khach-hang");
   const [loi, setLoi] = useState("");
   const [ghiNho, setGhiNho] = useState(false);
+  const pendingCartItem = location.state?.pendingCartItem;
 
   const xuLyDangNhap = async (event) => {
     event.preventDefault();
     setLoi("");
+    if (pendingCartItem && vaiTro !== "khach-hang") {
+      setLoi("Vui lòng đăng nhập bằng tài khoản khách hàng để thêm sản phẩm vào giỏ.");
+      return;
+    }
     const ketQua = await dangNhap(vaiTro, email, matKhau);
 
     if (ketQua.status) {
-      navigate(location.state?.from?.pathname || DUONG_DAN_VAI_TRO[vaiTro], { replace: true });
+      const returnPath = location.state?.from?.pathname || DUONG_DAN_VAI_TRO[vaiTro];
+      navigate(returnPath, {
+        replace: true,
+        state: pendingCartItem ? { pendingCartItem } : location.state?.from?.state,
+      });
     } else {
       setLoi(ketQua.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại email/mật khẩu.");
     }
@@ -99,6 +108,10 @@ export default function DangNhapPage() {
 
       <Link
         to="/kich-hoat"
+        state={{
+          from: location.state?.from,
+          pendingCartItem,
+        }}
         className="flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[9px] border border-[#C9CACE] bg-white px-4 py-2.5 text-sm font-semibold text-[#272A30] transition-colors hover:bg-[#F7F7F6]"
       >
         <ShieldCheck className="h-4 w-4" />
@@ -107,7 +120,11 @@ export default function DangNhapPage() {
 
       <p className="mt-4 text-sm text-[#666970]">
         Chưa có tài khoản?{" "}
-        <Link to="/dang-ky" className="font-semibold text-[#C8102E] hover:underline">
+        <Link
+          to="/dang-ky"
+          state={{ from: location.state?.from, pendingCartItem }}
+          className="font-semibold text-[#C8102E] hover:underline"
+        >
           Đăng ký ngay
         </Link>
       </p>

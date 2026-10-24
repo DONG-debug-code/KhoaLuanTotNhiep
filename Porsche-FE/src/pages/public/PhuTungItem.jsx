@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Package } from "lucide-react";
-import { Link } from "react-router-dom";
 
-function PhuTungCard({ item }) {
+function PhuTungCard({ item, onSelect }) {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <Link
+    <button
+      type="button"
       key={item.id}
-      to={`/phu-tung/${item.id}`}
-      className="group overflow-hidden rounded-2xl border border-[#ECECE9] bg-white shadow-sm transition-shadow hover:shadow-lg"
+      onClick={() => onSelect?.({ ...item, type: "phu_tung" })}
+      className="group overflow-hidden rounded-2xl border border-[#ECECE9] bg-white text-left shadow-sm transition-shadow hover:shadow-lg"
     >
       <div className="flex aspect-[16/9] items-center justify-center overflow-hidden bg-[#F1F1EF]">
         {item.anh && !imageError ? (
@@ -41,10 +41,10 @@ function PhuTungCard({ item }) {
           </span>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }
 
-export function PhuTungItem({ phuTung }) {
-  return phuTung.map((item) => <PhuTungCard key={item.id} item={item} />);
+export function PhuTungItem({ phuTung, onSelect }) {
+  return phuTung.map((item) => <PhuTungCard key={item.id} item={item} onSelect={onSelect} />);
 }

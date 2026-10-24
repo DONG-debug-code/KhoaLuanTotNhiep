@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\PhuTung;
 use Tests\TestCase;
 
 class PhuTungClientTest extends TestCase
@@ -49,11 +50,32 @@ class PhuTungClientTest extends TestCase
         $this->getJson('/api/client/phu-tung/data')
             ->assertOk()
             ->assertJsonPath('data.0.bao_gom', $expectedBaoGom)
-            ->assertJsonPath('data.0.dong_xe', $expectedDongXe);
+            ->assertJsonPath('data.0.dong_xe', $expectedDongXe)
+            ->assertJsonPath('data.0.loai_hien_thi', 'Hiệu năng');
 
         $this->getJson('/api/client/phu-tung/chi-tiet/1')
             ->assertOk()
             ->assertJsonPath('data.bao_gom', $expectedBaoGom)
             ->assertJsonPath('data.dong_xe', $expectedDongXe);
+    }
+
+    public function test_product_type_labels_are_mapped_for_display(): void
+    {
+        $labels = [
+            'hieu_suat' => 'Hiệu năng',
+            'he_thong_xa' => 'Hệ thống xả',
+            'he_thong_treo' => 'Hệ thống treo',
+            'mam_xe' => 'Mâm xe',
+            'phanh' => 'Phanh',
+            'noi_that' => 'Nội thất',
+            'ngoai_that' => 'Ngoại thất',
+            'cham_soc_xe' => 'Chăm sóc xe',
+        ];
+
+        foreach ($labels as $type => $expectedLabel) {
+            $product = new PhuTung(['loai' => $type]);
+
+            $this->assertSame($expectedLabel, $product->loai_hien_thi);
+        }
     }
 }

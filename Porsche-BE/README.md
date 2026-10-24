@@ -21,6 +21,21 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## VNPay card checkout
+
+Customer card payments (ATM, Visa/Mastercard, QR) use VNPay in VND. Register a sandbox merchant at https://sandbox.vnpayment.vn/devreg, then set these backend variables in `.env`:
+
+- `VNPAY_TMN_CODE`: terminal code (`vnp_TmnCode`).
+- `VNPAY_HASH_SECRET`: hash secret used to sign requests (keep this private).
+- `VNPAY_URL`: payment URL; defaults to the sandbox URL. Use the production URL only after VNPay approves your merchant.
+- `FRONTEND_URL`: frontend origin; VNPay returns customers to `<FRONTEND_URL>/dat-hang-thanh-cong/<orderId>`.
+
+Card checkout stays disabled until both `VNPAY_TMN_CODE` and `VNPAY_HASH_SECRET` are set. Orders are marked paid only after the HMAC-SHA512 signature, transaction amount and result code are verified, either from VNPay's IPN (`GET /api/webhooks/vnpay`, which must be registered in the VNPay merchant portal and publicly reachable) or from the result page, which forwards the signed return parameters to `GET /api/khach-hang/vnpay/xac-nhan`. The second path lets local development work without a public IPN URL. Unpaid card orders are cancelled and their stock restored when the payment fails or the window expires (`payments:expire-unpaid-card-orders`, scheduled every five minutes; make sure `php artisan schedule:work` or the cron entry is running). Configure the Laravel mail transport to send payment receipts.
+
+After changing `.env`, run `php artisan config:clear`. Never commit or paste the hash secret into source control or chat.
+
+Cash orders use cash on delivery and are not sent to VNPay.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.

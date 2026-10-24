@@ -1,12 +1,12 @@
 import { Package } from "lucide-react";
-import { Link } from "react-router-dom";
 
-export function GoiDoItem({ goiDo }) {
+export function GoiDoItem({ goiDo, onSelect }) {
   return goiDo.map((goi) => (
-    <Link
+    <button
+      type="button"
       key={goi.id ?? goi.slug}
-      to={`/goi-do/${goi.slug ?? goi.id}`}
-      className="group overflow-hidden rounded-2xl border border-[#ECECE9] bg-white shadow-sm transition-shadow hover:shadow-lg"
+      onClick={() => onSelect?.({ ...goi, type: "goi_do" })}
+      className="group overflow-hidden rounded-2xl border border-[#ECECE9] bg-white text-left shadow-sm transition-shadow hover:shadow-lg"
     >
       <div className="flex aspect-[16/9] items-center justify-center overflow-hidden bg-[#F1F1EF]">
         {goi.anh ? (
@@ -33,6 +33,6 @@ export function GoiDoItem({ goiDo }) {
           <span className="text-sm font-semibold text-[#17171A]">Xem chi tiết →</span>
         </div>
       </div>
-    </Link>
+    </button>
   ));
 }

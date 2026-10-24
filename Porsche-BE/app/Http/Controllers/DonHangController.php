@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\donHangModel;
+use App\Services\VnpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -70,7 +73,8 @@ class DonHangController extends Controller
                     [$voucher, $discount, $error] = $this->calculateVoucherDiscount(
                         $data['ma_voucher'],
                         $subtotal,
-                        true
+                        true,
+                        $userId
                     );
                     if ($error !== null) {
                         return ['error' => $error, 'code' => 422];
@@ -166,9 +170,16 @@ class DonHangController extends Controller
             'phuong_thuc_nhan' => 'required|string|in:nhan_tai_showroom,giao_tan_noi',
             'dia_chi_nguoi_nhan' => 'required_if:phuong_thuc_nhan,giao_tan_noi|nullable|string|max:1000',
             'ghi_chu_don_hang' => 'nullable|string|max:1000',
-            'phuong_thuc_tt' => 'required|string|in:chuyen_khoan,the,tra_gop,tien_mat_tai_showroom',
+            'phuong_thuc_tt' => 'required|string|in:the,tien_mat_khi_nhan_hang',
             'ma_voucher' => 'nullable|string|max:100',
         ]);
+
+        if ($data['phuong_thuc_tt'] === 'the' && !app(VnpayService::class)->isConfigured()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Thanh toán thẻ chưa được cấu hình đầy đủ. Vui lòng chọn tiền mặt hoặc liên hệ showroom.',
+            ], 503);
+        }
 
         try {
             $result = DB::transaction(function () use ($request, $data) {
@@ -235,7 +246,8 @@ class DonHangController extends Controller
                     [$voucher, $discount, $error] = $this->calculateVoucherDiscount(
                         $data['ma_voucher'],
                         $subtotal,
-                        true
+                        true,
+                        $userId
                     );
                     if ($error !== null) {
                         return ['error' => $error, 'code' => 422];
@@ -250,7 +262,9 @@ class DonHangController extends Controller
                     'giam_gia' => $discount,
                     'thanh_tien' => $total,
                     'trang_thai' => donHangModel::TRANG_THAI_CHO_XAC_NHAN,
-                    'trang_thai_thanh_toan' => 'chua_thanh_toan',
+                    'trang_thai_thanh_toan' => $data['phuong_thuc_tt'] === 'the'
+                        ? 'cho_thanh_toan'
+                        : 'thanh_toan_khi_nhan_hang',
                     'phuong_thuc_tt' => $data['phuong_thuc_tt'],
                     'phuong_thuc_nhan' => $data['phuong_thuc_nhan'],
                     'phi_van_chuyen' => $shippingFee,
@@ -320,7 +334,9 @@ class DonHangController extends Controller
                     'giam_gia' => $discount,
                     'phi_van_chuyen' => $shippingFee,
                     'thanh_tien' => $total,
-                    'trang_thai_thanh_toan' => 'chua_thanh_toan',
+                    'trang_thai_thanh_toan' => $data['phuong_thuc_tt'] === 'the'
+                        ? 'cho_thanh_toan'
+                        : 'thanh_toan_khi_nhan_hang',
                 ];
             });
 
@@ -328,9 +344,43 @@ class DonHangController extends Controller
                 return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
             }
 
+            if ($data['phuong_thuc_tt'] === 'the') {
+                $orderId = (int) $result['don_hang_id'];
+
+                try {
+                    $amount = (int) round((float) $result['thanh_tien']);
+                    $txnRef = 'DH' . $orderId . 'T' . now()->timestamp;
+
+                    DB::table('vnpay_payments')->insert([
+                        'don_hang_id' => $orderId,
+                        'txn_ref' => $txnRef,
+                        'amount' => $amount,
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $result['checkout_url'] = app(VnpayService::class)
+                        ->buildPaymentUrl($orderId, $txnRef, $amount, (string) $request->ip());
+                } catch (Throwable $e) {
+                    Log::error('Không thể khởi tạo thanh toán VNPay.', [
+                        'order_id' => $orderId,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $this->cancelUnpaidCardOrder($orderId, 'failed');
+
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Không thể khởi tạo thanh toán thẻ. Đơn hàng đã được hủy, vui lòng thử lại.',
+                    ], 502);
+                }
+            }
+
             return response()->json([
                 'status' => true,
-                'message' => 'Đã ghi nhận đơn hàng. Showroom sẽ liên hệ xác nhận đơn và thanh toán.',
+                'message' => $data['phuong_thuc_tt'] === 'the'
+                    ? 'Đang chuyển bạn đến cổng thanh toán VNPay.'
+                    : 'Đã ghi nhận đơn hàng COD. Bạn thanh toán tiền mặt khi nhận hàng.',
                 'data' => $result,
             ], 201);
         } catch (Throwable $e) {
@@ -359,6 +409,9 @@ class DonHangController extends Controller
 
                 if (!$order) {
                     return ['error' => 'Không tìm thấy đơn hàng.', 'code' => 404];
+                }
+                if ($order->trang_thai_thanh_toan === 'cho_thanh_toan') {
+                    return ['error' => 'Đơn hàng đang chờ thanh toán thẻ. Vui lòng hoàn tất thanh toán hoặc chờ phiên thanh toán hết hạn.', 'code' => 409];
                 }
                 if (in_array($order->trang_thai, [
                     donHangModel::TRANG_THAI_HOAN_THANH,
@@ -415,7 +468,25 @@ class DonHangController extends Controller
                     donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
                     donHangModel::TRANG_THAI_YEU_CAU_HUY,
                 ], true)) {
+                    if ($order->trang_thai === donHangModel::TRANG_THAI_HOAN_THANH
+                        && $data['trang_thai'] === donHangModel::TRANG_THAI_HOAN_THANH
+                        && $order->phuong_thuc_tt === 'tien_mat_khi_nhan_hang'
+                        && $order->trang_thai_thanh_toan === 'da_thanh_toan'
+                        && !$order->thanh_toan_email_sent_at) {
+                        return ['cash_receipt_order_id' => (int) $order->id];
+                    }
+
                     return ['error' => 'Đơn hàng đã kết thúc hoặc đang chờ duyệt hủy.', 'code' => 409];
+                }
+
+                $paymentStatus = $order->trang_thai_thanh_toan;
+                if ($data['trang_thai'] === donHangModel::TRANG_THAI_HOAN_THANH) {
+                    if ($order->phuong_thuc_tt === 'the' && $paymentStatus !== 'da_thanh_toan') {
+                        return ['error' => 'Không thể hoàn tất đơn thẻ khi VNPay chưa xác nhận thanh toán.', 'code' => 409];
+                    }
+                    if ($order->phuong_thuc_tt === 'tien_mat_khi_nhan_hang') {
+                        $paymentStatus = 'da_thanh_toan';
+                    }
                 }
 
                 if ($data['trang_thai'] === donHangModel::TRANG_THAI_HOAN_THANH
@@ -425,7 +496,7 @@ class DonHangController extends Controller
                         'don_hang_id' => $order->id,
                         'users_id' => $order->users_id,
                         'tong_tien' => $order->thanh_tien,
-                        'trang_thai_tt' => 'da_thanh_toan',
+                        'trang_thai_tt' => $paymentStatus,
                         'ngay_xuat' => now(),
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -434,14 +505,25 @@ class DonHangController extends Controller
 
                 DB::table('don_hangs')->where('id', $order->id)->update([
                     'trang_thai' => $data['trang_thai'],
+                    'trang_thai_thanh_toan' => $paymentStatus,
                     'updated_at' => now(),
                 ]);
 
-                return ['ok' => true];
+                return [
+                    'ok' => true,
+                    'cash_receipt_order_id' => $paymentStatus === 'da_thanh_toan'
+                        && $order->phuong_thuc_tt === 'tien_mat_khi_nhan_hang'
+                        ? (int) $order->id
+                        : null,
+                ];
             });
 
             if (isset($result['error'])) {
                 return response()->json(['status' => false, 'message' => $result['error']], $result['code']);
+            }
+
+            if (!empty($result['cash_receipt_order_id'])) {
+                $this->sendCashPaymentReceipt((int) $result['cash_receipt_order_id']);
             }
 
             return response()->json(['status' => true, 'message' => 'Cập nhật trạng thái đơn hàng thành công.']);
@@ -533,7 +615,12 @@ class DonHangController extends Controller
             'tong_tien' => 'required|numeric|min:0',
         ]);
 
-        [$voucher, $discount, $error] = $this->calculateVoucherDiscount($data['ma_voucher'], (float) $data['tong_tien']);
+        [$voucher, $discount, $error] = $this->calculateVoucherDiscount(
+            $data['ma_voucher'],
+            (float) $data['tong_tien'],
+            false,
+            (int) $request->user()->id
+        );
         if ($error !== null) {
             return response()->json(['status' => false, 'message' => $error], 422);
         }
@@ -550,7 +637,7 @@ class DonHangController extends Controller
         ]);
     }
 
-    private function calculateVoucherDiscount(string $code, float $subtotal, bool $lock = false): array
+    private function calculateVoucherDiscount(string $code, float $subtotal, bool $lock = false, ?int $userId = null): array
     {
         $query = DB::table('phieu_giam_gias')
             ->where('code', strtoupper(trim($code)))
@@ -562,6 +649,13 @@ class DonHangController extends Controller
 
         if (!$voucher) {
             return [null, 0, 'Mã giảm giá không tồn tại hoặc đã bị khóa.'];
+        }
+
+        if (!DB::table('user_vouchers')
+            ->where('user_id', $userId)
+            ->where('phieu_id', $voucher->id)
+            ->exists()) {
+            return [null, 0, 'Mã giảm giá này chưa được cấp cho tài khoản của bạn.'];
         }
 
         $now = now();
@@ -637,5 +731,47 @@ class DonHangController extends Controller
             ->where('don_hang_id', $orderId)
             ->where('trang_thai', 'da_su_dung')
             ->update(['trang_thai' => 'huy', 'updated_at' => now()]);
+    }
+
+    public function cancelUnpaidCardOrder(int $orderId, string $paymentStatus): void
+    {
+        DB::transaction(function () use ($orderId, $paymentStatus) {
+            $order = DB::table('don_hangs')->where('id', $orderId)->lockForUpdate()->first();
+            if (!$order || $order->trang_thai_thanh_toan !== 'cho_thanh_toan') {
+                return;
+            }
+
+            DB::table('don_hangs')->where('id', $orderId)->update([
+                'trang_thai' => donHangModel::TRANG_THAI_DA_HUY_HOAN_KHO,
+                'trang_thai_thanh_toan' => 'thanh_toan_that_bai',
+                'updated_at' => now(),
+            ]);
+            $this->restoreOrderStock($orderId);
+
+            DB::table('vnpay_payments')
+                ->where('don_hang_id', $orderId)
+                ->where('status', 'pending')
+                ->update(['status' => $paymentStatus, 'updated_at' => now()]);
+        });
+    }
+
+    private function sendCashPaymentReceipt(int $orderId): void
+    {
+        $order = DB::table('don_hangs')->where('id', $orderId)->first();
+        if (!$order || $order->thanh_toan_email_sent_at || $order->trang_thai_thanh_toan !== 'da_thanh_toan') {
+            return;
+        }
+
+        Mail::to($order->email_nguoi_nhan)->send(new \App\Mail\PaymentReceiptMail(
+            $order->ten_nguoi_nhan,
+            (int) $order->id,
+            (float) $order->thanh_tien,
+            'COD-' . $order->id
+        ));
+
+        DB::table('don_hangs')->where('id', $orderId)->update([
+            'thanh_toan_email_sent_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

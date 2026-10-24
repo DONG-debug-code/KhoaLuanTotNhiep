@@ -87,7 +87,15 @@ export default function KichHoatPage() {
         title="Email đã được xác thực"
         description={`Tài khoản khách hàng ${email} đã sẵn sàng. Bạn có thể đăng nhập để bắt đầu sử dụng Garage.`}
       >
-        <AuthSubmit onClick={() => navigate("/dang-nhap", { replace: true })}>
+        <AuthSubmit
+          onClick={() => navigate("/dang-nhap", {
+            replace: true,
+            state: {
+              from: location.state?.from,
+              pendingCartItem: location.state?.pendingCartItem,
+            },
+          })}
+        >
           <ShieldCheck className="h-4 w-4" />
           Đi tới đăng nhập
         </AuthSubmit>
@@ -137,7 +145,14 @@ export default function KichHoatPage() {
         </fieldset>
         <div className="-mt-2 flex items-center justify-between text-xs text-[#858991]">
           <span>Không nhận được mã?</span>
-          <Link to="/dang-ky" className="font-semibold text-[#C8102E] hover:underline">
+          <Link
+            to="/dang-ky"
+            state={{
+              from: location.state?.from,
+              pendingCartItem: location.state?.pendingCartItem,
+            }}
+            className="font-semibold text-[#C8102E] hover:underline"
+          >
             Đăng ký lại
           </Link>
         </div>
@@ -147,7 +162,14 @@ export default function KichHoatPage() {
       </form>
       <p className="mt-6 text-sm text-[#666970]">
         Đã kích hoạt rồi?{" "}
-        <Link to="/dang-nhap" className="font-semibold text-[#C8102E] hover:underline">
+        <Link
+          to="/dang-nhap"
+          state={{
+            from: location.state?.from,
+            pendingCartItem: location.state?.pendingCartItem,
+          }}
+          className="font-semibold text-[#C8102E] hover:underline"
+        >
           Đăng nhập
         </Link>
       </p>

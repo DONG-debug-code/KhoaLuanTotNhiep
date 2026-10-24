@@ -228,6 +228,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('profile/update', [KhachHangController::class, 'updateProfile']);
     Route::post('profile/update-avatar', [KhachHangController::class, 'updateProfileAvatar']);
     Route::post('profile/change-password', [KhachHangController::class, 'changePassword']);
+    Route::get('vouchers', [KhachHangController::class, 'getMyVouchers']);
 
     // Theo dõi tiến độ đơn hàng
     Route::get('/lich-hen/data', [KhachHangController::class, 'getDataLichHenCuaToi']);
@@ -242,6 +243,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('/dat-mua-xe', [\App\Http\Controllers\DonHangController::class, 'datMuaXe']);
     Route::post('/dat-don-hang', [\App\Http\Controllers\DonHangController::class, 'datDonHang']);
     Route::post('/ap-ma-giam-gia', [\App\Http\Controllers\DonHangController::class, 'apMaGiamGia']);
+    Route::get('/vnpay/xac-nhan', [\App\Http\Controllers\VnpayController::class, 'confirmReturn']);
     Route::post('/don-hang/yeu-cau-huy', [\App\Http\Controllers\DonHangController::class, 'khachYeuCauHuy']);
     Route::get('/don-hang/cua-toi', [\App\Http\Controllers\DonHangController::class, 'donHangCuaToi']);
     Route::get('/lich-su-mua-hang', [HoaDonController::class, 'getLichSuMuaHangKhachHang']);
@@ -258,6 +260,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
 */
 // 🔥 🤖 ROUTE CHATBOT TRỢ LÝ AI (Công khai - Cho phép cả khách vãng lai trải nghiệm)
 Route::post('/ai/ask', [AiController::class, 'askAI']);
+Route::get('/webhooks/vnpay', [\App\Http\Controllers\VnpayController::class, 'ipn']);
 
 Route::get('/flash-sale/active', [ChuongTrinhSaleController::class, 'getActiveFlashSale']);
 Route::get('/goi-do-xe/khuyen-mai-active', [GoiDoXeController::class, 'getGoiDoKhuyenMaiActive']);

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle, Check, Package, Search, ShoppingBag, ShoppingCart } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Footer from "../../components/layouts/partials/Footer";
 import { getGoiDoVaPhuTungClient } from "../../api/PublicApi";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import ProductDetailModal from "../../components/product/ProductDetailModal";
 
 const formatMoney = (value) => `${Number(value).toLocaleString("vi-VN")} ₫`;
 
@@ -18,14 +19,10 @@ function toStoreItem(item, type) {
   };
 }
 
-function StoreProductCard({ product, onAdd, justAdded, canShop }) {
-  const detailPath = product.type === "phu_tung"
-    ? `/phu-tung/${product.id}`
-    : `/goi-do/${product.slug ?? product.id}`;
-
+function StoreProductCard({ product, onAdd, justAdded, onSelect }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white transition-shadow hover:shadow-lg">
-      <Link to={detailPath} className="group block">
+      <button type="button" onClick={() => onSelect(product)} className="group block w-full text-left">
         <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#e7e8e5]">
           {product.anh ? (
             <img
@@ -53,7 +50,7 @@ function StoreProductCard({ product, onAdd, justAdded, canShop }) {
             <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-[#777a80]">{product.moTaNgan}</p>
           ) : null}
         </div>
-      </Link>
+      </button>
       <div className="flex items-center justify-between gap-3 border-t border-[#ecece9] px-4 py-4">
         <div>
           <span className="block text-xs text-[#85888d]">
@@ -64,11 +61,11 @@ function StoreProductCard({ product, onAdd, justAdded, canShop }) {
         <button
           type="button"
           onClick={() => onAdd(product)}
-          disabled={product.soLuong < 1 || !canShop}
+          disabled={product.soLuong < 1}
           className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#292b2f] disabled:cursor-not-allowed disabled:bg-[#a9aaab]"
         >
           {justAdded ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-          {product.soLuong < 1 ? "Hết hàng" : !canShop ? "Đăng nhập để mua" : justAdded ? "Đã thêm" : "Thêm vào giỏ"}
+          {product.soLuong < 1 ? "Hết hàng" : justAdded ? "Đã thêm" : "Thêm vào giỏ"}
         </button>
       </div>
     </article>
@@ -76,6 +73,9 @@ function StoreProductCard({ product, onAdd, justAdded, canShop }) {
 }
 
 export default function HangPhuTungPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const handledPendingItem = useRef("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,6 +83,7 @@ export default function HangPhuTungPage() {
   const [category, setCategory] = useState("Tất cả");
   const [sort, setSort] = useState("popular");
   const [addedKey, setAddedKey] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const { addItem, itemCount, subtotal } = useCart();
   const { daDangNhap, vaiTro } = useAuth();
   const canShop = daDangNhap && vaiTro === "khach-hang";
@@ -129,11 +130,23 @@ export default function HangPhuTungPage() {
   }, [category, products, search, sort]);
 
   const addProduct = (product) => {
+    if (!canShop) {
+      if (!daDangNhap) {
+        navigate("/dang-nhap", {
+          state: {
+            from: { pathname: location.pathname },
+            pendingCartItem: { type: product.type, id: product.id, quantity: 1 },
+          },
+        });
+        return;
+      }
+      setError("Vui lòng đăng nhập bằng tài khoản khách hàng để lưu giỏ hàng theo tài khoản.");
+      return;
+    }
+
     const added = addItem(product);
     if (!added) {
-      setError(canShop
-        ? "Sản phẩm hiện không thể thêm vào giỏ hàng."
-        : "Vui lòng đăng nhập bằng tài khoản khách hàng để lưu giỏ hàng theo tài khoản.");
+      setError("Sản phẩm hiện không thể thêm vào giỏ hàng.");
       return;
     }
     setError("");
@@ -141,6 +154,38 @@ export default function HangPhuTungPage() {
     setAddedKey(key);
     window.setTimeout(() => setAddedKey(""), 1200);
   };
+
+  useEffect(() => {
+    const pendingItem = location.state?.pendingCartItem;
+    if (!pendingItem || loading || !canShop) return;
+
+    const pendingKey = `${pendingItem.type}:${pendingItem.id}:${pendingItem.quantity}`;
+    if (handledPendingItem.current === pendingKey) return;
+    handledPendingItem.current = pendingKey;
+
+    const product = products.find(
+      (item) => item.type === pendingItem.type && String(item.id) === String(pendingItem.id)
+    );
+    if (product) {
+      const added = addItem(product, pendingItem.quantity);
+      if (added) {
+        setError("");
+        const key = `${product.type}:${product.id}`;
+        setAddedKey(key);
+        setSelectedProduct(product);
+        window.setTimeout(() => setAddedKey(""), 1200);
+      } else {
+        setError("Không thể thêm sản phẩm vào giỏ hàng. Vui lòng kiểm tra tồn kho và thử lại.");
+      }
+    } else {
+      setError("Không tìm thấy sản phẩm đã chọn. Vui lòng chọn lại sản phẩm.");
+    }
+
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: null,
+    });
+  }, [addItem, canShop, loading, location, navigate, products]);
 
   return (
     <>
@@ -199,8 +244,8 @@ export default function HangPhuTungPage() {
                   key={`${product.type}:${product.id}`}
                   product={product}
                   onAdd={addProduct}
+                  onSelect={setSelectedProduct}
                   justAdded={addedKey === `${product.type}:${product.id}`}
-                  canShop={canShop}
                 />
               ))}
             </div>
@@ -209,6 +254,9 @@ export default function HangPhuTungPage() {
         </section>
       </main>
       <Footer />
+      {selectedProduct ? (
+        <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      ) : null}
     </>
   );
 }

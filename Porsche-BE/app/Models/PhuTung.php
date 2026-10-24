@@ -31,6 +31,22 @@ class PhuTung extends Model
         'dong_xe' => 'array',
     ];
 
+    protected $appends = ['loai_hien_thi'];
+
+    public function getLoaiHienThiAttribute(): string
+    {
+        return [
+            'hieu_suat' => 'Hiệu năng',
+            'he_thong_xa' => 'Hệ thống xả',
+            'he_thong_treo' => 'Hệ thống treo',
+            'mam_xe' => 'Mâm xe',
+            'phanh' => 'Phanh',
+            'noi_that' => 'Nội thất',
+            'ngoai_that' => 'Ngoại thất',
+            'cham_soc_xe' => 'Chăm sóc xe',
+        ][$this->loai] ?? $this->loai;
+    }
+
     /**
      * Mối quan hệ với ChiTietBanDo
      */

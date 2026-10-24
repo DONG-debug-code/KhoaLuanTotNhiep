@@ -12,6 +12,10 @@ Schedule::command('workshop:cancel-expired-appointments')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+Schedule::command('payments:expire-unpaid-card-orders')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
 Schedule::command('workshop:remind-upcoming-appointments')
     ->dailyAt('08:00')
     ->withoutOverlapping();

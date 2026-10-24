@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { GoiDoItem } from "../../pages/public/GoiDoItem";
 import { PhuTungItem } from "../../pages/public/PhuTungItem";
 import { getGoiDoVaPhuTungClient } from "../../api/PublicApi";
+import ProductDetailModal from "../product/ProductDetailModal";
 
 export default function HangPhuTungSection() {
   const [goiDo, setGoiDo] = useState([]);
@@ -11,6 +12,9 @@ export default function HangPhuTungSection() {
   const [loiGoiDo, setLoiGoiDo] = useState("");
   const [loiPhuTung, setLoiPhuTung] = useState("");
   const [dangTai, setDangTai] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const closeProductDetail = () => setSelectedProduct(null);
 
   useEffect(() => {
     getGoiDoVaPhuTungClient()
@@ -48,9 +52,10 @@ export default function HangPhuTungSection() {
         {!dangTai && !loiGoiDo && !loiPhuTung && goiDo.length === 0 && phuTung.length === 0 ? (
           <p className="text-sm text-[#63635E]">Chưa có sản phẩm được đăng tải.</p>
         ) : null}
-        <GoiDoItem goiDo={goiDo.slice(0, 4)} />
-        <PhuTungItem phuTung={phuTung.slice(0, 4)} />
+        <GoiDoItem goiDo={goiDo.slice(0, 4)} onSelect={setSelectedProduct} />
+        <PhuTungItem phuTung={phuTung.slice(0, 4)} onSelect={setSelectedProduct} />
       </div>
+      {selectedProduct ? <ProductDetailModal product={selectedProduct} onClose={closeProductDetail} /> : null}
     </div>
   );
 }

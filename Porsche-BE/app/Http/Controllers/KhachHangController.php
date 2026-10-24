@@ -270,7 +270,38 @@ class KhachHangController extends Controller
                 'updated_at'    => now()
             ]);
 
-            Mail::send('emails.kich_hoat', ['ho_ten' => $request->ho_ten, 'ma' => $maKichHoat], function ($message) use ($request) {
+            $now = now();
+            $vouchers = DB::table('phieu_giam_gias')
+                ->where('trang_thai', true)
+                ->where(function ($query) use ($now) {
+                    $query->whereNull('ngay_bat_dau')->orWhere('ngay_bat_dau', '<=', $now);
+                })
+                ->where(function ($query) use ($now) {
+                    $query->whereNull('ngay_ket_thuc')->orWhere('ngay_ket_thuc', '>=', $now);
+                })
+                ->whereRaw(
+                    '(SELECT COUNT(*) FROM lich_su_su_dung_phieus WHERE phieu_id = phieu_giam_gias.id AND trang_thai = ?) < phieu_giam_gias.so_luong',
+                    ['da_su_dung']
+                )
+                ->orderBy('id')
+                ->get();
+
+            if ($vouchers->isNotEmpty()) {
+                DB::table('user_vouchers')->insert(
+                    $vouchers->map(fn ($voucher) => [
+                        'user_id' => $khachHangId,
+                        'phieu_id' => $voucher->id,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ])->all()
+                );
+            }
+
+            Mail::send('emails.kich_hoat', [
+                'ho_ten' => $request->ho_ten,
+                'ma' => $maKichHoat,
+                'vouchers' => $vouchers,
+            ], function ($message) use ($request) {
                 $message->to($request->email)->subject('🏁 Kích hoạt tài khoản Porsche Workshop Portal');
             });
 
@@ -427,9 +458,11 @@ class KhachHangController extends Controller
                     ->get();
             }
 
+            $vouchers = $this->getAssignedVouchers($khachHangId);
+
             return response()->json([
                 'status' => true,
-                'data' => ['profile' => $profile, 'garage' => $garage],
+                'data' => ['profile' => $profile, 'garage' => $garage, 'vouchers' => $vouchers],
             ], 200);
         } catch (Exception $e) {
             Log::error('Lỗi getProfile khách hàng: ' . $e->getMessage(), [
@@ -437,6 +470,58 @@ class KhachHangController extends Controller
             ]);
             return response()->json(['status' => false, 'message' => 'Không tải được Profile.'], 500);
         }
+    }
+
+    public function getMyVouchers(Request $request): JsonResponse
+    {
+        $khachHangId = $request->attributes->get('id_khach_hang') ?? $request->user()->id;
+
+        try {
+            return response()->json([
+                'status' => true,
+                'data' => $this->getAssignedVouchers($khachHangId),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Lỗi tải voucher khách hàng: ' . $e->getMessage(), [
+                'id_khach_hang' => $khachHangId,
+            ]);
+            return response()->json(['status' => false, 'message' => 'Không tải được danh sách voucher.'], 500);
+        }
+    }
+
+    private function getAssignedVouchers(int $khachHangId)
+    {
+        return DB::table('user_vouchers')
+            ->join('phieu_giam_gias', 'user_vouchers.phieu_id', '=', 'phieu_giam_gias.id')
+            ->where('user_vouchers.user_id', $khachHangId)
+            ->select(
+                'phieu_giam_gias.id',
+                'phieu_giam_gias.code',
+                'phieu_giam_gias.loai',
+                'phieu_giam_gias.gia_tri',
+                'phieu_giam_gias.gia_tri_don_hang_toi_thieu',
+                'phieu_giam_gias.giam_toi_da',
+                'phieu_giam_gias.so_luong',
+                'phieu_giam_gias.trang_thai',
+                'phieu_giam_gias.ngay_bat_dau',
+                'phieu_giam_gias.ngay_ket_thuc',
+                'user_vouchers.created_at as ngay_duoc_cap'
+            )
+            ->selectSub(function ($query) use ($khachHangId) {
+                $query->from('lich_su_su_dung_phieus')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('lich_su_su_dung_phieus.phieu_id', 'phieu_giam_gias.id')
+                    ->where('lich_su_su_dung_phieus.user_id', $khachHangId)
+                    ->where('lich_su_su_dung_phieus.trang_thai', 'da_su_dung');
+            }, 'so_lan_da_su_dung')
+            ->selectSub(function ($query) {
+                $query->from('lich_su_su_dung_phieus')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('lich_su_su_dung_phieus.phieu_id', 'phieu_giam_gias.id')
+                    ->where('lich_su_su_dung_phieus.trang_thai', 'da_su_dung');
+            }, 'tong_so_lan_da_su_dung')
+            ->orderByDesc('user_vouchers.created_at')
+            ->get();
     }
 
     public function updateProfile(Request $request): JsonResponse

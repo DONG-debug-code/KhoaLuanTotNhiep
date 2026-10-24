@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LockKeyhole, Mail, Phone, UserRound } from "lucide-react";
 import {
   AuthDivider,
@@ -12,6 +12,11 @@ import { dangKyKhachHang, getApiErrorMessage } from "../api/Authapi";
 
 export default function DangKyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const registrationState = {
+    from: location.state?.from,
+    pendingCartItem: location.state?.pendingCartItem,
+  };
   const [form, setForm] = useState({
     ho_ten: "",
     email: "",
@@ -39,7 +44,7 @@ export default function DangKyPage() {
     try {
       const ketQua = await dangKyKhachHang(form);
       if (ketQua.status) {
-        navigate(`/kich-hoat?email=${encodeURIComponent(form.email)}`);
+        navigate(`/kich-hoat?email=${encodeURIComponent(form.email)}`, { state: registrationState });
       } else {
         setLoi(ketQua.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
       }
@@ -61,7 +66,7 @@ export default function DangKyPage() {
       {emailDaTonTai ? (
         <Link
           to="/kich-hoat"
-          state={{ email: form.email }}
+          state={{ email: form.email, ...registrationState }}
           className="-mt-2 mb-5 block text-sm font-semibold text-[#C8102E] hover:underline"
         >
           Nhập mã kích hoạt cho email này
@@ -124,7 +129,11 @@ export default function DangKyPage() {
       <AuthDivider />
       <p className="text-sm text-[#666970]">
         Đã có tài khoản?{" "}
-        <Link to="/dang-nhap" className="font-semibold text-[#C8102E] hover:underline">
+        <Link
+          to="/dang-nhap"
+          state={registrationState}
+          className="font-semibold text-[#C8102E] hover:underline"
+        >
           Đăng nhập
         </Link>
       </p>

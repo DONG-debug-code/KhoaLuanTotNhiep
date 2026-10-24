@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, CreditCard, Info, Landmark, MapPin, Store, Truck, UserRound, Wallet } from "lucide-react";
+import { ArrowLeft, Check, CreditCard, Info, MapPin, Store, Truck, UserRound, Wallet } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Footer from "../../components/layouts/partials/Footer";
 import { useAuth } from "../../context/AuthContext";
@@ -9,11 +9,20 @@ import { postWorkspaceData, getWorkspaceData } from "../../api/WorkspaceApi";
 
 const money = (value) => `${Number(value).toLocaleString("vi-VN")} ₫`;
 
+function isVoucherAvailable(voucher) {
+  const now = Date.now();
+  const startsAt = voucher.ngay_bat_dau ? new Date(voucher.ngay_bat_dau).getTime() : null;
+  const endsAt = voucher.ngay_ket_thuc ? new Date(voucher.ngay_ket_thuc).getTime() : null;
+
+  return Number(voucher.trang_thai) === 1
+    && (startsAt === null || startsAt <= now)
+    && (endsAt === null || endsAt >= now)
+    && Number(voucher.so_luong) > Number(voucher.tong_so_lan_da_su_dung);
+}
+
 const PAYMENT_METHODS = [
-  { value: "chuyen_khoan", label: "Chuyển khoản ngân hàng", hint: "Showroom gửi thông tin chuyển khoản sau khi xác nhận đơn.", Icon: Landmark },
-  { value: "the", label: "Thẻ tín dụng / ghi nợ", hint: "Showroom liên hệ xác nhận phương thức thanh toán.", Icon: CreditCard },
-  { value: "tra_gop", label: "Trả góp qua thẻ", hint: "Điều kiện trả góp được xác nhận với showroom.", Icon: Wallet },
-  { value: "tien_mat_tai_showroom", label: "Tiền mặt tại showroom", hint: "Thanh toán trực tiếp khi nhận hàng tại showroom.", Icon: Store },
+  { value: "the", label: "Thẻ ATM / Visa / QR qua VNPay", hint: "Thanh toán bảo mật qua cổng VNPay.", Icon: CreditCard },
+  { value: "tien_mat_khi_nhan_hang", label: "Tiền mặt khi nhận hàng", hint: "Thanh toán cho nhân viên giao hàng khi nhận đơn.", Icon: Store },
 ];
 
 function CheckoutStep({ active }) {
@@ -49,9 +58,10 @@ export default function ThanhToanPage() {
     dia_chi_nguoi_nhan: nguoiDung?.dia_chi || "",
     ghi_chu_don_hang: "",
     phuong_thuc_nhan: "nhan_tai_showroom",
-    phuong_thuc_tt: "chuyen_khoan",
+    phuong_thuc_tt: "the",
   });
   const [voucherCode, setVoucherCode] = useState("");
+  const [vouchers, setVouchers] = useState([]);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -70,6 +80,7 @@ export default function ThanhToanPage() {
           so_dien_thoai_nguoi_nhan: current.so_dien_thoai_nguoi_nhan || data.so_dien_thoai || "",
           dia_chi_nguoi_nhan: current.dia_chi_nguoi_nhan || data.dia_chi || "",
         }));
+        setVouchers(Array.isArray(response?.vouchers) ? response.vouchers : []);
       })
       .catch((requestError) => {
         if (active) {
@@ -80,6 +91,7 @@ export default function ThanhToanPage() {
   }, []);
 
   const discount = Number(appliedVoucher?.so_tien_giam) || 0;
+  const availableVouchers = useMemo(() => vouchers.filter(isVoucherAvailable), [vouchers]);
   const total = useMemo(() => Math.max(0, subtotal - discount), [discount, subtotal]);
   const setField = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
@@ -121,6 +133,10 @@ export default function ThanhToanPage() {
       });
       if (!response?.status || !response.data?.don_hang_id) {
         throw new Error(response?.message || "Không thể tạo đơn hàng.");
+      }
+      if (response.data.checkout_url) {
+        window.location.assign(response.data.checkout_url);
+        return;
       }
       const orderId = response.data.don_hang_id;
       window.sessionStorage.setItem(`donHangVuaDat:${orderId}`, JSON.stringify(response.data));
@@ -219,7 +235,7 @@ export default function ThanhToanPage() {
                 </section>
 
                 <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Wallet className="h-5 w-5" /></span><div><h2 className="font-bold">Phương thức thanh toán</h2><p className="mt-1 text-xs text-[#777a80]">Chọn phương thức mong muốn. Showroom sẽ xác nhận sau khi nhận đơn.</p></div></div>
+                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Wallet className="h-5 w-5" /></span><div><h2 className="font-bold">Phương thức thanh toán</h2><p className="mt-1 text-xs text-[#777a80]">Thanh toán thẻ qua VNPay hoặc tiền mặt khi nhận hàng.</p></div></div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {PAYMENT_METHODS.map(({ value, label, hint, Icon }) => (
                       <button key={value} type="button" onClick={() => setForm((current) => ({ ...current, phuong_thuc_tt: value }))} className={`rounded-xl border p-4 text-left ${form.phuong_thuc_tt === value ? "border-[#17191c] bg-[#f5f5f3]" : "border-[#e9e9e6]"}`}>
@@ -288,11 +304,29 @@ export default function ThanhToanPage() {
             </div>
             {step === 1 ? (
               <div className="mt-5 rounded-xl bg-[#f3f3f1] p-3.5">
-                <label className="text-xs font-semibold">Mã giảm giá</label>
-                <div className="mt-2 flex gap-2">
-                  <input value={voucherCode} onChange={(event) => { setVoucherCode(event.target.value); setAppliedVoucher(null); }} placeholder="Nhập mã giảm giá" className="min-w-0 flex-1 rounded-lg border border-[#dededb] bg-white px-3 py-2.5 text-sm outline-none" />
-                  <button type="button" disabled={saving || !voucherCode.trim()} onClick={() => void applyVoucher()} className="rounded-lg bg-[#080a0d] px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-50">Áp dụng</button>
+                <label htmlFor="checkout-voucher" className="text-xs font-semibold">Chọn voucher của bạn</label>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <select
+                    id="checkout-voucher"
+                    value={voucherCode}
+                    onChange={(event) => { setVoucherCode(event.target.value); setAppliedVoucher(null); setError(""); setNotice(""); }}
+                    className="min-w-0 flex-1 rounded-lg border border-[#dededb] bg-white px-3 py-2.5 text-sm outline-none"
+                  >
+                    <option value="">Chọn mã giảm giá</option>
+                    {availableVouchers.map((voucher) => {
+                      const discountLabel = voucher.loai === "phan_tram"
+                        ? `${voucher.gia_tri}%`
+                        : money(voucher.gia_tri);
+                      return (
+                        <option key={voucher.id} value={voucher.code}>
+                          {voucher.code} · giảm {discountLabel}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <button type="button" disabled={saving || !voucherCode} onClick={() => void applyVoucher()} className="rounded-lg bg-[#080a0d] px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-50">Áp dụng</button>
                 </div>
+                {!availableVouchers.length ? <p className="mt-2 text-xs text-[#777a80]">Bạn chưa có voucher khả dụng.</p> : null}
               </div>
             ) : null}
             <div className="mt-5 space-y-3 border-t border-[#ecece9] pt-4 text-sm">

@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { CheckCircle2, Clock3, FileText, Phone, ShoppingBag } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { AlertCircle, CheckCircle2, Clock3, FileText, Phone, ShoppingBag } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Footer from "../../components/layouts/partials/Footer";
 import { getWorkspaceAssetUrl, getWorkspaceData } from "../../api/WorkspaceApi";
+import { useCart } from "../../context/CartContext";
 
 const money = (value) => `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
 const dateTime = (value) => value ? new Date(value).toLocaleString("vi-VN") : new Date().toLocaleString("vi-VN");
 
 export default function DatHangThanhCongPage() {
   const { orderId } = useParams();
+  const { clearCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const vnpayQuery = searchParams.get("vnp_SecureHash") ? searchParams.toString() : "";
+  const isCardReturn = Boolean(vnpayQuery);
+  const vnpayResponseCode = searchParams.get("vnp_ResponseCode");
   const [order, setOrder] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem(`donHangVuaDat:${orderId}`) || "null");
@@ -18,30 +24,73 @@ export default function DatHangThanhCongPage() {
     }
   });
   const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(isCardReturn);
 
   useEffect(() => {
     let active = true;
-    getWorkspaceData("khach-hang", "don-hang/cua-toi")
-      .then((orders) => {
+    const loadOrder = async () => {
+      if (vnpayQuery) {
+        try {
+          await getWorkspaceData("khach-hang", "vnpay/xac-nhan", Object.fromEntries(new URLSearchParams(vnpayQuery)));
+        } catch (requestError) {
+          if (active) setError(requestError.response?.data?.message || "Không thể xác nhận kết quả thanh toán.");
+        }
+      }
+      try {
+        const orders = await getWorkspaceData("khach-hang", "don-hang/cua-toi");
         const savedOrder = Array.isArray(orders)
           ? orders.find((item) => String(item.id) === String(orderId))
           : null;
         if (active && savedOrder) setOrder((current) => ({ ...current, ...savedOrder }));
-      })
-      .catch((requestError) => {
+      } catch (requestError) {
         if (active) setError(requestError.response?.data?.message || "Chưa thể tải lại chi tiết đơn hàng.");
-      });
-    return () => { active = false; };
-  }, [orderId]);
+      } finally {
+        if (active) setConfirming(false);
+      }
+    };
+    void loadOrder();
+    return () => {
+      active = false;
+    };
+  }, [orderId, vnpayQuery]);
+
+  const isPaid = order?.trang_thai_thanh_toan === "da_thanh_toan";
+  useEffect(() => {
+    if (isCardReturn && isPaid) clearCart();
+  }, [isCardReturn, isPaid, clearCart]);
+  const isCancelled = isCardReturn && !confirming && !isPaid && vnpayResponseCode === "24";
+  const isFailed = isCardReturn && !confirming && !isPaid && !isCancelled;
+  const title = confirming
+    ? "Đang xác nhận thanh toán"
+    : isCancelled
+      ? "Bạn đã hủy thanh toán"
+      : isFailed
+        ? "Thanh toán không thành công"
+        : isPaid
+          ? "Thanh toán thành công"
+          : "Đã tiếp nhận đơn hàng";
+  const showWarning = isCancelled || isFailed;
 
   return (
     <>
       <Navbar luonSang />
       <main className="min-h-screen bg-[#fafaf9] pt-[84px]">
         <section className="bg-[#f3f3f1] px-5 py-14 text-center sm:px-8">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#b8914a] text-[#080a0d]"><CheckCircle2 className="h-9 w-9" /></span>
-          <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Đặt hàng thành công</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#63666b]">Cảm ơn bạn đã đặt hàng tại DU_AN_XE. Showroom sẽ kiểm tra tồn kho và liên hệ xác nhận đơn hàng, giao nhận và phương thức thanh toán.</p>
+          <span className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${showWarning ? "bg-[#fae9eb] text-[#9d1026]" : "bg-[#b8914a] text-[#080a0d]"}`}>
+            {showWarning ? <AlertCircle className="h-9 w-9" /> : <CheckCircle2 className="h-9 w-9" />}
+          </span>
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight">{title}</h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#63666b]">
+            {confirming
+              ? "Vui lòng chờ trong giây lát, chúng tôi đang xác nhận giao dịch với VNPay."
+              : showWarning
+                ? "Giao dịch chưa được thực hiện. Đơn hàng đã được hủy và tồn kho được hoàn lại; bạn có thể đặt hàng lại."
+                : isPaid
+                  ? "VNPay đã xác nhận giao dịch. Email xác nhận thanh toán đã được gửi đến địa chỉ email đặt hàng."
+                  : order?.phuong_thuc_tt === "tien_mat_khi_nhan_hang"
+                    ? "Đơn hàng đã được ghi nhận. Bạn thanh toán tiền mặt cho nhân viên giao hàng khi nhận hàng."
+                    : "Cảm ơn bạn đã đặt hàng tại DU_AN_XE. Showroom sẽ kiểm tra tồn kho và liên hệ xác nhận đơn hàng."}
+          </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm">
             <span className="rounded-full border border-[#dededb] bg-white px-4 py-2">Mã đơn: <strong className="text-[#c8102e]">{order?.ma_don_hang || `DH-${orderId}`}</strong></span>
             <span className="rounded-full border border-[#dededb] bg-white px-4 py-2">{dateTime(order?.created_at)}</span>

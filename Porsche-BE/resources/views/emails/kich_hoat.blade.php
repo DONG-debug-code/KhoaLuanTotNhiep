@@ -13,6 +13,30 @@
         <p style="margin: 28px 0; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #b00020;">
             {{ $ma }}
         </p>
+        @if ($vouchers->isNotEmpty())
+            <h2 style="margin-top: 32px; color: #111;">Voucher dành cho bạn</h2>
+            <p>Sau khi kích hoạt tài khoản, bạn có thể sử dụng các mã dưới đây khi đặt hàng:</p>
+            <ul style="padding-left: 20px;">
+                @foreach ($vouchers as $voucher)
+                    <li style="margin-bottom: 12px;">
+                        <strong>{{ $voucher->code }}</strong> —
+                        Giảm
+                        @if ($voucher->loai === 'phan_tram')
+                            {{ $voucher->gia_tri }}%
+                            @if ($voucher->giam_toi_da)
+                                (tối đa {{ number_format($voucher->giam_toi_da, 0, ',', '.') }}₫)
+                            @endif
+                        @else
+                            {{ number_format($voucher->gia_tri, 0, ',', '.') }}₫
+                        @endif
+                        @if ((float) $voucher->gia_tri_don_hang_toi_thieu > 0)
+                            cho đơn từ {{ number_format($voucher->gia_tri_don_hang_toi_thieu, 0, ',', '.') }}₫
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+            <p>Bạn cũng có thể xem lại các voucher này trong mục Voucher ở hồ sơ cá nhân.</p>
+        @endif
         <p>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.</p>
         <p>Trân trọng,<br>Porsche Workshop Portal</p>
     </main>
