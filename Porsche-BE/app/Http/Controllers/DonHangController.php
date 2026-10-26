@@ -544,7 +544,8 @@ class DonHangController extends Controller
         ]);
 
         try {
-            $result = DB::transaction(function () use ($data) {
+            $staffId = $request->user()?->id;
+            $result = DB::transaction(function () use ($data, $staffId) {
                 $order = DB::table('don_hangs')->where('id', $data['don_hang_id'])->lockForUpdate()->first();
                 if (in_array($order->trang_thai, [
                     donHangModel::TRANG_THAI_HOAN_THANH,
@@ -586,11 +587,54 @@ class DonHangController extends Controller
                     ]);
                 }
 
-                DB::table('don_hangs')->where('id', $order->id)->update([
+                $timeline = [];
+                $target = $data['trang_thai'];
+                if ($target !== donHangModel::TRANG_THAI_CHO_XAC_NHAN) {
+                    if (!$order->xac_nhan_luc) {
+                        $timeline['xac_nhan_luc'] = now();
+                    }
+                    if (!$order->xac_nhan_boi && $staffId) {
+                        $timeline['xac_nhan_boi'] = $staffId;
+                    }
+                }
+                if (in_array($target, [donHangModel::TRANG_THAI_DANG_GIAO, donHangModel::TRANG_THAI_HOAN_THANH], true) && !$order->giao_hang_luc) {
+                    $timeline['giao_hang_luc'] = now();
+                }
+                if ($target === donHangModel::TRANG_THAI_HOAN_THANH) {
+                    $timeline['hoan_thanh_luc'] = now();
+                }
+                if ($paymentStatus === 'da_thanh_toan' && !$order->thanh_toan_luc) {
+                    $timeline['thanh_toan_luc'] = now();
+                }
+
+                DB::table('don_hangs')->where('id', $order->id)->update($timeline + [
                     'trang_thai' => $data['trang_thai'],
                     'trang_thai_thanh_toan' => $paymentStatus,
                     'updated_at' => now(),
                 ]);
+
+                if ($target === donHangModel::TRANG_THAI_HOAN_THANH) {
+                    $invoice = DB::table('hoa_dons')->where('don_hang_id', $order->id)->first();
+                    if ($invoice && !DB::table('hoa_don_chi_tiets')->where('id_hoa_don', $invoice->id)->exists()) {
+                        $lines = DB::table('chi_tiet_don_hangs as d')
+                            ->leftJoin('san_phams as p', 'd.san_pham_id', '=', 'p.id')
+                            ->leftJoin('phu_tungs as a', 'd.phu_tung_id', '=', 'a.id')
+                            ->where('d.don_hang_id', $order->id)
+                            ->select('d.so_luong', 'd.don_gia', 'd.thanh_tien', DB::raw('COALESCE(p.ten, a.ten) as ten'))
+                            ->get();
+                        foreach ($lines as $line) {
+                            DB::table('hoa_don_chi_tiets')->insert([
+                                'id_hoa_don' => $invoice->id,
+                                'ten_vat_tu' => $line->ten ?? 'Sản phẩm',
+                                'so_luong' => $line->so_luong,
+                                'don_gia' => $line->don_gia,
+                                'thanh_tien' => $line->thanh_tien,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                }
 
                 return [
                     'ok' => true,
@@ -660,6 +704,45 @@ class DonHangController extends Controller
             Log::error('Không thể phê duyệt hủy đơn hàng.', ['error' => $e->getMessage()]);
             return response()->json(['status' => false, 'message' => 'Không thể xử lý phê duyệt hủy.'], 500);
         }
+    }
+
+    public function chiTietDonHang(Request $request, int $id): JsonResponse
+    {
+        $detail = app(\App\Services\OrderDetailService::class)->build($id, (int) $request->user()->id);
+
+        return $detail
+            ? response()->json(['status' => true, 'data' => $detail])
+            : response()->json(['status' => false, 'message' => 'Không tìm thấy đơn hàng.'], 404);
+    }
+
+    public function chiTietDonHangAdmin(int $id): JsonResponse
+    {
+        $detail = app(\App\Services\OrderDetailService::class)->build($id);
+
+        return $detail
+            ? response()->json(['status' => true, 'data' => $detail])
+            : response()->json(['status' => false, 'message' => 'Không tìm thấy đơn hàng.'], 404);
+    }
+
+    public function inHoaDon(Request $request, int $id)
+    {
+        return $this->renderInvoicePdf(app(\App\Services\OrderDetailService::class)->build($id, (int) $request->user()->id));
+    }
+
+    public function inHoaDonAdmin(int $id)
+    {
+        return $this->renderInvoicePdf(app(\App\Services\OrderDetailService::class)->build($id));
+    }
+
+    private function renderInvoicePdf(?array $detail)
+    {
+        if (!$detail) {
+            return response()->json(['status' => false, 'message' => 'Không tìm thấy đơn hàng.'], 404);
+        }
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice', ['order' => $detail])
+            ->setPaper('a4')
+            ->download(($detail['ma_hoa_don'] ?? $detail['ma_don_hang']) . '.pdf');
     }
 
     public function donHangCuaToi(Request $request): JsonResponse

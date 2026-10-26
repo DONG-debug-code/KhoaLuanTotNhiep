@@ -21,7 +21,7 @@ import CustomerPortalPage from './pages/customer/CustomerPortalPage'
 import GioHangPage from './pages/customer/GioHangPage'
 import ThanhToanPage from './pages/customer/ThanhToanPage'
 import DatHangThanhCongPage from './pages/customer/DatHangThanhCongPage'
-import OperationsWorkspacePage from './pages/staff/OperationsWorkspacePage'
+import AdminWorkspacePage from './pages/admin/AdminWorkspacePage'
 import ChuyenGiaWorkspacePage from './pages/chuyengia/ChuyenGiaWorkspacePage'
 
 function App() {
@@ -84,7 +84,7 @@ function App() {
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <OperationsWorkspacePage role="admin" />
+              <AdminWorkspacePage />
             </ProtectedRoute>
           }
         />

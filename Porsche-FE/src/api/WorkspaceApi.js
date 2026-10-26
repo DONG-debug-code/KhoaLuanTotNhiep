@@ -40,6 +40,23 @@ export async function postWorkspaceData(role, path, payload) {
   return data;
 }
 
+export async function getOrderDetail(orderId, role = "khach-hang") {
+  const { data } = await apiClient.get(`/${role}/don-hang/${orderId}/chi-tiet`);
+  return data?.data;
+}
+
+export async function downloadOrderInvoicePdf(orderId, fileName, role = "khach-hang") {
+  const response = await apiClient.get(`/${role}/don-hang/${orderId}/pdf`, { responseType: "blob" });
+  const url = URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${fileName || `don-hang-${orderId}`}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export async function updateWorkspaceProfile(role, payload) {
   return postWorkspaceData(role, "profile/update", payload);
 }

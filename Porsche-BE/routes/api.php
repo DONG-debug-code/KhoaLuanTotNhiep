@@ -170,6 +170,20 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     // Dashboard Executive
     Route::get('/dashboard/data', [ThongKeController::class, 'getDashboardData'])->middleware('permission:executive');
     Route::get('/hoa-don/data', [HoaDonController::class, 'getDataHoaDon']);
+    Route::prefix('workspace')->controller(\App\Http\Controllers\AdminWorkspaceController::class)->group(function () {
+        Route::get('/dashboard', 'dashboard');
+        Route::get('/lich-hen', 'lichHen');
+        Route::get('/don-hang', 'donHang');
+        Route::get('/hoa-don', 'hoaDon');
+        Route::get('/khach-hang', 'khachHang');
+        Route::get('/chuyen-gia', 'chuyenGia');
+        Route::get('/lich-lam-viec', 'lichLamViec');
+        Route::get('/nhan-vien', 'nhanVien')->middleware('permission:super_admin');
+        Route::get('/khu-vuc', 'khuVuc');
+        Route::get('/san-pham', 'sanPham');
+    });
+    Route::get('/don-hang/{id}/chi-tiet', [\App\Http\Controllers\DonHangController::class, 'chiTietDonHangAdmin'])->whereNumber('id');
+    Route::get('/don-hang/{id}/pdf', [\App\Http\Controllers\DonHangController::class, 'inHoaDonAdmin'])->whereNumber('id');
     Route::post('/kiem-tra-phieu-dat-lich', [PhieuDatLichController::class, 'kiemTraMaDatLich']);
 });
 
@@ -257,6 +271,8 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::get('/vnpay/xac-nhan', [\App\Http\Controllers\VnpayController::class, 'confirmReturn']);
     Route::post('/don-hang/yeu-cau-huy', [\App\Http\Controllers\DonHangController::class, 'khachYeuCauHuy']);
     Route::get('/don-hang/cua-toi', [\App\Http\Controllers\DonHangController::class, 'donHangCuaToi']);
+    Route::get('/don-hang/{id}/chi-tiet', [\App\Http\Controllers\DonHangController::class, 'chiTietDonHang'])->whereNumber('id');
+    Route::get('/don-hang/{id}/pdf', [\App\Http\Controllers\DonHangController::class, 'inHoaDon'])->whereNumber('id');
     Route::get('/lich-su-mua-hang', [HoaDonController::class, 'getLichSuMuaHangKhachHang']);
 
     // 🤖 LỊCH SỬ CHAT VÀ XÓA LỊCH SỬ (Bắt buộc phải đăng nhập)

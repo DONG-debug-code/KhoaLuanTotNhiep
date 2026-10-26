@@ -104,6 +104,11 @@ class CommerceUpgradeTest extends TestCase
             $table->unsignedBigInteger('dia_chi_giao_hang_id')->nullable();
             $table->string('ly_do_huy', 500)->nullable();
             $table->timestamp('ngay_tao')->nullable();
+            $table->timestamp('xac_nhan_luc')->nullable();
+            $table->unsignedBigInteger('xac_nhan_boi')->nullable();
+            $table->timestamp('thanh_toan_luc')->nullable();
+            $table->timestamp('giao_hang_luc')->nullable();
+            $table->timestamp('hoan_thanh_luc')->nullable();
             $table->timestamps();
         });
 
@@ -184,6 +189,37 @@ class CommerceUpgradeTest extends TestCase
             $table->string('trang_thai_tt');
             $table->timestamp('ngay_xuat')->nullable();
             $table->timestamps();
+        });
+
+        Schema::create('hoa_don_chi_tiets', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('id_hoa_don');
+            $table->string('ten_vat_tu');
+            $table->integer('so_luong');
+            $table->decimal('don_gia', 15, 2);
+            $table->decimal('thanh_tien', 15, 2);
+            $table->timestamps();
+        });
+
+        Schema::create('admins', function (Blueprint $table) {
+            $table->id();
+            $table->string('ho_ten');
+            $table->string('email');
+        });
+
+        Schema::dropIfExists('users');
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('ho_ten')->nullable();
+            $table->string('email')->nullable();
+            $table->string('so_dien_thoai')->nullable();
+            $table->string('dia_chi')->nullable();
+        });
+
+        Schema::dropIfExists('phu_tungs');
+        Schema::create('phu_tungs', function (Blueprint $table) {
+            $table->id();
+            $table->string('ten')->nullable();
         });
 
         Schema::dropIfExists('phieu_dat_lichs');
@@ -714,6 +750,38 @@ class CommerceUpgradeTest extends TestCase
         $this->assertSame('da_thanh_toan', DB::table('don_hangs')->where('id', 1)->value('trang_thai_thanh_toan'));
         $this->assertSame('da_thanh_toan', DB::table('hoa_dons')->where('don_hang_id', 1)->value('trang_thai_tt'));
         Mail::assertSent(PaymentReceiptMail::class, fn (PaymentReceiptMail $mail) => $mail->orderId === 1);
+    }
+
+    public function test_order_detail_shows_timeline_and_pdf_is_owner_only(): void
+    {
+        DB::table('admins')->insert(['id' => 5, 'ho_ten' => 'Nhân viên A', 'email' => 'a@staff.vn']);
+        DB::table('don_hangs')->insert([
+            'id' => 1, 'users_id' => 42, 'tong_tien' => 3000, 'giam_gia' => 500, 'thanh_tien' => 2500,
+            'trang_thai' => 'dang_giao', 'phuong_thuc_tt' => 'tien_mat_khi_nhan_hang',
+            'trang_thai_thanh_toan' => 'chua_thanh_toan', 'phuong_thuc_nhan' => 'giao_tan_noi',
+            'ten_nguoi_nhan' => 'Khách', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $staff = new \App\Models\Admin();
+        $staff->id = 5;
+
+        $request = Request::create('/api/admin/don-hang/cap-nhat-trang-thai', 'POST', [
+            'don_hang_id' => 1,
+            'trang_thai' => 'hoan_thanh',
+        ]);
+        $request->setUserResolver(fn () => $staff);
+        Mail::fake();
+        app(DonHangController::class)->capNhatTrangThai($request);
+
+        $detail = app(\App\Services\OrderDetailService::class)->build(1, 42);
+        $this->assertSame('Nhân viên A', $detail['nhan_vien_xac_nhan']['ho_ten']);
+        $this->assertNotNull($detail['thoi_gian']['xac_nhan']);
+        $this->assertNotNull($detail['thoi_gian']['thanh_toan']);
+        $this->assertNotNull($detail['ma_hoa_don']);
+        $this->assertSame(500.0, $detail['tong_ket']['giam_gia']);
+        $this->assertNull(app(\App\Services\OrderDetailService::class)->build(1, 999));
+
+        $pdf = app(DonHangController::class)->inHoaDonAdmin(1);
+        $this->assertStringStartsWith('%PDF', $pdf->getContent());
     }
 
     public function test_restock_updates_both_inventory_columns_and_writes_audit_log(): void

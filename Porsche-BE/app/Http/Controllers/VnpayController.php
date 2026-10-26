@@ -112,6 +112,7 @@ class VnpayController extends Controller
             ]);
             DB::table('don_hangs')->where('id', $locked->don_hang_id)->update([
                 'trang_thai_thanh_toan' => 'da_thanh_toan',
+                'thanh_toan_luc' => now(),
                 'updated_at' => now(),
             ]);
 

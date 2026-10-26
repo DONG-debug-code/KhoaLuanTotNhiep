@@ -7,6 +7,7 @@ import { apiClient } from "../../api/Authapi";
 import { getWorkspaceData, postWorkspaceData } from "../../api/WorkspaceApi";
 import WorkspaceLayout from "../../components/workspaces/WorkspaceLayout";
 import WorkspaceTable from "../../components/workspaces/WorkspaceTable";
+import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
 
 const ADMIN_NAV = [
   { key: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
@@ -101,6 +102,7 @@ export default function OperationsWorkspacePage({ role }) {
   const [selectedRole, setSelectedRole] = useState(false);
   const [selectedSlide, setSelectedSlide] = useState(false);
   const [chiTietHoaDon, setChiTietHoaDon] = useState(null);
+  const [orderModalId, setOrderModalId] = useState(null);
   const [historyRows, setHistoryRows] = useState(null);
   const [profile, setProfile] = useState(null);
   const [permissionData, setPermissionData] = useState(null);
@@ -245,6 +247,10 @@ export default function OperationsWorkspacePage({ role }) {
   };
 
   const xemChiTietHoaDon = async (invoice) => {
+    if (invoice.don_hang_id) {
+      setOrderModalId(invoice.don_hang_id);
+      return;
+    }
     setDangTai(true);
     setLoi("");
     try {
@@ -633,6 +639,7 @@ export default function OperationsWorkspacePage({ role }) {
         </div>
       ) : null}
 
+      {orderModalId ? <OrderDetailModal orderId={orderModalId} role={role} onClose={() => setOrderModalId(null)} /> : null}
       {chiTietHoaDon ? (
         <section className="mt-5 rounded-xl border border-[#ECECE9] p-4">
           <div className="mb-3 flex items-center justify-between">

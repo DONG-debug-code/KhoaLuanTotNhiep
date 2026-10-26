@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import CustomerWorkspaceLayout from "../../components/workspaces/CustomerWorkspaceLayout";
+import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
 import { useAuth } from "../../context/AuthContext";
 import {
   changeWorkspacePassword, clearAIHistory, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
@@ -204,6 +205,7 @@ function CustomerPortalPage() {
   const [bookingOptions, setBookingOptions] = useState({ chuyen_gias: [], khu_vuc_workshops: [] });
   const [invoices, setInvoices] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [detailOrderId, setDetailOrderId] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -706,11 +708,13 @@ function CustomerPortalPage() {
                       <p key={detail.id} className="mt-2 flex justify-between gap-4"><span>{detail.ten_san_pham || "Sản phẩm showroom"} × {detail.so_luong}</span><span className="font-medium">{money(detail.thanh_tien)}</span></p>
                     ))}
                     <p className="mt-2"><span className="font-semibold">Hình thức nhận:</span> {order.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận tại showroom" : order.phuong_thuc_nhan === "giao_tan_noi" ? `Giao tận nơi${order.dia_chi_nguoi_nhan ? ` · ${order.dia_chi_nguoi_nhan}` : ""}` : "—"}</p>
+                    <button type="button" onClick={() => setDetailOrderId(order.id)} className="mt-4 rounded-lg bg-[#c8102e] px-4 py-2 text-xs font-semibold text-white">Xem chi tiết đầy đủ &amp; in hóa đơn PDF</button>
                   </div>
                 </details>
               ))}
             </div>
           ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-sm text-[#777a80]">Bạn chưa có đơn hàng nào.</div>}
+          {detailOrderId ? <OrderDetailModal orderId={detailOrderId} onClose={() => setDetailOrderId(null)} /> : null}
         </section>
       ) : null}
 
