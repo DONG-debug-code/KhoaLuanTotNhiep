@@ -305,28 +305,28 @@ export default function OperationsWorkspacePage({ role }) {
         <div className="flex justify-end gap-2">
           <button type="button" onClick={() => { setSelectedRole(true); setFormData({ id: row.id, ten_chuc_vu: row.ten_chuc_vu, ma_chuc_vu: row.ma_chuc_vu, trang_thai: String(row.trang_thai) }); }} className="rounded-lg border border-[#ECECE9] px-2 py-1.5 text-xs font-semibold">Sửa</button>
           <button type="button" disabled={dangLuu} onClick={() => void doiTrangThai("chuc-vu/change-status", row)} className="rounded-lg border border-[#ECECE9] px-2 py-1.5 text-xs font-semibold">Trạng thái</button>
-          <button type="button" disabled={dangLuu} onClick={() => void xoaBanGhi("chuc-vu/delete", row, `chức vụ ${row.ten_chuc_vu}`)} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#B60F0F]">Xóa</button>
+          <button type="button" disabled={dangLuu} onClick={() => void xoaBanGhi("chuc-vu/delete", row, `chức vụ ${row.ten_chuc_vu}`)} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#AC0021]">Xóa</button>
         </div>
       );
     } else if (isAdmin && activeKey === "customers") {
       actions = (
         <div className="flex justify-end gap-2">
           <button type="button" onClick={() => { setSelectedCustomer(true); setFormData({ id: row.id, ho_ten: row.ho_ten, email: row.email, so_dien_thoai: row.so_dien_thoai, dia_chi: row.dia_chi || "" }); }} className="rounded-lg border border-[#ECECE9] px-2.5 py-1.5 text-xs font-semibold">Sửa</button>
-          <button type="button" disabled={dangLuu} onClick={() => void doiTrangThai("khach-hang/change-status", row)} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#B60F0F]">Đổi trạng thái</button>
+          <button type="button" disabled={dangLuu} onClick={() => void doiTrangThai("khach-hang/change-status", row)} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#AC0021]">Đổi trạng thái</button>
         </div>
       );
     } else if (isAdmin && activeKey === "inventory") {
       actions = (
         <div className="flex justify-end gap-2">
           <button type="button" disabled={dangLuu} onClick={() => void capNhatKho(row, "restock")} className="rounded-lg border border-[#ECECE9] px-2 py-1.5 text-xs font-semibold">Nhập kho</button>
-          <button type="button" disabled={dangLuu} onClick={() => void capNhatKho(row, "export")} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#B60F0F]">Xuất kho</button>
+          <button type="button" disabled={dangLuu} onClick={() => void capNhatKho(row, "export")} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#AC0021]">Xuất kho</button>
         </div>
       );
     } else if (isAdmin && activeKey === "appointments") {
       actions = (
         <div className="flex justify-end gap-2">
           {Number(row.trang_thai) === 0 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-hen/xac-nhan", { id: row.id })} className="rounded-lg bg-[#17171A] px-2.5 py-1.5 text-xs font-semibold text-white">Duyệt</button> : null}
-          {Number(row.trang_thai) === 1 ? <button type="button" disabled={dangLuu} onClick={() => { setSelectedAppointment(row); setFormData({ tong_tien: "", chi_tiet_kt: "[]" }); }} className="rounded-lg bg-[#B60F0F] px-2.5 py-1.5 text-xs font-semibold text-white">Nghiệm thu</button> : null}
+          {Number(row.trang_thai) === 1 ? <button type="button" disabled={dangLuu} onClick={() => { setSelectedAppointment(row); setFormData({ tong_tien: "", chi_tiet_kt: "[]" }); }} className="rounded-lg bg-[#AC0021] px-2.5 py-1.5 text-xs font-semibold text-white">Nghiệm thu</button> : null}
         </div>
       );
     } else if (isAdmin && activeKey === "invoices") {
@@ -336,7 +336,7 @@ export default function OperationsWorkspacePage({ role }) {
         <div className="flex justify-end gap-2">
           <button type="button" onClick={() => { setSelectedSlide(true); setFormData({ id: row.id, tieu_de: row.tieu_de, hinh_anh: row.hinh_anh, duong_dan: row.duong_dan || "", thu_tu: row.thu_tu, trang_thai: String(row.trang_thai) }); }} className="rounded-lg border border-[#ECECE9] px-2 py-1.5 text-xs font-semibold">Sửa</button>
           <button type="button" disabled={dangLuu} onClick={() => void doiTrangThai("slide/change-status", row)} className="rounded-lg border border-[#ECECE9] px-2 py-1.5 text-xs font-semibold">Ẩn / hiện</button>
-          <button type="button" disabled={dangLuu} onClick={() => void xoaBanGhi("slide/delete", row, `slide ${row.tieu_de}`)} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#B60F0F]">Xóa</button>
+          <button type="button" disabled={dangLuu} onClick={() => void xoaBanGhi("slide/delete", row, `slide ${row.tieu_de}`)} className="rounded-lg border border-[#F1CACA] px-2 py-1.5 text-xs font-semibold text-[#AC0021]">Xóa</button>
         </div>
       );
     } else if (!isAdmin && activeKey === "appointments") {
@@ -345,11 +345,11 @@ export default function OperationsWorkspacePage({ role }) {
         <div className="flex justify-end gap-2">
           {status === 0 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 1 })} className="rounded-lg bg-[#17171A] px-2.5 py-1.5 text-xs font-semibold text-white">Xác nhận</button> : null}
           {status === 1 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 2 })} className="rounded-lg bg-[#2FA84F] px-2.5 py-1.5 text-xs font-semibold text-white">Hoàn thành</button> : null}
-          {status === 0 || status === 1 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 3 })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#B60F0F]">Từ chối</button> : null}
+          {status === 0 || status === 1 ? <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-dat-do/cap-nhat", { id: row.id, trang_thai: 3 })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#AC0021]">Từ chối</button> : null}
         </div>
       );
     } else if (!isAdmin && activeKey === "roster") {
-      actions = <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-lam-viec/xoa", { id: row.id })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#B60F0F]">Xóa ca</button>;
+      actions = <button type="button" disabled={dangLuu} onClick={() => void guiForm(null, "lich-lam-viec/xoa", { id: row.id })} className="rounded-lg border border-[#F1CACA] px-2.5 py-1.5 text-xs font-semibold text-[#AC0021]">Xóa ca</button>;
     } else if (!isAdmin && activeKey === "customers") {
       actions = <button type="button" disabled={dangTai} onClick={() => void xemLichSuKhach(row)} className="rounded-lg border border-[#ECECE9] px-3 py-1.5 text-xs font-semibold">Lịch sử độ xe</button>;
     } else if (!isAdmin && activeKey === "vehicle-records") {
@@ -556,7 +556,7 @@ export default function OperationsWorkspacePage({ role }) {
             <section className="mb-5 rounded-xl border border-[#ECECE9] p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-bold">Lịch sử độ xe: {historyRows.customer.ho_ten}</h3>
-                <button type="button" onClick={() => setHistoryRows(null)} className="text-sm font-semibold text-[#B60F0F]">Đóng</button>
+                <button type="button" onClick={() => setHistoryRows(null)} className="text-sm font-semibold text-[#AC0021]">Đóng</button>
               </div>
               <WorkspaceTable rows={historyRows.rows} emptyMessage="Khách hàng chưa có lịch sử nâng cấp." />
             </section>
@@ -575,7 +575,7 @@ export default function OperationsWorkspacePage({ role }) {
             <p className="mt-2 text-xs text-[#63635E]">Mỗi phần tử gồm ten_vat_tu, so_luong và don_gia. Ví dụ: []</p>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setSelectedAppointment(null)} className="rounded-lg border border-[#ECECE9] px-4 py-2.5 text-sm font-semibold">Hủy</button>
-              <button disabled={dangLuu} className="rounded-lg bg-[#B60F0F] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Hoàn thành</button>
+              <button disabled={dangLuu} className="rounded-lg bg-[#AC0021] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Hoàn thành</button>
             </div>
           </form>
         </div>
@@ -644,7 +644,7 @@ export default function OperationsWorkspacePage({ role }) {
         <section className="mt-5 rounded-xl border border-[#ECECE9] p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-bold">Chi tiết hóa đơn</h3>
-            <button type="button" onClick={() => setChiTietHoaDon(null)} className="text-sm font-semibold text-[#B60F0F]">Đóng</button>
+            <button type="button" onClick={() => setChiTietHoaDon(null)} className="text-sm font-semibold text-[#AC0021]">Đóng</button>
           </div>
           <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-[#FAFAF9] p-3 text-xs">{JSON.stringify(chiTietHoaDon, null, 2)}</pre>
         </section>

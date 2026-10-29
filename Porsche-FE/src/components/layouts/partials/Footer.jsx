@@ -18,7 +18,7 @@ const LINK_DICH_VU = [
 
 export default function Footer() {
     return (
-        <footer className="bg-[#FAFAF9] px-12 pt-14 max-[860px]:px-5">
+        <footer className="bg-[#FAFAF9] px-[1.3rem] pt-14">
             <div className="grid grid-cols-1 gap-10 border-b border-[#ECECE9] pb-12 sm:grid-cols-2 lg:grid-cols-4">
 
                 {/* Logo + mô tả + social */}
@@ -99,7 +99,7 @@ export default function Footer() {
 
             {/* Copyright bar */}
             <div className="flex flex-col justify-center gap-3 py-6 text-xs text-[#8A8A85] sm:flex-row sm:items-center">
-                <span>© 2026 DU_AN_XE. Giá và tồn kho sản phẩm được xác nhận theo dữ liệu showroom.</span>
+                <span>© 2026 Porschethông . Giá và tồn kho sản phẩm được xác nhận theo dữ liệu showroom.</span>
 
                 <div className="flex gap-5">
                     <a href="#" className="hover:text-[#17171A]">Điều khoản</a>

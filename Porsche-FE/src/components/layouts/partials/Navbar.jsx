@@ -7,8 +7,8 @@ import { useCart } from "../../../context/CartContext";
 const NAV_LINKS = [
   { key: "home", ten: "Trang chủ", loai: "home" },
   { key: "xe-dang-ban", ten: "Xe đang bán", loai: "scroll", targetId: "xe-dang-ban" },
-  { key: "hang-phu-tung", ten: "Gói độ & phụ kiện", loai: "route", duongDan: "/hang-phu-tung" },
-  { key: "chuyen-gia", ten: "Chuyên gia", loai: "route", duongDan: "/chuyen-gia" },
+  { key: "hang-phu-tung", ten: "Gói độ & phụ kiện", loai: "route", duongDan: "/hang-phu-tung", targetId: "hang-phu-tung" },
+  { key: "chuyen-gia", ten: "Chuyên gia", loai: "route", duongDan: "/chuyen-gia", targetId: "chuyen-gia" },
 ];
 
 export default function Navbar({ luonSang = false }) {
@@ -34,7 +34,7 @@ export default function Navbar({ luonSang = false }) {
   useEffect(() => {
     if (location.pathname !== "/") return;
 
-    const cacMucTieu = NAV_LINKS.filter((l) => l.loai === "scroll").map((l) => l.targetId);
+    const cacMucTieu = NAV_LINKS.filter((l) => l.targetId).map((l) => l.targetId);
     const phanTu = cacMucTieu.map((id) => document.getElementById(id)).filter(Boolean);
     if (phanTu.length === 0) return;
 
@@ -87,11 +87,10 @@ export default function Navbar({ luonSang = false }) {
   };
 
   const kiemTraActive = (link) => {
-    if (link.loai === "route") return location.pathname.startsWith(link.duongDan);
+    if (link.loai === "route" && location.pathname.startsWith(link.duongDan)) return true;
     if (location.pathname !== "/") return false;
     if (link.loai === "home") return muctieuDangHien === "home";
-    if (link.loai === "scroll") return muctieuDangHien === link.targetId;
-    return false;
+    return muctieuDangHien === link.targetId;
   };
 
   const xuLyDangXuat = async () => {
@@ -115,8 +114,8 @@ export default function Navbar({ luonSang = false }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 flex h-[84px] items-center justify-between
-        px-12 max-[860px]:px-5 max-[860px]:h-[64px]
+      className={`fixed top-0 left-0 right-0 z-50 flex h-[80px] items-center justify-between
+        px-12 max-[860px]:px-5
         transition-colors duration-300 ease-in-out border-b
         ${dangSang
           ? "bg-white/95 backdrop-blur border-[#ECECE9] shadow-sm"
@@ -136,7 +135,7 @@ export default function Navbar({ luonSang = false }) {
         {NAV_LINKS.map((link) => {
           const active = kiemTraActive(link);
           const lopChung = `cursor-pointer transition-colors duration-200 ${
-            active ? "text-[#B60F0F] font-semibold" : "hover:opacity-70"
+            active ? "text-[#AC0021] font-semibold" : "hover:opacity-70"
           }`;
 
           if (link.loai === "home") {
@@ -171,7 +170,7 @@ export default function Navbar({ luonSang = false }) {
         >
           <ShoppingBag className="h-5 w-5" />
           {itemCount > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8102e] px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#AC0021] px-1 text-[10px] font-bold text-white">
               {itemCount > 99 ? "99+" : itemCount}
             </span>
           ) : null}
@@ -181,9 +180,9 @@ export default function Navbar({ luonSang = false }) {
             <button
               onClick={() => setMenuMo((truoc) => !truoc)}
               className={`flex items-center gap-2 rounded-lg border-none px-3.5 py-2.5 text-sm font-semibold transition-colors duration-300
-                ${dangSang ? "bg-[#F1F1EF] text-[#17171A]" : "bg-white/[0.08] text-white"}`}
+                bg-[#17171A] text-white`}
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#B60F0F] text-xs font-bold text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#AC0021] text-xs font-bold text-white">
                 {chuCaiDau}
               </span>
               <span className="max-w-[120px] truncate">{tenHienThi}</span>
@@ -202,7 +201,7 @@ export default function Navbar({ luonSang = false }) {
                 </Link>
                 <button
                   onClick={xuLyDangXuat}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[#B60F0F] hover:bg-[#FBE9E9]"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[#AC0021] hover:bg-[#FBE9E9]"
                 >
                   <LogOut className="h-4 w-4" />
                   Đăng xuất

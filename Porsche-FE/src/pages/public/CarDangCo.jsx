@@ -91,8 +91,8 @@ export const CarDangCo = () => {
   );
 
   return (
-    <div id="xe-dang-ban" className="scroll-mt-[77.3px] relative min-h-screen px-6 bg-[#FAFAF9] font-['Inter',sans-serif] text-[#17171A]">
-      <div className="flex items-start justify-between gap-6 border-b border-[#ECECE9] pb-7 pt-10 max-[860px]:flex-col max-[860px]:px-5 max-[860px]:pb-5 max-[860px]:pt-7">
+    <div id="xe-dang-ban" className="scroll-mt-[80px] relative min-h-screen px-[1.3rem] bg-[#FAFAF9] font-['Inter',sans-serif] text-[#17171A]">
+      <div className="flex items-start justify-between gap-6 border-b border-[#ECECE9] pb-7 pt-10 max-[860px]:flex-col max-[860px]:pb-5 max-[860px]:pt-7">
         <div>
           <h1 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px]">
             Xe Porsche đang có tại showroom
@@ -105,7 +105,7 @@ export const CarDangCo = () => {
         </div>
 
         <div className="flex shrink-0 items-center gap-3 whitespace-nowrap self-end rounded-xl border border-[#ECECE9] bg-[#F1F1EF] px-[18px] py-1.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FBE9E9] text-[#c71430]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FBE9E9] text-[#AC0021]">
             <BadgeCheck className="h-5 w-5" strokeWidth={2.5} />
           </span>
 
@@ -121,13 +121,13 @@ export const CarDangCo = () => {
         </div>
       </div>
 
-      <div className=" my-6 flex w-full flex-wrap gap-2 rounded-[50px] bg-[#F1F1EF] p-1.5 max-[860px]:mx-5 max-[860px]:my-5">
+      <div className=" my-6 flex w-full flex-wrap gap-2       rounded-[50px] bg-[#F1F1EF] p-1 max-[860px]:mx-5 max-[860px]:my-5">
         {BO_LOC.map((loc) => (
           <button
             key={loc}
             className={`
-                    cursor-pointer rounded-[50px] border-none px-[18px] py-[9px]
-                    text-sm font-medium
+                          cursor-pointer rounded-[50px] border-none px-4 py-1.5
+                    text-[13px] font-medium
                     ${locDang === loc
                                 ? "bg-[#17171A] font-semibold text-white"
                                 : "bg-transparent text-[#4A4A46]"
@@ -143,8 +143,8 @@ export const CarDangCo = () => {
         ))}
       </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_180px]">
-        <label className="relative">
+      <div className="mb-6 grid items-end gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_180px]">
+        <label className="relative block">
           <span className="sr-only">Tìm xe theo tên hoặc dòng xe</span>
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A85]" />
           <input
@@ -152,41 +152,41 @@ export const CarDangCo = () => {
             value={tuKhoa}
             onChange={(event) => { setTuKhoa(event.target.value); setTrang(1); }}
             placeholder="Tìm tên xe hoặc dòng xe"
-            className="w-full rounded-xl border border-[#DCDCD7] bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-[#17171A]"
+            className="w-full rounded-xl border border-[#DCDCD7] bg-white h-10 pl-10 pr-4 text-[13px] outline-none focus:border-[#17171A]"
           />
         </label>
-        <label className="text-xs font-semibold text-[#63635E]">
+        <label className="text-[11px] font-semibold text-[#63635E]">
           Giá từ (VNĐ)
           <input
             type="number"
             min="0"
             value={giaTu}
             onChange={(event) => { setGiaTu(event.target.value); setTrang(1); }}
-            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white px-3.5 py-2.5 text-sm font-normal text-[#17171A] outline-none focus:border-[#17171A]"
+            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white h-10 px-3.5 text-[13px] font-normal text-[#17171A] outline-none focus:border-[#17171A]"
           />
         </label>
-        <label className="text-xs font-semibold text-[#63635E]">
+        <label className="text-[11px] font-semibold text-[#63635E]">
           Giá đến (VNĐ)
           <input
             type="number"
             min="0"
             value={giaDen}
             onChange={(event) => { setGiaDen(event.target.value); setTrang(1); }}
-            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white px-3.5 py-2.5 text-sm font-normal text-[#17171A] outline-none focus:border-[#17171A]"
+            className="mt-1 w-full rounded-xl border border-[#DCDCD7] bg-white h-10 px-3.5 text-[13px] font-normal text-[#17171A] outline-none focus:border-[#17171A]"
           />
         </label>
       </div>
 
-      {loi ? <p role="alert" className="px-6 text-sm text-red-700">{loi}</p> : null}
-      {dangTai ? <p className="px-6 text-sm text-[#63635E]">Đang tải danh sách xe...</p> : null}
+      {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
+      {dangTai ? <p className="text-sm text-[#63635E]">Đang tải danh sách xe...</p> : null}
       {!dangTai && !loi && danhSachXe.length === 0 ? (
-        <p className="px-6 text-sm text-[#63635E]">Hiện chưa có xe tại showroom.</p>
+        <p className="text-sm text-[#63635E]">Hiện chưa có xe tại showroom.</p>
       ) : null}
       {!dangTai && !loi && danhSachXe.length > 0 && xeHienThi.length === 0 ? (
-        <p className="px-6 text-sm text-[#63635E]">Không có xe phù hợp với điều kiện tìm kiếm.</p>
+        <p className="text-sm text-[#63635E]">Không có xe phù hợp với điều kiện tìm kiếm.</p>
       ) : null}
 
-      <div className={`grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-4 pt-2 max-[860px]:px-5 ${
+      <div className={`grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-4 pt-2 ${
         trangCuoi > 1 ? "pb-8 max-[860px]:pb-6" : "pb-16 max-[860px]:pb-12"
       }`}>
         <CarItem xeHienThi={xeHienThi} />

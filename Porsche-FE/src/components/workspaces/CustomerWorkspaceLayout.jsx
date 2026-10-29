@@ -48,10 +48,8 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
 
       <aside className={`fixed inset-y-0 left-0 z-[60] flex w-[264px] flex-col border-r border-[#e6e6e3] bg-[#fafaf9] transition-transform duration-200 lg:translate-x-0 ${menuMo ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[#e6e6e3] px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#080a0d] text-white">
-            <span className="text-sm font-bold">P</span>
-          </div>
-          <span className="text-base font-extrabold tracking-tight">DU_AN_XE</span>
+          <img src="/src/assets/img/logo.png" alt="Porsche" className="h-10 w-10 object-contain" />
+          <span className="text-[15px] font-extrabold uppercase tracking-tight">Porsche</span>
           <button type="button" onClick={() => setMenuMo(false)} aria-label="Đóng menu" className="ml-auto rounded-lg p-2 lg:hidden">
             <X className="h-5 w-5" />
           </button>
@@ -64,7 +62,7 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
               type="button"
               onClick={() => chonMuc(key)}
               aria-current={activeKey === key ? "page" : undefined}
-              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
+              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
                 activeKey === key ? "bg-[#080a0d] text-white" : "text-[#50545a] hover:bg-[#f0f0ed]"
               }`}
             >
@@ -78,23 +76,23 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#faedce] text-[#9b7437]">
                 <Sparkles className="h-4 w-4" />
               </span>
-              <span className="text-sm font-bold">Trợ lý AI 24/7</span>
+              <span className="text-[13px] font-bold">Trợ lý AI 24/7</span>
             </div>
-            <p className="mt-2 text-xs leading-5 text-[#73767a]">Tư vấn gói độ và bảo dưỡng theo xe của bạn.</p>
-            <button type="button" onClick={() => chonMuc("ai-history")} className="mt-3 w-full rounded-lg bg-[#080a0d] px-3 py-2 text-xs font-semibold text-white">
+            <p className="mt-2 text-[11px] leading-5 text-[#73767a]">Tư vấn gói độ và bảo dưỡng theo xe của bạn.</p>
+            <button type="button" onClick={() => chonMuc("ai-history")} className="mt-3 w-full rounded-lg bg-[#080a0d] px-3 py-2 text-[11px] font-semibold text-white">
               Tư vấn gói độ
             </button>
-            <button type="button" onClick={() => chonMuc("booking")} className="mt-2 w-full rounded-lg border border-[#d7d7d3] bg-transparent px-3 py-2 text-xs font-semibold">
+            <button type="button" onClick={() => chonMuc("booking")} className="mt-2 w-full rounded-lg border border-[#d7d7d3] bg-transparent px-3 py-2 text-[11px] font-semibold">
               Tư vấn bảo dưỡng
             </button>
           </section>
         </nav>
 
         <div className="space-y-1 border-t border-[#e6e6e3] p-3">
-          <Link to="/" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#50545a] hover:bg-[#f0f0ed]">
+          <Link to="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-[#50545a] hover:bg-[#f0f0ed]">
             <Store className="h-[18px] w-[18px]" /> Về showroom
           </Link>
-          <button type="button" onClick={() => void xuLyDangXuat()} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#c8102e] hover:bg-[#fae9eb]">
+          <button type="button" onClick={() => void xuLyDangXuat()} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] text-[#AC0021] hover:bg-[#fae9eb]">
             <LogOut className="h-[18px] w-[18px]" /> Đăng xuất
           </button>
         </div>
@@ -107,12 +105,12 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
               <Menu className="h-5 w-5" />
             </button>
             <div>
-              <p className="text-xs text-[#82858a]">Khu vực khách hàng</p>
-              <p className="text-sm font-semibold">Xin chào, {ten}</p>
+              <p className="text-[11px] text-[#82858a]">Khu vực khách hàng</p>
+              <p className="text-[13px] font-semibold">Xin chào, {ten}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button type="button" onClick={onBook} className="inline-flex items-center gap-2 rounded-lg bg-[#cf102d] px-3.5 py-2.5 text-xs font-bold text-white hover:bg-[#b80e28] sm:px-4 sm:text-sm">
+            <button type="button" onClick={onBook} className="inline-flex items-center gap-2 rounded-lg bg-[#AC0021] px-3 py-2 text-[11px] font-bold text-white hover:bg-[#8C001B] sm:px-3.5 sm:text-[12px]">
               <span className="text-base leading-none">+</span> <span className="hidden sm:inline">Đặt lịch mới</span><span className="sm:hidden">Đặt lịch</span>
             </button>
             <div className="relative">
@@ -120,20 +118,20 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#deded9] text-sm font-bold text-[#50545a]">{chuCaiDau}</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#deded9] text-[13px] font-bold text-[#50545a]">{chuCaiDau}</span>
                 )}
                 <span className="hidden min-w-0 sm:block">
-                  <span className="block max-w-[120px] truncate text-xs font-semibold">{ten}</span>
+                  <span className="block max-w-[120px] truncate text-[11px] font-semibold">{ten}</span>
                   <span className="block text-[11px] text-[#937541]">Khách hàng</span>
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-[#70737a]" />
               </button>
               {menuNguoiDungMo ? (
                 <div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl border border-[#e6e6e3] bg-white p-1.5 shadow-lg">
-                  <button type="button" onClick={() => { chonMuc("profile"); setMenuNguoiDungMo(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-[#f3f3f1]">
+                  <button type="button" onClick={() => { chonMuc("profile"); setMenuNguoiDungMo(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] hover:bg-[#f3f3f1]">
                     <Settings className="h-4 w-4" /> Hồ sơ cá nhân
                   </button>
-                  <button type="button" onClick={() => void xuLyDangXuat()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-[#c8102e] hover:bg-[#fae9eb]">
+                  <button type="button" onClick={() => void xuLyDangXuat()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] text-[#AC0021] hover:bg-[#fae9eb]">
                     <LogOut className="h-4 w-4" /> Đăng xuất
                   </button>
                 </div>
@@ -145,8 +143,8 @@ export default function CustomerWorkspaceLayout({ activeKey, onNavigate, onBook,
         <main className="min-h-screen px-4 pb-8 pt-[96px] sm:px-6 lg:px-7">
           {children}
         </main>
-        <footer className="flex flex-wrap justify-between gap-3 border-t border-[#e6e6e3] bg-[#fafaf9] px-6 py-4 text-xs text-[#777a80] lg:px-7">
-          <span>© {new Date().getFullYear()} DU_AN_XE · Khu vực khách hàng</span>
+        <footer className="flex flex-wrap justify-between gap-3 border-t border-[#e6e6e3] bg-[#fafaf9] px-6 py-4 text-[11px] text-[#777a80] lg:px-7">
+          <span>© {new Date().getFullYear()} Porsche · Khu vực khách hàng</span>
           <span className="flex gap-5"><a href="#terms" className="hover:text-[#17191c]">Điều khoản</a><a href="#privacy" className="hover:text-[#17191c]">Bảo mật</a></span>
         </footer>
       </div>

@@ -42,7 +42,7 @@ export const HangItem = ({ HANG_DO }) => {
             <span className="text-sm text-[#8A8A85]">{hang.goiDo.length} gói độ sẵn có</span>
             <Link
               to={`/hang-phu-tung/${hang.id ?? hang.slug}`}
-              className="text-sm font-semibold text-[#c71430] hover:underline"
+              className="text-sm font-semibold text-[#AC0021] hover:underline"
             >
               Xem gói độ →
             </Link>

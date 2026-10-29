@@ -77,11 +77,11 @@ export default function DangNhapPage() {
               type="checkbox"
               checked={ghiNho}
               onChange={(event) => setGhiNho(event.target.checked)}
-              className="h-4 w-4 rounded border-[#C9CACE] accent-[#C8102E]"
+              className="h-4 w-4 rounded border-[#C9CACE] accent-[#AC0021]"
             />
             Ghi nhớ đăng nhập
           </label>
-          <Link to="/quen-mat-khau" className="font-semibold text-[#C8102E] hover:underline">
+          <Link to="/quen-mat-khau" className="font-semibold text-[#AC0021] hover:underline">
             Quên mật khẩu?
           </Link>
         </div>
@@ -109,7 +109,7 @@ export default function DangNhapPage() {
         <Link
           to="/dang-ky"
           state={{ from: location.state?.from, pendingCartItem }}
-          className="font-semibold text-[#C8102E] hover:underline"
+          className="font-semibold text-[#AC0021] hover:underline"
         >
           Đăng ký ngay
         </Link>

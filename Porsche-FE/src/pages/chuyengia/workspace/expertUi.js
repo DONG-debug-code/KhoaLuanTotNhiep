@@ -1,7 +1,7 @@
 export const STAGE_META = {
   cho_xac_nhan: { label: "Chờ xác nhận", dot: "#B8862B", chip: "bg-[#FBF1DC] text-[#8A6414] border-[#F0DDB0]" },
   cho_nhan_xe: { label: "Chờ nhận xe", dot: "#B8862B", chip: "bg-[#FBF1DC] text-[#8A6414] border-[#F0DDB0]" },
-  dang_thi_cong: { label: "Đang thi công", dot: "#D4202B", chip: "bg-[#FDE8E8] text-[#B60F0F] border-[#F6C9C9]" },
+  dang_thi_cong: { label: "Đang thi công", dot: "#AC0021", chip: "bg-[#FDE8E8] text-[#AC0021] border-[#F6C9C9]" },
   dang_test_dyno: { label: "Đang test Dyno", dot: "#A98A4B", chip: "bg-[#F3EBDD] text-[#7A5F25] border-[#E5D7BA]" },
   da_ban_giao: { label: "Hoàn thành", dot: "#17171A", chip: "bg-[#17171A] text-white border-[#17171A]" },
   da_huy: { label: "Đã hủy", dot: "#8B8B86", chip: "bg-[#F1F1EF] text-[#63635E] border-[#E4E4E0]" },

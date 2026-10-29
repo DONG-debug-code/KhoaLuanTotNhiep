@@ -26,19 +26,19 @@ function PhuTungCard({ item, onSelect }) {
           </div>
         )}
       </div>
-      <div className="p-5">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A8A85]">
+      <div className="p-4">
+        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A8A85]">
           {item.hangMuc || "Phụ tùng Porsche"}
         </div>
-        <h3 className="mb-2 text-lg font-bold text-[#17171A]">{item.ten}</h3>
+        <h3 className="mb-1.5 text-[15px] font-bold text-[#17171A]">{item.ten}</h3>
         {item.moTaNgan ? (
-          <p className="mb-4 line-clamp-3 text-sm leading-[1.6] text-[#63635E]">{item.moTaNgan}</p>
+          <p className="mb-3 line-clamp-3 text-[13px] leading-[1.6] text-[#63635E]">{item.moTaNgan}</p>
         ) : null}
-        <div className="flex items-center justify-between border-t border-[#ECECE9] pt-4">
-          <span className="text-base font-extrabold text-[#B60F0F]">{item.gia || "Liên hệ"}</span>
-          <span className={`text-xs font-semibold ${item.soLuong > 0 ? "text-[#2FA84F]" : "text-[#8A8A85]"}`}>
+        <div className="flex items-center justify-between border-t border-[#ECECE9] pt-3">
+          <span className={`text-[11px] font-semibold ${item.soLuong > 0 ? "text-[#2FA84F]" : "text-[#8A8A85]"}`}>
             {item.soLuong > 0 ? `Còn ${item.soLuong}` : "Tạm hết hàng"}
           </span>
+          <span className="text-[13px] font-semibold text-[#17171A]">Xem chi tiết →</span>
         </div>
       </div>
     </button>

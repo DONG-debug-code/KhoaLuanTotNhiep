@@ -53,7 +53,7 @@ export default function ExpertRosterView({ shifts, today, saving, onRegister, on
                 {items.map((item) => (
                   <span key={item.id} className="inline-flex items-center gap-2 rounded-lg bg-[#F4F4F2] py-1.5 pl-3 pr-1.5 text-sm">
                     {item.ca_lam_viec}
-                    <button type="button" disabled={saving} onClick={() => onRemove(item.id)} aria-label={`Xóa ${item.ca_lam_viec} ngày ${formatDate(day)}`} className="rounded-md p-1.5 text-[#B60F0F] hover:bg-[#FBE9E9] disabled:opacity-50">
+                    <button type="button" disabled={saving} onClick={() => onRemove(item.id)} aria-label={`Xóa ${item.ca_lam_viec} ngày ${formatDate(day)}`} className="rounded-md p-1.5 text-[#AC0021] hover:bg-[#FBE9E9] disabled:opacity-50">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </span>

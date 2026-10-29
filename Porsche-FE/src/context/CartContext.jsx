@@ -85,11 +85,34 @@ function CartSession({ children, accountKey }) {
     if (accountKey) setItems([]);
   }, [accountKey]);
 
+  // selected !== false: các món cũ chưa có cờ này mặc định được coi là đã chọn
+  const toggleSelected = useCallback((type, id) => {
+    setItems((current) => current.map((item) => (
+      item.type === type && item.id === id ? { ...item, selected: item.selected === false } : item
+    )));
+  }, []);
+
+  const setAllSelected = useCallback((selected) => {
+    setItems((current) => current.map((item) => ({ ...item, selected })));
+  }, []);
+
+  const clearSelected = useCallback(() => {
+    if (accountKey) setItems((current) => current.filter((item) => item.selected === false));
+  }, [accountKey]);
+
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const subtotal = items.reduce((total, item) => total + item.giaSo * item.quantity, 0);
+  const selectedItems = items.filter((item) => item.selected !== false);
+  const selectedCount = selectedItems.reduce((total, item) => total + item.quantity, 0);
+  const selectedSubtotal = selectedItems.reduce((total, item) => total + item.giaSo * item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, itemCount, subtotal, addItem, setQuantity, removeItem, clearCart }}>
+    <CartContext.Provider
+      value={{
+        items, itemCount, subtotal, addItem, setQuantity, removeItem, clearCart,
+        selectedItems, selectedCount, selectedSubtotal, toggleSelected, setAllSelected, clearSelected,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

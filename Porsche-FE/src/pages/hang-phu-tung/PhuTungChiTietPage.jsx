@@ -54,7 +54,7 @@ export default function PhuTungChiTietPage() {
   return (
     <>
       <Navbar luonSang />
-      <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[130px] max-[860px]:px-5">
+      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin phụ tùng...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !phuTung ? (
@@ -90,7 +90,7 @@ export default function PhuTungChiTietPage() {
                   <p className="text-sm leading-[1.6] text-[#63635E]">{phuTung.dongXeTuongThich.join(", ")}</p>
                 </section>
               ) : null}
-              <div className="mb-5 text-2xl font-extrabold text-[#B60F0F]">
+              <div className="mb-5 text-2xl font-extrabold text-[#AC0021]">
                 {phuTung.gia || "Liên hệ"}
               </div>
               <p className="mb-2 text-xs text-[#85888d]">Giá trọn gói (đã gồm công lắp đặt)</p>

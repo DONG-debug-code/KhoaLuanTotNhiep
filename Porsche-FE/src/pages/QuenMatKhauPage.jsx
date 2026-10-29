@@ -49,7 +49,7 @@ export default function QuenMatKhauPage() {
         </AuthSubmit>
         <p className="mt-6 text-sm text-[#666970]">
           Nhớ ra mật khẩu rồi?{" "}
-          <Link to="/dang-nhap" className="font-semibold text-[#C8102E] hover:underline">
+          <Link to="/dang-nhap" className="font-semibold text-[#AC0021] hover:underline">
             Quay lại đăng nhập
           </Link>
         </p>
@@ -80,7 +80,7 @@ export default function QuenMatKhauPage() {
       </form>
       <p className="mt-6 text-sm text-[#666970]">
         Nhớ ra mật khẩu rồi?{" "}
-        <Link to="/dang-nhap" className="font-semibold text-[#C8102E] hover:underline">
+        <Link to="/dang-nhap" className="font-semibold text-[#AC0021] hover:underline">
           Quay lại đăng nhập
         </Link>
       </p>

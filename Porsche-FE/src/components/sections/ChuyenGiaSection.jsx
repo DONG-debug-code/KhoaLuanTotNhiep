@@ -15,7 +15,7 @@ export default function ChuyenGiaSection() {
   }, []);
 
   return (
-    <div className="bg-[#FAFAF9] px-6 py-16 max-[860px]:px-5 max-[860px]:py-10">
+    <div id="chuyen-gia" className="bg-[#FAFAF9] px-[1.3rem] py-16 max-[860px]:py-10">
       <h2 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px] max-[860px]:text-[26px]">
         Đội ngũ chuyên gia / tuner
       </h2>

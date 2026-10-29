@@ -94,7 +94,7 @@ export default function ChuyenGiaWorkspacePage() {
 
   return (
     <ExpertWorkspaceLayout activeKey={activeKey} onNavigate={setActiveKey} expert={board?.chuyen_gia} dynoBusy={Boolean(board?.dyno_ban)}>
-      {loi ? <p role="alert" className="mb-4 rounded-xl border border-[#F1CACA] bg-[#FBE9E9] px-4 py-3 text-sm text-[#B60F0F]">{loi}</p> : null}
+      {loi ? <p role="alert" className="mb-4 rounded-xl border border-[#F1CACA] bg-[#FBE9E9] px-4 py-3 text-sm text-[#AC0021]">{loi}</p> : null}
       {thongBao ? <p role="status" className="mb-4 rounded-xl border border-[#CFE6D4] bg-[#EAF6ED] px-4 py-3 text-sm text-[#256C3A]">{thongBao}</p> : null}
 
       {!sanSang ? (

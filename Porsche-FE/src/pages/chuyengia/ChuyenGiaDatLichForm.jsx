@@ -102,7 +102,7 @@ export default function ChuyenGiaDatLichForm({ chuyenGia }) {
                     {slot.gio}
                   </button>
                 ))}
-                {khungGio.length > 0 && khungGio.every((slot) => !slot.con_trong) ? <p className="text-sm text-[#B60F0F]">Chuyên gia không còn giờ trống trong ngày này.</p> : null}
+                {khungGio.length > 0 && khungGio.every((slot) => !slot.con_trong) ? <p className="text-sm text-[#AC0021]">Chuyên gia không còn giờ trống trong ngày này.</p> : null}
               </div>
             )}
           </div>

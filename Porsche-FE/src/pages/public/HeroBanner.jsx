@@ -30,14 +30,14 @@ export const HeroBanner = ({ data }) => {
             <div className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.25)_55%,rgba(0,0,0,0.85)_90%)]" />
 
             <div className="relative z-[2] flex flex-col min-h-screen">
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-6 pb-10">
-                    <div className="inline-flex items-center gap-2 text-[13px] text-[#E8E7E2] border border-white/[0.18] px-4 py-1 rounded-full mt-20 mb-7">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#c71430]" />
+                <div className="flex-1 flex flex-col items-center justify-center text-center px-[1.3rem] pb-10">
+                    <div className="inline-flex items-center gap-2 text-[13px] text-[#E8E7E2] border border-white/[0.18] px-4 py-1 rounded-full mt-24 mb-7">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#AC0021]" />
                         Showroom Porsche · TP. Đà Nẵng
                     </div>
 
                     <h1 className="text-[#d8d4d4] text-[34px] m-0 md:text-[70px] leading-[1.1] font-extrabold max-w-[820px] mb-6 tracking-[-0.5px]">
-                        Khí chất <span className="text-[#c71430]">Porsche</span>,<br />
+                        Khí chất <span className="text-[#AC0021]">Porsche</span>,<br />
                         chuẩn mực showroom.
                     </h1>
 
@@ -50,7 +50,7 @@ export const HeroBanner = ({ data }) => {
 
                     <div className="flex flex-col md:flex-row gap-3.5 mb-10 w-full max-w-[320px] md:max-w-none md:w-auto">
                         <button onClick={() => document.getElementById("xe-dang-ban")?.scrollIntoView({ behavior: "smooth" })}
-                         className="bg-[#c71430] text-white text-[15px] font-semibold px-6 py-3.5 rounded-[9px] border-0 cursor-pointer flex items-center justify-center gap-2.5">
+                         className="bg-[#AC0021] text-white text-[15px] font-semibold px-6 py-3.5 rounded-[9px] border-0 cursor-pointer flex items-center justify-center gap-2.5">
                             Khám phá xe đang bán
                         </button>
                         <button 

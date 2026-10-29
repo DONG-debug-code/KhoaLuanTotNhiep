@@ -43,7 +43,7 @@ export default function GoiDoChiTietPage() {
   return (
     <>
       <Navbar luonSang />
-      <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[130px] max-[860px]:px-5">
+      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin gói độ...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !goi ? (
@@ -87,7 +87,7 @@ export default function GoiDoChiTietPage() {
                 </div>
               ) : null}
 
-              {goi.gia ? <div className="mb-6 text-2xl font-extrabold text-[#B60F0F]">{goi.gia}</div> : null}
+              {goi.gia ? <div className="mb-6 text-2xl font-extrabold text-[#AC0021]">{goi.gia}</div> : null}
 
               <Link
                 to={`/dat-coc/goi-do/${goi.id ?? goi.slug}`}

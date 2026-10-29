@@ -5,7 +5,7 @@ const GOI_Y_BAO_DUONG = ["Xe 15.000 km cần làm gì?", "Khi nào thay dầu PD
 
 export default function TroLyAISection() {
   return (
-    <div className="bg-[#0A0A0B] px-6 py-20 text-white max-[860px]:px-5 max-[860px]:py-14">
+    <div className="bg-[#0A0A0B] px-[1.3rem] py-20 text-white max-[860px]:py-14">
       <h2 className="mb-4 max-w-[720px] text-[38px] text-white font-extrabold leading-[1.15] tracking-[-0.3px] max-[860px]:text-[26px]">
         Hai trợ lý AI hỗ trợ sau khi bạn đã có xe
       </h2>
@@ -17,7 +17,7 @@ export default function TroLyAISection() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
           <div className="mb-5 flex items-center gap-3.5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#c71430]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#AC0021]">
               <Wrench className="h-5 w-5 text-white" />
             </span>
             <div>

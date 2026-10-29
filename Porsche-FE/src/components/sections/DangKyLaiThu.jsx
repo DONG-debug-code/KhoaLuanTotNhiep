@@ -4,7 +4,7 @@ const DONG_XE = ["911", "718", "Taycan", "Panamera", "Cayenne", "Macan"];
 
 export default function DangKyLaiThu() {
     return (
-        <div id="dang-ky-lai-thu" className="bg-[#F3F3F0] scroll-mt-[77.3px] py-16 max-[860px]:px-5 max-[860px]:py-10 px-6">
+        <div id="dang-ky-lai-thu" className="bg-[#F3F3F0] scroll-mt-[80px] py-16 max-[860px]:py-10 px-[1.3rem]">
             <div className="grid grid-cols-1 gap-14 lg:grid-cols-2">
 
                 {/* Left */}
@@ -132,7 +132,7 @@ export default function DangKyLaiThu() {
 
                     <button
                         type="submit"
-                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#B60F0F] py-3.5 text-[15px] font-semibold text-white"
+                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#AC0021] py-3.5 text-[15px] font-semibold text-white"
                     >
                         <Send className="h-4 w-4" />
                         Gửi yêu cầu tư vấn

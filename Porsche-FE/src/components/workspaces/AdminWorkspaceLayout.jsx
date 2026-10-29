@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, Gauge, LogOut, Menu, Search, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Search, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkspaceAssetUrl } from "../../api/WorkspaceApi";
 import { initials } from "../../pages/chuyengia/workspace/expertUi";
@@ -41,9 +41,9 @@ export default function AdminWorkspaceLayout({
 
       <aside className={`fixed inset-y-0 left-0 z-[60] flex w-[270px] flex-col bg-[#0B0B0D] text-white transition-transform duration-200 lg:translate-x-0 ${menuMo ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4202B]"><Gauge className="h-5 w-5" /></div>
+          <img src="/src/assets/img/logo.png" alt="Porsche" className="h-10 w-10 object-contain" />
           <div className="leading-tight">
-            <p className="text-sm font-extrabold tracking-tight">DU_AN_XE</p>
+                      <p className="text-sm font-extrabold uppercase tracking-tight">Porsche</p>
             <p className="text-[11px] text-white/60">Bảng quản trị</p>
           </div>
           <button type="button" onClick={() => setMenuMo(false)} aria-label="Đóng menu" className="ml-auto rounded-lg p-2 lg:hidden"><X className="h-5 w-5" /></button>
@@ -64,7 +64,7 @@ export default function AdminWorkspaceLayout({
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{label}</span>
-                    {badge ? <span className="rounded-full bg-[#D4202B] px-2 py-0.5 text-[10px] font-bold">{badge}</span> : null}
+                    {badge ? <span className="rounded-full bg-[#AC0021] px-2 py-0.5 text-[10px] font-bold">{badge}</span> : null}
                   </button>
                 ))}
               </div>
@@ -94,7 +94,7 @@ export default function AdminWorkspaceLayout({
             </label>
             <button type="button" onClick={onAlertClick} aria-label="Việc cần xử lý" className="relative rounded-xl border border-[#E6E6E3] bg-white p-3">
               <Bell className="h-4 w-4" />
-              {alertCount > 0 ? <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D4202B] px-1 text-[10px] font-bold text-white">{alertCount}</span> : null}
+              {alertCount > 0 ? <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#AC0021] px-1 text-[10px] font-bold text-white">{alertCount}</span> : null}
             </button>
             <div ref={profileRef} className="relative">
               <button type="button" onClick={() => setProfileMo((value) => !value)} className="flex items-center gap-2.5 rounded-full border border-[#E6E6E3] bg-white py-1.5 pl-1.5 pr-3">
@@ -107,7 +107,7 @@ export default function AdminWorkspaceLayout({
               </button>
               {profileMo ? (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl border border-[#E6E6E3] bg-white p-1 shadow-lg">
-                  <button type="button" onClick={xuLyDangXuat} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B60F0F] hover:bg-[#FBE9E9]"><LogOut className="h-4 w-4" /> Đăng xuất</button>
+                  <button type="button" onClick={xuLyDangXuat} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#AC0021] hover:bg-[#FBE9E9]"><LogOut className="h-4 w-4" /> Đăng xuất</button>
                 </div>
               ) : null}
             </div>
@@ -116,7 +116,7 @@ export default function AdminWorkspaceLayout({
 
         <main className="px-4 pb-10 pt-8 sm:px-8">{children}</main>
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E6E6E3] px-4 py-5 text-xs text-[#63635E] sm:px-8">
-          <span>© {new Date().getFullYear()} DU_AN_XE · Bảng quản trị</span>
+          <span>© {new Date().getFullYear()} Porsche · Bảng quản trị</span>
           <span>Dữ liệu hiển thị là dữ liệu thật từ hệ thống</span>
         </footer>
       </div>

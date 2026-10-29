@@ -74,7 +74,7 @@ export default function DatCocPage() {
     return (
       <>
         <Navbar luonSang />
-        <div className="min-h-screen bg-[#FAFAF9] px-5 pt-[130px] text-center text-sm text-[#63635E]">
+        <div className="min-h-screen bg-[#FAFAF9] px-5 pt-[126px] text-center text-sm text-[#63635E]">
           Đang tải thông tin gói độ...
         </div>
       </>
@@ -85,7 +85,7 @@ export default function DatCocPage() {
     return (
       <>
         <Navbar luonSang />
-        <div className="min-h-screen bg-[#FAFAF9] px-5 pt-[130px] text-center">
+        <div className="min-h-screen bg-[#FAFAF9] px-5 pt-[126px] text-center">
           <p role="alert" className="mb-5 text-sm text-red-700">
             {loiGoiDo || "Không tìm thấy thông tin đặt lịch."}
           </p>
@@ -112,7 +112,7 @@ export default function DatCocPage() {
     return (
       <>
         <Navbar luonSang />
-        <div className="flex min-h-screen items-center justify-center bg-[#FAFAF9] px-5 pt-[100px]">
+        <div className="flex min-h-screen items-center justify-center bg-[#FAFAF9] px-5 pt-[96px]">
           <div className="w-full max-w-[440px] rounded-2xl border border-[#ECECE9] bg-white p-8 text-center">
             <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#E9F7EE] text-[#2FA84F]">
               <ShieldCheck className="h-7 w-7" />
@@ -140,7 +140,7 @@ export default function DatCocPage() {
     <>
       <Navbar luonSang />
 
-      <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[100px] max-[860px]:px-5 max-[860px]:pt-[84px]">
+      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[96px] max-[860px]:pt-[80px]">
         <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-[#63635E]">
           <ChevronLeft className="h-4 w-4" /> Quay lại
         </Link>
@@ -167,7 +167,7 @@ export default function DatCocPage() {
               <span className="flex items-center gap-2 text-sm text-[#63635E]">
                 <Wallet className="h-4 w-4" /> Tiền đặt cọc
               </span>
-              <span className="text-lg font-extrabold text-[#B60F0F]">
+              <span className="text-lg font-extrabold text-[#AC0021]">
                 {dinhDangTien(thongTin.tienCoc)}
               </span>
             </div>
@@ -246,7 +246,7 @@ export default function DatCocPage() {
               <button
                 type="submit"
                 disabled={dangXuLy}
-                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-[#B60F0F] py-3.5 text-sm font-semibold text-white disabled:opacity-60"
+                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-[#AC0021] py-3.5 text-sm font-semibold text-white disabled:opacity-60"
               >
                 <CalendarCheck className="h-4 w-4" />
                 {dangXuLy ? "Đang xử lý..." : `Xác nhận đặt cọc ${dinhDangTien(thongTin.tienCoc)}`}
@@ -254,7 +254,7 @@ export default function DatCocPage() {
 
               <p className="text-center text-xs text-[#8A8A85]">
                 Bằng việc xác nhận, bạn đồng ý với điều khoản đặt cọc và chính sách hoàn tiền của
-                DU_AN_XE.
+                Porsche.
               </p>
             </form>
           </div>

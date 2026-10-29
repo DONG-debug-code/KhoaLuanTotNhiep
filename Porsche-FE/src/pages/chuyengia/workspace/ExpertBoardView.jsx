@@ -62,7 +62,7 @@ function JobCard({ job, bays, busy, onProgress, onConfirm }) {
               <button type="button" disabled={busy} onClick={() => onConfirm(job, 1)} className="inline-flex items-center gap-2 rounded-xl bg-[#0B0B0D] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
                 <CheckCircle2 className="h-4 w-4" /> Xác nhận
               </button>
-              <button type="button" disabled={busy} onClick={() => onConfirm(job, 3)} className="rounded-xl border border-[#F1CACA] px-4 py-2.5 text-sm font-semibold text-[#B60F0F] disabled:opacity-60">
+              <button type="button" disabled={busy} onClick={() => onConfirm(job, 3)} className="rounded-xl border border-[#F1CACA] px-4 py-2.5 text-sm font-semibold text-[#AC0021] disabled:opacity-60">
                 Từ chối
               </button>
             </div>
@@ -150,7 +150,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
           <button type="button" onClick={() => onNavigate("workshop")} className="inline-flex items-center gap-2 rounded-xl border border-[#DCDCD7] bg-white px-5 py-3 text-sm font-semibold">
             <Hammer className="h-4 w-4" /> Trạng thái Bay
           </button>
-          <button type="button" onClick={() => onNavigate("customers")} className="inline-flex items-center gap-2 rounded-xl bg-[#D4202B] px-5 py-3 text-sm font-semibold text-white">
+          <button type="button" onClick={() => onNavigate("customers")} className="inline-flex items-center gap-2 rounded-xl bg-[#AC0021] px-5 py-3 text-sm font-semibold text-white">
             <Users className="h-4 w-4" /> Khách phụ trách
           </button>
         </div>
@@ -158,7 +158,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Ca trong ngày" value={stats.ca_hom_nay} hint={`${stats.da_hoan_tat} ca đã hoàn tất`} icon={CalendarCheck} tone="bg-[#0B0B0D] text-white" />
-        <StatCard label="Đang thi công" value={stats.dang_thi_cong} hint="Theo dõi tiến độ từng Bay" icon={Hammer} tone="bg-[#FDE8E8] text-[#B60F0F]" />
+        <StatCard label="Đang thi công" value={stats.dang_thi_cong} hint="Theo dõi tiến độ từng Bay" icon={Hammer} tone="bg-[#FDE8E8] text-[#AC0021]" />
         <StatCard label="Chờ test Dyno" value={stats.cho_test_dyno} hint="Cần chốt công suất sau nạp map" icon={Gauge} tone="bg-[#FBF1DC] text-[#8A6414]" />
         <StatCard label="Giá trị ca làm" value={formatMillions(stats.gia_tri_ca)} hint="Tạm tính theo lịch hẹn" icon={Coins} tone="bg-[#EEEEEB] text-[#4A4A46]" />
       </div>
@@ -200,7 +200,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
                   </div>
                   <div className="flex gap-2">
                     <button type="button" disabled={busyId === job.id} onClick={() => onConfirm(job, 1)} className="rounded-xl bg-[#0B0B0D] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">Xác nhận</button>
-                    <button type="button" disabled={busyId === job.id} onClick={() => onConfirm(job, 3)} className="rounded-xl border border-[#F1CACA] px-4 py-2.5 text-sm font-semibold text-[#B60F0F] disabled:opacity-60">Từ chối</button>
+                    <button type="button" disabled={busyId === job.id} onClick={() => onConfirm(job, 3)} className="rounded-xl border border-[#F1CACA] px-4 py-2.5 text-sm font-semibold text-[#AC0021] disabled:opacity-60">Từ chối</button>
                   </div>
                 </div>
               ))}
@@ -212,7 +212,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
           <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-extrabold tracking-tight">Trạng thái Bay</h2>
-              <button type="button" onClick={() => onNavigate("workshop")} className="text-xs font-semibold text-[#B60F0F]">Xem tất cả</button>
+              <button type="button" onClick={() => onNavigate("workshop")} className="text-xs font-semibold text-[#AC0021]">Xem tất cả</button>
             </div>
             <ul className="mt-4 space-y-2.5">
               {bay.map((item) => {
@@ -253,7 +253,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
       <section className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-extrabold tracking-tight">Bay đang hoạt động</h2>
-          <button type="button" onClick={() => onNavigate("workshop")} className="text-xs font-semibold text-[#B60F0F]">Toàn bộ khu vực</button>
+          <button type="button" onClick={() => onNavigate("workshop")} className="text-xs font-semibold text-[#AC0021]">Toàn bộ khu vực</button>
         </div>
         {activeBays.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[#DCDCD7] bg-white p-6 text-center text-sm text-[#63635E]">Hiện chưa có Bay nào đang thi công.</p>
@@ -270,7 +270,7 @@ export default function ExpertBoardView({ data, date, onDateChange, busyId, onPr
 export function BayCard({ bay }) {
   const meta = STAGE_META[bay.trang_thai];
   const job = bay.cong_viec;
-  const barColor = bay.trang_thai === "dang_test_dyno" ? "#B08B45" : "#D4202B";
+  const barColor = bay.trang_thai === "dang_test_dyno" ? "#B08B45" : "#AC0021";
   return (
     <article className="rounded-2xl border border-[#ECECE9] bg-white p-5">
       <div className="flex items-center justify-between">

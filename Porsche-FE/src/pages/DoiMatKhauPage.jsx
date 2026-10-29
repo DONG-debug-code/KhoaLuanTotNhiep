@@ -75,7 +75,7 @@ export default function DoiMatKhauPage() {
                 </p>
 
                 {loi && (
-                    <div className="mb-4 rounded-lg bg-[#FBE9E9] px-4 py-3 text-sm text-[#B60F0F]">
+                    <div className="mb-4 rounded-lg bg-[#FBE9E9] px-4 py-3 text-sm text-[#AC0021]">
                         {loi}
                     </div>
                 )}

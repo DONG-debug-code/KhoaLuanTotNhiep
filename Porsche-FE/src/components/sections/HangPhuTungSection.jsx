@@ -28,7 +28,7 @@ export default function HangPhuTungSection() {
   }, []);
 
   return (
-    <div className="bg-[#F3F3F0] px-6 py-16 max-[860px]:px-5 max-[860px]:py-10">
+    <div id="hang-phu-tung" className="bg-[#F3F3F0] px-[1.3rem] py-16 max-[860px]:py-10">
       <div className="mb-8 flex items-start justify-between gap-6 max-[860px]:flex-col">
         <div>
           <h2 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px] max-[860px]:text-[26px]">
@@ -40,20 +40,20 @@ export default function HangPhuTungSection() {
         </div>
 
         <Link to="/hang-phu-tung" className="flex shrink-0 items-center gap-2 rounded-lg border border-[#ECECE9] bg-white px-4 py-2.5 text-sm font-semibold text-[#17171A]">
-          <Sparkles className="h-4 w-4 text-[#c71430]" />
+          <Sparkles className="h-4 w-4 text-[#AC0021]" />
           Xem tất cả sản phẩm
         </Link>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] lg:grid-cols-3 gap-5">
         {loiGoiDo ? <p role="alert" className="text-sm text-red-700">{loiGoiDo}</p> : null}
         {loiPhuTung ? <p role="alert" className="text-sm text-red-700">{loiPhuTung}</p> : null}
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải sản phẩm...</p> : null}
         {!dangTai && !loiGoiDo && !loiPhuTung && goiDo.length === 0 && phuTung.length === 0 ? (
           <p className="text-sm text-[#63635E]">Chưa có sản phẩm được đăng tải.</p>
         ) : null}
-        <GoiDoItem goiDo={goiDo.slice(0, 4)} onSelect={setSelectedProduct} />
-        <PhuTungItem phuTung={phuTung.slice(0, 4)} onSelect={setSelectedProduct} />
+        <GoiDoItem goiDo={goiDo.slice(0, 3)} onSelect={setSelectedProduct} />
+        <PhuTungItem phuTung={phuTung.slice(0, Math.max(0, 3 - goiDo.length))} onSelect={setSelectedProduct} />
       </div>
       {selectedProduct ? <ProductDetailModal product={selectedProduct} onClose={closeProductDetail} /> : null}
     </div>

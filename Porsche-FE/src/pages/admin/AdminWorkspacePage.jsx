@@ -154,7 +154,7 @@ export default function AdminWorkspacePage() {
       onAlertClick={() => navigate(alertCount ? "appointments" : "dashboard")}
     >
       {activeKey !== "dashboard" ? <h1 className="mb-6 text-3xl font-extrabold tracking-tight">{TITLES[activeKey]}</h1> : null}
-      {error ? <p role="alert" className="mb-5 rounded-xl border border-[#F6C9C9] bg-[#FDE8E8] px-4 py-3 text-sm text-[#B60F0F]">{error}</p> : null}
+      {error ? <p role="alert" className="mb-5 rounded-xl border border-[#F6C9C9] bg-[#FDE8E8] px-4 py-3 text-sm text-[#AC0021]">{error}</p> : null}
       {notice ? <p role="status" className="mb-5 rounded-xl border border-[#BFE5CD] bg-[#E4F5EA] px-4 py-3 text-sm text-[#1F7A3D]">{notice}</p> : null}
       {loading && !hasData ? <p className="py-16 text-center text-sm text-[#63635E]">Đang tải dữ liệu...</p> : null}
       {hasData ? view() : null}

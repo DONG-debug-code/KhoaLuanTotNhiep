@@ -35,37 +35,37 @@ export const ChuyenGiaItem = ({ CHUYEN_GIA }) => (
         <article key={cg.id ?? cg.slug} className="group flex flex-col overflow-hidden rounded-2xl border border-[#ECECE9] bg-white shadow-sm transition-shadow hover:shadow-lg">
           <Link to={`/chuyen-gia/${cg.id ?? cg.slug}`} className="relative block">
             <ChuyenGiaAnh chuyenGia={cg} className="aspect-[4/3.4]" />
-            <span className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#17171A]">
+            <span className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#17171A]">
               <span className={`h-1.5 w-1.5 rounded-full ${trangThai.cham}`} />
               {trangThai.nhan}
             </span>
           </Link>
 
-          <div className="flex flex-1 flex-col p-5">
-            <Link to={`/chuyen-gia/${cg.id ?? cg.slug}`} className="text-lg font-bold hover:underline">{cg.ten}</Link>
-            <div className="mb-3 text-sm text-[#63635E]">{cg.chucDanh}</div>
-            <p className="mb-4 line-clamp-3 text-sm leading-[1.6] text-[#63635E]">{cg.moTa}</p>
+          <div className="flex flex-1 flex-col p-4">
+            <Link to={`/chuyen-gia/${cg.id ?? cg.slug}`} className="text-[15px] font-bold hover:underline">{cg.ten}</Link>
+            <div className="mb-2 text-[13px] text-[#63635E]">{cg.chucDanh}</div>
+            <p className="mb-3 line-clamp-3 text-[13px] leading-[1.6] text-[#63635E]">{cg.moTa}</p>
 
-            <div className="mb-5 flex flex-wrap gap-2">
+            <div className="mb-4 flex flex-wrap gap-1.5">
               {cg.hangMucChuyenMon.map((tag) => (
-                <span key={tag} className="rounded-full border border-[#DCDCD8] px-3 py-1 text-xs text-[#3B3B38]">{tag}</span>
+                <span key={tag} className="rounded-full border border-[#DCDCD8] px-2.5 py-0.5 text-[11px] text-[#3B3B38]">{tag}</span>
               ))}
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-3 border-t border-[#ECECE9] pt-4 text-center">
               <div>
-                <div className="text-base font-bold">{cg.soDuAn}</div>
-                <div className="text-xs text-[#8A8A85]">Dự án hoàn thành</div>
+                <div className="text-[15px] font-bold">{cg.soDuAn}</div>
+                <div className="text-[11px] text-[#8A8A85]">Dự án hoàn thành</div>
               </div>
               <div>
-                <div className="text-base font-bold">{cg.soNamKinhNghiem} năm</div>
-                <div className="text-xs text-[#8A8A85]">Kinh nghiệm</div>
+                <div className="text-[15px] font-bold">{cg.soNamKinhNghiem} năm</div>
+                <div className="text-[11px] text-[#8A8A85]">Kinh nghiệm</div>
               </div>
             </div>
 
             <Link
               to={`/chuyen-gia/${cg.id ?? cg.slug}#dat-lich`}
-              className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-[#DCDCD8] py-2.5 text-sm font-semibold hover:bg-[#F6F6F4]"
+              className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-[#DCDCD8] py-2 text-[13px] font-semibold hover:bg-[#F6F6F4]"
             >
               <CalendarCheck className="h-4 w-4" /> Đăng ký tư vấn
             </Link>

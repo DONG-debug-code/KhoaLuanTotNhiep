@@ -66,19 +66,19 @@ export default function AdminDashboardView({ data, onNavigate }) {
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#63635E]">Bức tranh toàn cảnh hoạt động của showroom và workshop: lịch hẹn, đơn hàng, doanh thu, chuyên gia và các việc cần xử lý.</p>
         </div>
-        <button type="button" onClick={() => onNavigate("appointments")} className="inline-flex items-center gap-2 rounded-xl bg-[#C9161F] px-5 py-3 text-sm font-semibold text-white"><ArrowRight className="h-4 w-4" /> Xử lý lịch hẹn</button>
+        <button type="button" onClick={() => onNavigate("appointments")} className="inline-flex items-center gap-2 rounded-xl bg-[#AC0021] px-5 py-3 text-sm font-semibold text-white"><ArrowRight className="h-4 w-4" /> Xử lý lịch hẹn</button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Tổng lịch hẹn" value={stat.tong_lich} hint="Toàn bộ lịch lắp đặt & tư vấn" icon={CalendarCheck} tone="bg-[#FDE8E8] text-[#B60F0F]" />
+        <Kpi label="Tổng lịch hẹn" value={stat.tong_lich} hint="Toàn bộ lịch lắp đặt & tư vấn" icon={CalendarCheck} tone="bg-[#FDE8E8] text-[#AC0021]" />
         <Kpi label="Lịch cần xử lý" value={stat.can_xu_ly} hint="Đang chờ admin xác nhận" icon={Clock3} tone="bg-[#FBF1DC] text-[#8A6414]" />
         <Kpi label="Đơn hàng cần xử lý" value={stat.don_can_xu_ly} hint={`Trên tổng ${stat.tong_don_hang} đơn hàng`} icon={ShoppingBag} tone="bg-[#EEEEEB] text-[#4A4A46]" />
         <Kpi label="Doanh thu đã thu" value={compactMoney(stat.doanh_thu)} hint="Đơn đã thanh toán + lịch hoàn thành" icon={CircleDollarSign} tone="bg-[#0B0B0D] text-white" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Card title="Hoạt động 7 ngày gần nhất" subtitle="Lịch hẹn và đơn hàng phát sinh theo từng ngày" right={<span className="rounded-full bg-[#FDE8E8] px-3 py-1 text-xs font-semibold text-[#B60F0F]">{weekTotal} lượt</span>}>
-          <Bars data={week} valueKey="tong" labelKey="nhan" color="#C9161F" formatter={String} />
+        <Card title="Hoạt động 7 ngày gần nhất" subtitle="Lịch hẹn và đơn hàng phát sinh theo từng ngày" right={<span className="rounded-full bg-[#FDE8E8] px-3 py-1 text-xs font-semibold text-[#AC0021]">{weekTotal} lượt</span>}>
+          <Bars data={week} valueKey="tong" labelKey="nhan" color="#AC0021" formatter={String} />
         </Card>
         <Card title="Cơ cấu dịch vụ" subtitle="Tỉ lệ giữa các loại lịch hẹn">
           <div className="space-y-5">
@@ -87,7 +87,7 @@ export default function AdminDashboardView({ data, onNavigate }) {
               return (
                 <div key={item.ten}>
                   <div className="flex justify-between text-sm"><span className="font-medium">{item.ten}</span><span className="font-semibold">{percent}%</span></div>
-                  <div className="mt-2 h-2 rounded-full bg-[#EEEEEB]"><div className="h-2 rounded-full" style={{ width: `${percent}%`, background: index ? "#B8862B" : "#C9161F" }} /></div>
+                  <div className="mt-2 h-2 rounded-full bg-[#EEEEEB]"><div className="h-2 rounded-full" style={{ width: `${percent}%`, background: index ? "#B8862B" : "#AC0021" }} /></div>
                   <p className="mt-1 text-xs text-[#63635E]">{item.so_luong} lịch</p>
                 </div>
               );
@@ -119,7 +119,7 @@ export default function AdminDashboardView({ data, onNavigate }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Card title="Lịch hẹn sắp tới" subtitle="Các lịch đang chờ xác nhận hoặc đã xác nhận" right={<button type="button" onClick={() => onNavigate("appointments")} className="text-sm font-semibold text-[#C9161F]">Xem tất cả →</button>}>
+        <Card title="Lịch hẹn sắp tới" subtitle="Các lịch đang chờ xác nhận hoặc đã xác nhận" right={<button type="button" onClick={() => onNavigate("appointments")} className="text-sm font-semibold text-[#AC0021]">Xem tất cả →</button>}>
           {data.lich_sap_toi.length ? (
             <div className="divide-y divide-[#ECECE9]">
               {data.lich_sap_toi.map((item) => {

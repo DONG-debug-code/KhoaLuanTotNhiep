@@ -20,7 +20,7 @@ export default function WorkspaceLayout({ title, navigation, activeKey, onNaviga
       <div className="mx-auto max-w-[1440px] px-6 pb-14 pt-[108px] max-[860px]:px-4 max-[860px]:pt-[82px]">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <Link to="/" className="mb-2 inline-flex items-center gap-1.5 text-xs text-[#63635E] hover:text-[#B60F0F]">
+            <Link to="/" className="mb-2 inline-flex items-center gap-1.5 text-xs text-[#63635E] hover:text-[#AC0021]">
               <ArrowLeft className="h-3.5 w-3.5" /> Về trang chủ
             </Link>
             <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
@@ -31,7 +31,7 @@ export default function WorkspaceLayout({ title, navigation, activeKey, onNaviga
           <button
             type="button"
             onClick={xuLyDangXuat}
-            className="hidden items-center gap-2 rounded-lg border border-[#ECECE9] bg-white px-4 py-2.5 text-sm font-semibold text-[#B60F0F] sm:flex"
+            className="hidden items-center gap-2 rounded-lg border border-[#ECECE9] bg-white px-4 py-2.5 text-sm font-semibold text-[#AC0021] sm:flex"
           >
             <LogOut className="h-4 w-4" /> Đăng xuất
           </button>
@@ -71,7 +71,7 @@ export default function WorkspaceLayout({ title, navigation, activeKey, onNaviga
             <button
               type="button"
               onClick={xuLyDangXuat}
-              className="mt-2 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-[#B60F0F] hover:bg-[#FBE9E9] sm:hidden"
+              className="mt-2 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-[#AC0021] hover:bg-[#FBE9E9] sm:hidden"
             >
               <LogOut className="h-4 w-4" /> Đăng xuất
             </button>

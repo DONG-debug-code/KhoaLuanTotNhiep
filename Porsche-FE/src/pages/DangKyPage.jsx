@@ -67,7 +67,7 @@ export default function DangKyPage() {
         <Link
           to="/kich-hoat"
           state={{ email: form.email, ...registrationState }}
-          className="-mt-2 mb-5 block text-sm font-semibold text-[#C8102E] hover:underline"
+          className="-mt-2 mb-5 block text-sm font-semibold text-[#AC0021] hover:underline"
         >
           Nhập mã kích hoạt cho email này
         </Link>
@@ -132,7 +132,7 @@ export default function DangKyPage() {
         <Link
           to="/dang-nhap"
           state={registrationState}
-          className="font-semibold text-[#C8102E] hover:underline"
+          className="font-semibold text-[#AC0021] hover:underline"
         >
           Đăng nhập
         </Link>

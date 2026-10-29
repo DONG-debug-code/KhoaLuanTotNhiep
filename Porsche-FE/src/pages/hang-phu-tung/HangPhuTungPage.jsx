@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertCircle, Check, Package, Search, ShoppingBag, ShoppingCart } from "lucide-react";
+import { AlertCircle, Check, Package, Search, ShoppingBag } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Footer from "../../components/layouts/partials/Footer";
 import { getGoiDoVaPhuTungClient } from "../../api/PublicApi";
@@ -10,7 +10,7 @@ import ProductDetailModal from "../../components/product/ProductDetailModal";
 
 const formatMoney = (value) => `${Number(value).toLocaleString("vi-VN")} ₫`;
 
-function toStoreItem(item, type) {
+export function toStoreItem(item, type) {
   return {
     ...item,
     type,
@@ -19,10 +19,10 @@ function toStoreItem(item, type) {
   };
 }
 
-function StoreProductCard({ product, onAdd, justAdded, onSelect }) {
+export function StoreProductCard({ product, onAdd, justAdded, onSelect }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white transition-shadow hover:shadow-lg">
-      <button type="button" onClick={() => onSelect(product)} className="group block w-full text-left">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white transition-shadow hover:shadow-lg">
+      <button type="button" onClick={() => onSelect(product)} className="group block w-full flex-1 text-left">
         <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#e7e8e5]">
           {product.anh ? (
             <img
@@ -34,37 +34,43 @@ function StoreProductCard({ product, onAdd, justAdded, onSelect }) {
           ) : (
             <Package className="h-14 w-14 text-[#9da1a4]" strokeWidth={1} />
           )}
-          <span className="absolute left-3 top-3 rounded-full bg-[#080a0d] px-3 py-1.5 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 rounded-full bg-[#080a0d] px-3 py-1.5 text-[11px] font-semibold text-white">
             {product.type === "phu_tung" ? "Phụ tùng" : "Gói độ"}
           </span>
-          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-[#555a60]">
+          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-[#555a60]">
             Còn {product.soLuong}
           </span>
         </div>
         <div className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#85888d]">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#85888d]">
             {product.hangMuc || "Phụ kiện Porsche"}
           </p>
-          <h2 className="mt-2 line-clamp-2 min-h-12 font-bold text-[#17191c]">{product.ten}</h2>
-          {product.moTaNgan ? (
-            <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-[#777a80]">{product.moTaNgan}</p>
+          <h2 className="mt-1 line-clamp-2 text-[15px] font-bold text-[#17191c]">{product.ten}</h2>
+          <p className="mt-1.5 line-clamp-2 h-10 text-[13px] leading-5 text-[#777a80]">{product.moTaNgan}</p>
+          {product.dongXeTuongThich?.length ? (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {product.dongXeTuongThich.map((dongXe) => (
+                <span key={dongXe} className="rounded-full border border-[#e5e5e1] bg-[#f3f3f1] px-2.5 py-0.5 text-[11px] text-[#3b3b38]">{dongXe}</span>
+              ))}
+            </div>
           ) : null}
         </div>
       </button>
-      <div className="flex items-center justify-between gap-3 border-t border-[#ecece9] px-4 py-4">
+      <div className="flex items-center justify-between gap-3 border-t border-[#ecece9] px-4 py-3">
         <div>
-          <span className="block text-xs text-[#85888d]">
-            {product.type === "phu_tung" ? "Giá trọn gói (đã gồm công lắp đặt)" : "Giá bán"}
+          <span className="block whitespace-nowrap text-[11px] text-[#85888d]">
+            {product.type === "phu_tung" ? "Giá trọn gói" : "Giá bán"}
           </span>
-          <strong className="text-lg font-extrabold text-[#b10e27]">{formatMoney(product.giaSo)}</strong>
+          <strong className="text-[17px] font-extrabold text-[#AC0021]">{formatMoney(product.giaSo)}</strong>
+          <span className="mt-0.5 block text-[11px] text-[#777a80]">{product.soLuong > 0 ? `Còn ${product.soLuong} sản phẩm` : "Tạm hết hàng"}</span>
         </div>
         <button
           type="button"
           onClick={() => onAdd(product)}
           disabled={product.soLuong < 1}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#292b2f] disabled:cursor-not-allowed disabled:bg-[#a9aaab]"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#080a0d] px-3 py-1.5 text-[13px] font-bold text-white transition hover:bg-[#292b2f] disabled:cursor-not-allowed disabled:bg-[#a9aaab]"
         >
-          {justAdded ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+          {justAdded ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
           {product.soLuong < 1 ? "Hết hàng" : justAdded ? "Đã thêm" : "Thêm vào giỏ"}
         </button>
       </div>
@@ -190,36 +196,36 @@ export default function HangPhuTungPage() {
   return (
     <>
       <Navbar luonSang />
-      <main className="min-h-screen bg-[#fafaf9] pt-[84px]">
-        <section className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-5 py-12 sm:px-8 lg:px-12">
-          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-6">
+      <main className="min-h-screen bg-[#fafaf9] pt-[80px]">
+        <section className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-[1.3rem] py-8">
+          <div className="mx-auto flex flex-wrap items-center justify-between gap-6">
             <div>
-              <p className="mb-3 text-sm text-[#777a80]">Trang chủ　›　Gói độ &amp; phụ kiện</p>
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Gói độ &amp; phụ kiện chính hãng</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#63666b]">
+              <p className="mb-3 text-[13px] text-[#777a80]">Trang chủ　›　Gói độ &amp; phụ kiện</p>
+              <h1 className="!my-0 text-2xl font-extrabold tracking-tight sm:text-3xl">Gói độ &amp; phụ kiện chính hãng</h1>
+              <p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#63666b]">
                 Sản phẩm, giá bán và số lượng tồn được tải trực tiếp từ hệ thống showroom.
               </p>
             </div>
             <Link to="/gio-hang" className="flex items-center gap-3 rounded-xl border border-[#e5e5e1] bg-white p-3.5">
               <span className="relative flex h-11 w-11 items-center justify-center rounded-lg bg-[#080a0d] text-white">
                 <ShoppingBag className="h-5 w-5" />
-                {itemCount > 0 ? <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8102e] px-1 text-[10px] font-bold">{itemCount}</span> : null}
+                {itemCount > 0 ? <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#AC0021] px-1 text-[10px] font-bold">{itemCount}</span> : null}
               </span>
-              <span><strong className="block text-sm">Giỏ hàng của bạn</strong><small className="text-xs text-[#777a80]">{formatMoney(subtotal)} · {itemCount} món</small></span>
+              <span><strong className="block text-[13px]">Giỏ hàng của bạn</strong><small className="text-[11px] text-[#777a80]">{formatMoney(subtotal)} · {itemCount} món</small></span>
             </Link>
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-12">
-          {error ? <p role="alert" className="mb-5 flex items-center gap-2 rounded-xl bg-[#fae9eb] px-4 py-3 text-sm text-[#9d1026]"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p> : null}
+        <section className="mx-auto px-[1.3rem] py-8">
+          {error ? <p role="alert" className="mb-5 flex items-center gap-2 rounded-xl bg-[#fae9eb] px-4 py-3 text-[13px] text-[#8C001B]"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p> : null}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <label className="flex min-w-[260px] flex-1 items-center gap-2 rounded-lg border border-[#dededb] bg-white px-3.5 py-3 sm:max-w-[520px]">
+            <label className="flex min-w-[260px] flex-1 items-center gap-2 rounded-lg border border-[#dededb] bg-white px-3.5 py-2 sm:max-w-[520px]">
               <Search className="h-4 w-4 text-[#85888d]" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên sản phẩm, hãng hoặc dòng xe..." className="w-full bg-transparent text-sm outline-none" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên sản phẩm, hãng hoặc dòng xe..." className="w-full bg-transparent text-[13px] outline-none" />
             </label>
-            <label className="flex items-center gap-3 text-sm text-[#777a80]">
+            <label className="flex items-center gap-3 text-[13px] text-[#777a80]">
               Sắp xếp
-              <select value={sort} onChange={(event) => setSort(event.target.value)} className="rounded-lg border border-[#dededb] bg-white px-3 py-2.5 text-sm text-[#17191c]">
+              <select value={sort} onChange={(event) => setSort(event.target.value)} className="rounded-lg border border-[#dededb] bg-white px-3 py-2 text-[13px] text-[#17191c]">
                 <option value="popular">Phổ biến</option>
                 <option value="price-asc">Giá tăng dần</option>
                 <option value="price-desc">Giá giảm dần</option>
@@ -227,16 +233,16 @@ export default function HangPhuTungPage() {
             </label>
           </div>
 
-          <div className="my-6 flex gap-2 overflow-x-auto rounded-full border border-[#e9e9e6] bg-[#f3f3f1] p-1.5">
+          <div className="my-6 flex gap-2 overflow-x-auto rounded-full border border-[#e9e9e6] bg-[#f3f3f1] p-1">
             {categories.map((item) => (
-              <button key={item} type="button" onClick={() => setCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium ${category === item ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-white"}`}>
+              <button key={item} type="button" onClick={() => setCategory(item)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium ${category === item ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-white"}`}>
                 {item}
               </button>
             ))}
           </div>
-          <p className="mb-4 text-sm text-[#777a80]">Hiển thị {visibleProducts.length}/{products.length} sản phẩm</p>
+          <p className="mb-4 text-[13px] text-[#777a80]">Hiển thị {visibleProducts.length}/{products.length} sản phẩm</p>
 
-          {loading ? <p className="py-12 text-center text-sm text-[#777a80]">Đang tải sản phẩm từ showroom...</p> : null}
+          {loading ? <p className="py-12 text-center text-[13px] text-[#777a80]">Đang tải sản phẩm từ showroom...</p> : null}
           {!loading && visibleProducts.length ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {visibleProducts.map((product) => (
@@ -250,7 +256,7 @@ export default function HangPhuTungPage() {
               ))}
             </div>
           ) : null}
-          {!loading && !visibleProducts.length && !error ? <p className="rounded-xl border border-dashed border-[#d9d9d5] bg-white p-10 text-center text-sm text-[#777a80]">Không tìm thấy sản phẩm phù hợp.</p> : null}
+          {!loading && !visibleProducts.length && !error ? <p className="rounded-xl border border-dashed border-[#d9d9d5] bg-white p-10 text-center text-[13px] text-[#777a80]">Không tìm thấy sản phẩm phù hợp.</p> : null}
         </section>
       </main>
       <Footer />

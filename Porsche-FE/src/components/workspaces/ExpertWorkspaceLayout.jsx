@@ -37,11 +37,9 @@ export default function ExpertWorkspaceLayout({ activeKey, onNavigate, expert, d
 
       <aside className={`fixed inset-y-0 left-0 z-[60] flex w-[268px] flex-col border-r border-[#E6E6E3] bg-[#FAFAF9] transition-transform duration-200 lg:translate-x-0 ${menuMo ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[#E6E6E3] px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4202B] text-white">
-            <Gauge className="h-5 w-5" />
-          </div>
+          <img src="/src/assets/img/logo.png" alt="Porsche" className="h-10 w-10 object-contain" />
           <div className="leading-tight">
-            <p className="text-sm font-extrabold tracking-tight">DU_AN_XE</p>
+            <p className="text-sm font-extrabold uppercase tracking-tight">Porsche</p>
             <p className="text-[11px] text-[#63635E]">Khu chuyên gia</p>
           </div>
           <button type="button" onClick={() => setMenuMo(false)} aria-label="Đóng menu" className="ml-auto rounded-lg p-2 lg:hidden">
@@ -85,7 +83,7 @@ export default function ExpertWorkspaceLayout({ activeKey, onNavigate, expert, d
           <Link to="/" className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold text-[#3D3D39] hover:bg-[#EFEFEC]">
             <Store className="h-[18px] w-[18px]" /> Về showroom
           </Link>
-          <button type="button" onClick={xuLyDangXuat} className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-[#B60F0F] hover:bg-[#FBE9E9]">
+          <button type="button" onClick={xuLyDangXuat} className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-[#AC0021] hover:bg-[#FBE9E9]">
             <LogOut className="h-[18px] w-[18px]" /> Đăng xuất
           </button>
         </div>
@@ -111,7 +109,7 @@ export default function ExpertWorkspaceLayout({ activeKey, onNavigate, expert, d
               {avatar ? (
                 <img src={avatar} alt={ten} className="h-9 w-9 rounded-full object-cover" />
               ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C9161F] text-xs font-bold text-white">{initials(ten)}</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#AC0021] text-xs font-bold text-white">{initials(ten)}</span>
               )}
               <div className="hidden leading-tight sm:block">
                 <p className="text-sm font-semibold">{ten}</p>
@@ -124,7 +122,7 @@ export default function ExpertWorkspaceLayout({ activeKey, onNavigate, expert, d
         <main className="px-4 pb-10 pt-8 sm:px-8">{children}</main>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E6E6E3] px-4 py-5 text-xs text-[#63635E] sm:px-8">
-          <span>© {new Date().getFullYear()} DU_AN_XE · Khu chuyên gia</span>
+          <span>© {new Date().getFullYear()} Porsche · Khu chuyên gia</span>
           <span>Dữ liệu hiển thị là dữ liệu thật từ hệ thống</span>
         </footer>
       </div>

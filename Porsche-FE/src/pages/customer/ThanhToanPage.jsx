@@ -26,8 +26,9 @@ const PAYMENT_METHODS = [
 ];
 
 const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+const DONG_XE = ["Porsche 911", "Porsche 718 Cayman", "Porsche 718 Boxster", "Porsche Cayenne", "Porsche Macan", "Porsche Panamera", "Porsche Taycan", "Dòng xe khác"];
 const DEFAULT_DELIVERY_MAX = 5000000;
-const fieldClass = "mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]";
+const fieldClass = "mt-1.5 w-full rounded-lg border border-[#dededb] px-3 py-2 text-[13px] font-normal outline-none focus:border-[#202226]";
 
 function CheckoutStep({ active }) {
   const steps = ["Thông tin", "Nhận hàng & thanh toán", "Xác nhận"];
@@ -38,10 +39,10 @@ function CheckoutStep({ active }) {
         const complete = active > number;
         return (
           <div key={label} className="flex items-center gap-2">
-            <span className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold ${complete ? "border-[#b8914a] bg-[#b8914a] text-white" : active === number ? "border-[#080a0d] bg-[#080a0d] text-white" : "border-[#dededb] bg-white text-[#777a80]"}`}>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold ${complete ? "border-[#b8914a] bg-[#b8914a] text-white" : active === number ? "border-[#080a0d] bg-[#080a0d] text-white" : "border-[#dededb] bg-white text-[#777a80]"}`}>
               {complete ? <Check className="h-4 w-4" /> : number}
             </span>
-            <span className={`text-sm ${active === number ? "font-semibold text-[#17191c]" : "text-[#777a80]"}`}>{label}</span>
+            <span className={`text-[13px] ${active === number ? "font-semibold text-[#17191c]" : "text-[#777a80]"}`}>{label}</span>
             {number < steps.length ? <span className="mx-1 text-[#b5b6b7]">›</span> : null}
           </div>
         );
@@ -53,7 +54,7 @@ function CheckoutStep({ active }) {
 export default function ThanhToanPage() {
   const navigate = useNavigate();
   const { nguoiDung } = useAuth();
-  const { items, subtotal, clearCart } = useCart();
+  const { selectedItems: items, selectedSubtotal: subtotal, clearSelected: clearCart } = useCart();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     ten_nguoi_nhan: nguoiDung?.ho_ten || "",
@@ -194,10 +195,10 @@ export default function ThanhToanPage() {
     return (
       <>
         <Navbar luonSang />
-        <main className="flex min-h-[65vh] flex-col items-center justify-center px-5 pt-[84px] text-center">
-          <h1 className="text-2xl font-extrabold">Giỏ hàng đang trống</h1>
-          <p className="mt-2 text-sm text-[#777a80]">Hãy thêm sản phẩm trước khi thanh toán.</p>
-          <Link to="/hang-phu-tung" className="mt-5 rounded-lg bg-[#080a0d] px-5 py-3 text-sm font-semibold text-white">Quay lại showroom</Link>
+        <main className="flex min-h-[65vh] flex-col items-center justify-center px-5 pt-[80px] text-center">
+          <h1 className="!my-0 text-xl font-extrabold">Chưa có sản phẩm nào được chọn</h1>
+          <p className="mt-2 text-[13px] text-[#777a80]">Hãy chọn sản phẩm trong giỏ hàng trước khi thanh toán.</p>
+          <Link to="/gio-hang" className="mt-5 rounded-lg bg-[#080a0d] px-5 py-3 text-[13px] font-semibold text-white">Về giỏ hàng</Link>
         </main>
         <Footer />
       </>
@@ -213,86 +214,89 @@ export default function ThanhToanPage() {
   return (
     <>
       <Navbar luonSang />
-      <main className="min-h-screen bg-[#fafaf9] pt-[84px]">
-        <header className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-5 py-7 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1440px]">
-            <p className="mb-2 text-sm text-[#777a80]">Trang chủ　›　<Link to="/gio-hang" className="hover:underline">Giỏ hàng</Link>　›　Thanh toán</p>
-            <h1 className="text-3xl font-extrabold tracking-tight">Hoàn tất đơn hàng</h1>
-            <div className="mt-5"><CheckoutStep active={step} /></div>
+      <main className="min-h-screen bg-[#fafaf9] pt-[80px]">
+        <header className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-[1.3rem] py-5">
+          <div className="mx-auto">
+            <p className="mb-1.5 text-[12px] text-[#777a80]">Trang chủ　›　<Link to="/gio-hang" className="hover:underline">Giỏ hàng</Link>　›　Thanh toán</p>
+            <h1 className="!my-0 text-[26px] font-extrabold tracking-tight">Hoàn tất đơn hàng</h1>
+            <div className="mt-3"><CheckoutStep active={step} /></div>
           </div>
         </header>
 
-        <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)] lg:px-12">
+        <div className="mx-auto grid gap-5 px-[1.3rem] py-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)]">
           <div>
-            {error ? <p role="alert" className="mb-5 rounded-xl bg-[#fae9eb] px-4 py-3 text-sm text-[#9d1026]">{error}</p> : null}
-            {notice ? <p role="status" className="mb-5 rounded-xl bg-[#e8f5ec] px-4 py-3 text-sm text-[#24613a]">{notice}</p> : null}
+            {error ? <p role="alert" className="mb-4 rounded-xl bg-[#fae9eb] px-4 py-3 text-[13px] text-[#8C001B]">{error}</p> : null}
+            {notice ? <p role="status" className="mb-4 rounded-xl bg-[#e8f5ec] px-4 py-3 text-[13px] text-[#24613a]">{notice}</p> : null}
 
             {step === 1 ? (
-              <form onSubmit={continueFromInformation} className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                <div className="mb-6 flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><UserRound className="h-5 w-5" /></span>
-                  <div><h2 className="font-bold">Thông tin người đặt hàng</h2><p className="mt-1 text-xs text-[#777a80]">Thông tin để lập đơn hàng và liên hệ giao nhận.</p></div>
+              <form onSubmit={continueFromInformation} className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#080a0d] text-white"><UserRound className="h-5 w-5" /></span>
+                  <div><h2 className="font-bold">Thông tin người đặt hàng</h2><p className="mt-1 text-[11px] text-[#777a80]">Thông tin để lập đơn hàng và liên hệ giao nhận.</p></div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-medium">Họ và tên *
-                    <input required name="ten_nguoi_nhan" maxLength={255} value={form.ten_nguoi_nhan} onChange={setField} autoComplete="name" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" />
+                  <label className="text-[13px] font-medium">Họ và tên *
+                    <input required name="ten_nguoi_nhan" maxLength={255} value={form.ten_nguoi_nhan} onChange={setField} autoComplete="name" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3 py-2 text-[13px] font-normal outline-none focus:border-[#202226]" />
                   </label>
-                  <label className="text-sm font-medium">Số điện thoại *
-                    <input required name="so_dien_thoai_nguoi_nhan" maxLength={30} value={form.so_dien_thoai_nguoi_nhan} onChange={setField} autoComplete="tel" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" />
+                  <label className="text-[13px] font-medium">Số điện thoại *
+                    <input required name="so_dien_thoai_nguoi_nhan" maxLength={30} value={form.so_dien_thoai_nguoi_nhan} onChange={setField} autoComplete="tel" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3 py-2 text-[13px] font-normal outline-none focus:border-[#202226]" />
                   </label>
-                  <label className="text-sm font-medium sm:col-span-2">Email *
-                    <input required type="email" name="email_nguoi_nhan" maxLength={255} value={form.email_nguoi_nhan} onChange={setField} autoComplete="email" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" />
+                  <label className="text-[13px] font-medium sm:col-span-2">Email *
+                    <input required type="email" name="email_nguoi_nhan" maxLength={255} value={form.email_nguoi_nhan} onChange={setField} autoComplete="email" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3 py-2 text-[13px] font-normal outline-none focus:border-[#202226]" />
                   </label>
-                  <label className="text-sm font-medium sm:col-span-2">Ghi chú cho showroom
-                    <textarea name="ghi_chu_don_hang" maxLength={1000} rows={3} value={form.ghi_chu_don_hang} onChange={setField} placeholder="Thông tin thêm về đơn hàng..." className="mt-1.5 w-full resize-y rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" />
+                  <label className="text-[13px] font-medium sm:col-span-2">Ghi chú cho showroom
+                    <textarea name="ghi_chu_don_hang" maxLength={1000} rows={3} value={form.ghi_chu_don_hang} onChange={setField} placeholder="Thông tin thêm về đơn hàng..." className="mt-1.5 w-full resize-y rounded-lg border border-[#dededb] px-3 py-2 text-[13px] font-normal outline-none focus:border-[#202226]" />
                   </label>
                 </div>
-                <div className="mt-6 flex justify-between gap-3">
-                  <Link to="/gio-hang" className="inline-flex items-center gap-2 rounded-lg border border-[#dededb] px-4 py-3 text-sm font-semibold"><ArrowLeft className="h-4 w-4" /> Về giỏ hàng</Link>
-                  <button type="submit" className="rounded-lg bg-[#c8102e] px-5 py-3 text-sm font-bold text-white">Tiếp tục →</button>
+                <div className="mt-4 flex justify-between gap-3">
+                  <Link to="/gio-hang" className="inline-flex items-center gap-2 rounded-lg border border-[#dededb] px-4 py-2.5 text-[13px] font-semibold"><ArrowLeft className="h-4 w-4" /> Về giỏ hàng</Link>
+                  <button type="submit" className="rounded-lg bg-[#AC0021] px-5 py-2.5 text-[13px] font-bold text-white">Tiếp tục →</button>
                 </div>
               </form>
             ) : null}
 
             {step === 2 ? (
-              <div className="space-y-5">
-                <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Truck className="h-5 w-5" /></span><div><h2 className="font-bold">Hình thức nhận hàng</h2>                                    <p className="mt-1 text-xs text-[#777a80]">Nhận tại showroom để đặt lịch lắp đặt, hoặc giao tận nơi cho phụ kiện nhỏ lẻ.</p></div></div>
+              <div className="space-y-4">
+                <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                  <div className="mb-4 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Truck className="h-5 w-5" /></span><div><h2 className="font-bold">Hình thức nhận hàng</h2>                                    <p className="mt-1 text-[11px] text-[#777a80]">Nhận tại showroom để đặt lịch lắp đặt, hoặc giao tận nơi cho phụ kiện nhỏ lẻ.</p></div></div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
                                         { value: "nhan_tai_showroom", title: "Nhận & lắp đặt tại showroom", description: "Đặt lịch hẹn để kỹ thuật viên lắp đặt phụ tùng cho xe của bạn.", Icon: Store, disabled: false },
                                         { value: "giao_tan_noi", title: "Giao hàng tận nơi", description: deliveryEligible ? "Dành cho phụ kiện nhỏ lẻ, bạn có thể tự lắp. Phí giao hàng được showroom xác nhận." : `Chỉ áp dụng cho phụ kiện nhỏ lẻ (không gồm gói độ) có tổng tiền hàng tối đa ${money(workshopOptions.delivery_max_subtotal)}.`, Icon: Truck, disabled: !deliveryEligible },
                                       ].map(({ value, title, description, Icon, disabled }) => (
                                         <button key={value} type="button" disabled={disabled} onClick={() => setForm((current) => ({ ...current, phuong_thuc_nhan: value }))} className={`rounded-xl border p-4 text-left disabled:cursor-not-allowed disabled:opacity-50 ${form.phuong_thuc_nhan === value ? "border-[#17191c] bg-[#f5f5f3]" : "border-[#e9e9e6]"}`}>
-                        <Icon className="mb-3 h-5 w-5 text-[#555a60]" /><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-[#777a80]">{description}</span>
+                        <Icon className="mb-3 h-5 w-5 text-[#555a60]" /><strong className="block text-[13px]">{title}</strong><span className="mt-1 block text-[11px] leading-5 text-[#777a80]">{description}</span>
                       </button>
                     ))}
                   </div>
                                     {form.phuong_thuc_nhan === "nhan_tai_showroom" ? (
-                                      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                                        <p className="rounded-xl bg-[#f3f3f1] p-3 text-xs leading-5 text-[#63666b] sm:col-span-2">Lịch lắp đặt sẽ được lưu vào mục Lịch hẹn của bạn và gửi qua email xác nhận.</p>
-                                        <label className="text-sm font-medium">Dòng xe *
-                                          <input required name="ten_xe" maxLength={255} value={booking.ten_xe} onChange={setBookingField} placeholder="VD: Porsche 911 Carrera" className={fieldClass} />
+                                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                        <p className="rounded-xl bg-[#f3f3f1] p-3 text-[11px] leading-5 text-[#63666b] sm:col-span-2">Lịch lắp đặt sẽ được lưu vào mục Lịch hẹn của bạn và gửi qua email xác nhận.</p>
+                                        <label className="text-[13px] font-medium">Dòng xe *
+                                          <select required name="ten_xe" value={booking.ten_xe} onChange={setBookingField} className={fieldClass}>
+                                            <option value="">Chọn dòng xe</option>
+                                            {DONG_XE.map((model) => <option key={model} value={model}>{model}</option>)}
+                                          </select>
                                         </label>
-                                        <label className="text-sm font-medium">Biển số xe *
+                                        <label className="text-[13px] font-medium">Biển số xe *
                                           <input required name="bien_so_xe" maxLength={50} value={booking.bien_so_xe} onChange={setBookingField} placeholder="VD: 51A-123.45" className={fieldClass} />
                                         </label>
-                                        <label className="text-sm font-medium">Ngày lắp đặt *
+                                        <label className="text-[13px] font-medium">Ngày lắp đặt *
                                           <input required type="date" name="ngay_dat" min={today} value={booking.ngay_dat} onChange={setBookingField} className={fieldClass} />
                                         </label>
-                                        <label className="text-sm font-medium">Giờ *
+                                        <label className="text-[13px] font-medium">Giờ *
                                           <select required name="gio_dat" value={booking.gio_dat} onChange={setBookingField} className={fieldClass}>
                                             <option value="">Chọn giờ</option>
                                             {TIME_SLOTS.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
                                           </select>
                                         </label>
-                                        <label className="text-sm font-medium">Chuyên gia lắp đặt *
+                                        <label className="text-[13px] font-medium">Chuyên gia lắp đặt *
                                           <select required name="id_chuyen_gia" value={booking.id_chuyen_gia} onChange={setBookingField} className={fieldClass}>
                                             <option value="">Chọn chuyên gia</option>
                                             {workshopOptions.chuyen_gias.map((expert) => <option key={expert.id} value={expert.id}>{expert.ho_ten}</option>)}
                                           </select>
                                         </label>
-                                        <label className="text-sm font-medium">Khu vực workshop *
+                                        <label className="text-[13px] font-medium">Khu vực workshop *
                                           <select required name="id_khu_vuc_workshop" value={booking.id_khu_vuc_workshop} onChange={setBookingField} className={fieldClass}>
                                             <option value="">Chọn khu vực</option>
                                             {workshopOptions.khu_vuc_workshops.map((area) => <option key={area.id} value={area.id}>{area.ten_khu_vuc}</option>)}
@@ -301,36 +305,36 @@ export default function ThanhToanPage() {
                                       </div>
                                     ) : null}
                   {form.phuong_thuc_nhan === "giao_tan_noi" ? (
-                    <label className="mt-5 block text-sm font-medium">Địa chỉ giao hàng *
+                    <label className="mt-5 block text-[13px] font-medium">Địa chỉ giao hàng *
                       <span className="mt-1.5 flex items-center gap-2 rounded-lg border border-[#dededb] px-3.5"><MapPin className="h-4 w-4 shrink-0 text-[#85888d]" /><input required name="dia_chi_nguoi_nhan" maxLength={1000} value={form.dia_chi_nguoi_nhan} onChange={setField} autoComplete="street-address" placeholder="Số nhà, đường, phường, quận, tỉnh/thành" className="w-full py-3 font-normal outline-none" /></span>
                     </label>
                   ) : null}
                 </section>
 
-                <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                  <div className="mb-5 flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Wallet className="h-5 w-5" /></span><div><h2 className="font-bold">Phương thức thanh toán</h2><p className="mt-1 text-xs text-[#777a80]">Thanh toán thẻ qua VNPay hoặc tiền mặt khi nhận hàng.</p></div></div>
+                <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                  <div className="mb-4 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#080a0d] text-white"><Wallet className="h-5 w-5" /></span><div><h2 className="font-bold">Phương thức thanh toán</h2><p className="mt-1 text-[11px] text-[#777a80]">Thanh toán thẻ qua VNPay hoặc tiền mặt khi nhận hàng.</p></div></div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {PAYMENT_METHODS.map(({ value, label, hint, Icon }) => (
                       <button key={value} type="button" onClick={() => setForm((current) => ({ ...current, phuong_thuc_tt: value }))} className={`rounded-xl border p-4 text-left ${form.phuong_thuc_tt === value ? "border-[#17191c] bg-[#f5f5f3]" : "border-[#e9e9e6]"}`}>
-                        <Icon className="mb-3 h-5 w-5 text-[#555a60]" /><strong className="block text-sm">{label}</strong><span className="mt-1 block text-xs leading-5 text-[#777a80]">{hint}</span>
+                        <Icon className="mb-3 h-5 w-5 text-[#555a60]" /><strong className="block text-[13px]">{label}</strong><span className="mt-1 block text-[11px] leading-5 text-[#777a80]">{hint}</span>
                       </button>
                     ))}
                   </div>
                 </section>
                 <div className="flex justify-between gap-3">
-                  <button type="button" onClick={() => setStep(1)} className="rounded-lg border border-[#dededb] px-4 py-3 text-sm font-semibold">← Quay lại</button>
-                  <button type="button" onClick={() => { const problem = validateReceiving(); if (problem) { setError(problem); return; } setError(""); setStep(3); }} className="rounded-lg bg-[#c8102e] px-5 py-3 text-sm font-bold text-white">Tiếp tục →</button>
+                  <button type="button" onClick={() => setStep(1)} className="rounded-lg border border-[#dededb] px-4 py-2.5 text-[13px] font-semibold">← Quay lại</button>
+                  <button type="button" onClick={() => { const problem = validateReceiving(); if (problem) { setError(problem); return; } setError(""); setStep(3); }} className="rounded-lg bg-[#AC0021] px-5 py-2.5 text-[13px] font-bold text-white">Tiếp tục →</button>
                 </div>
               </div>
             ) : null}
 
             {step === 3 ? (
-              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-7">
-                <h2 className="text-lg font-bold">Xác nhận thông tin đặt hàng</h2>
-                <div className="mt-5 grid gap-6 sm:grid-cols-2">
+              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                <h2 className="text-[15px] font-bold">Xác nhận thông tin đặt hàng</h2>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#85888d]">Người đặt hàng</h3>
-                    <dl className="mt-3 space-y-3 text-sm">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[#85888d]">Người đặt hàng</h3>
+                    <dl className="mt-3 space-y-2.5 text-[13px]">
                       {[
                         ["Họ tên", form.ten_nguoi_nhan],
                         ["Điện thoại", form.so_dien_thoai_nguoi_nhan],
@@ -340,8 +344,8 @@ export default function ThanhToanPage() {
                     </dl>
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-[#85888d]">Nhận hàng & thanh toán</h3>
-                    <dl className="mt-3 space-y-3 text-sm">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[#85888d]">Nhận hàng & thanh toán</h3>
+                    <dl className="mt-3 space-y-2.5 text-[13px]">
                       <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Hình thức nhận</dt><dd className="text-right font-medium">{form.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận & lắp đặt tại showroom" : "Giao hàng tận nơi"}</dd></div>
                       {form.phuong_thuc_nhan === "nhan_tai_showroom" ? (
                         <div className="flex justify-between gap-3 border-b border-[#ecece9] pb-2"><dt className="text-[#777a80]">Lịch lắp đặt</dt><dd className="text-right font-medium">{booking.gio_dat} · {booking.ngay_dat ? new Date(booking.ngay_dat).toLocaleDateString("vi-VN") : ""}<br />{booking.ten_xe} · {booking.bien_so_xe.toUpperCase()}</dd></div>
@@ -352,41 +356,41 @@ export default function ThanhToanPage() {
                     </dl>
                   </div>
                 </div>
-                <div className="mt-6 flex items-start gap-2 rounded-xl bg-[#f3f3f1] p-4 text-xs leading-5 text-[#63666b]"><Info className="mt-0.5 h-4 w-4 shrink-0" />Đơn hàng được lưu vào hệ thống và chờ showroom xác nhận. Đây chưa phải giao dịch thanh toán trực tuyến; không nhập thông tin thẻ hoặc mật khẩu ngân hàng tại đây.</div>
-                <div className="mt-6 flex flex-wrap justify-between gap-3">
-                  <button type="button" onClick={() => setStep(2)} className="rounded-lg border border-[#dededb] px-4 py-3 text-sm font-semibold">← Quay lại</button>
-                  <button type="button" disabled={saving} onClick={() => void confirmOrder()} className="rounded-lg bg-[#c8102e] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{saving ? "Đang gửi đơn..." : "Xác nhận đặt hàng"}</button>
+                <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#f3f3f1] p-4 text-[11px] leading-5 text-[#63666b]"><Info className="mt-0.5 h-4 w-4 shrink-0" />Đơn hàng được lưu vào hệ thống và chờ showroom xác nhận. Đây chưa phải giao dịch thanh toán trực tuyến; không nhập thông tin thẻ hoặc mật khẩu ngân hàng tại đây.</div>
+                <div className="mt-4 flex flex-wrap justify-between gap-3">
+                  <button type="button" onClick={() => setStep(2)} className="rounded-lg border border-[#dededb] px-4 py-2.5 text-[13px] font-semibold">← Quay lại</button>
+                  <button type="button" disabled={saving} onClick={() => void confirmOrder()} className="rounded-lg bg-[#AC0021] px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-50">{saving ? "Đang gửi đơn..." : "Xác nhận đặt hàng"}</button>
                 </div>
               </section>
             ) : null}
 
             {step === 1 ? (
-              <div className="mt-4 rounded-xl border border-[#e9e9e6] bg-white px-4 py-3 text-xs leading-5 text-[#777a80]">
+              <div className="mt-4 rounded-xl border border-[#e9e9e6] bg-white px-4 py-3 text-[11px] leading-5 text-[#777a80]">
                 Bằng cách tiếp tục, bạn đồng ý để showroom dùng thông tin này để liên hệ xử lý đơn hàng.
               </div>
             ) : null}
           </div>
 
-          <aside className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-            <div className="flex items-center justify-between"><h2 className="text-lg font-bold">Đơn hàng của bạn</h2>{step === 3 ? <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-[#c8102e]">Sửa</button> : null}</div>
-            <div className="mt-5 max-h-72 space-y-4 overflow-y-auto">
+          <aside className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-5">
+            <div className="flex items-center justify-between"><h2 className="text-[15px] font-bold">Đơn hàng của bạn</h2>{step === 3 ? <button type="button" onClick={() => setStep(1)} className="text-[13px] font-semibold text-[#AC0021]">Sửa</button> : null}</div>
+            <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
               {items.map((item) => (
                 <div key={`${item.type}:${item.id}`} className="flex items-center gap-3">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#e7e8e5]">{item.anh ? <img src={item.anh} alt="" className="h-full w-full object-cover" /> : null}</div>
-                  <div className="min-w-0 flex-1"><strong className="line-clamp-2 text-sm">{item.ten}</strong><p className="mt-1 text-xs text-[#777a80]">SL {item.quantity} · {item.type === "phu_tung" ? "Phụ tùng" : "Gói độ"}</p></div>
-                  <span className="shrink-0 text-right text-sm font-semibold">{money(item.giaSo * item.quantity)}</span>
+                  <div className="min-w-0 flex-1"><strong className="line-clamp-2 text-[13px]">{item.ten}</strong><p className="mt-1 text-[11px] text-[#777a80]">SL {item.quantity} · {item.type === "phu_tung" ? "Phụ tùng" : "Gói độ"}</p></div>
+                  <span className="shrink-0 text-right text-[13px] font-semibold">{money(item.giaSo * item.quantity)}</span>
                 </div>
               ))}
             </div>
             {step === 1 ? (
-              <div className="mt-5 rounded-xl bg-[#f3f3f1] p-3.5">
-                <label htmlFor="checkout-voucher" className="text-xs font-semibold">Chọn voucher của bạn</label>
+              <div className="mt-4 rounded-xl bg-[#f3f3f1] p-3">
+                <label htmlFor="checkout-voucher" className="text-[11px] font-semibold">Chọn voucher của bạn</label>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                   <select
                     id="checkout-voucher"
                     value={voucherCode}
                     onChange={(event) => { setVoucherCode(event.target.value); setAppliedVoucher(null); setError(""); setNotice(""); }}
-                    className="min-w-0 flex-1 rounded-lg border border-[#dededb] bg-white px-3 py-2.5 text-sm outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-[#dededb] bg-white px-3 py-2 text-[13px] outline-none"
                   >
                     <option value="">Chọn mã giảm giá</option>
                     {availableVouchers.map((voucher) => {
@@ -400,19 +404,19 @@ export default function ThanhToanPage() {
                       );
                     })}
                   </select>
-                  <button type="button" disabled={saving || !voucherCode} onClick={() => void applyVoucher()} className="rounded-lg bg-[#080a0d] px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-50">Áp dụng</button>
+                  <button type="button" disabled={saving || !voucherCode} onClick={() => void applyVoucher()} className="rounded-lg bg-[#080a0d] px-3 py-2 text-[11px] font-semibold text-white disabled:opacity-50">Áp dụng</button>
                 </div>
-                {!availableVouchers.length ? <p className="mt-2 text-xs text-[#777a80]">Bạn chưa có voucher khả dụng.</p> : null}
+                {!availableVouchers.length ? <p className="mt-2 text-[11px] text-[#777a80]">Bạn chưa có voucher khả dụng.</p> : null}
               </div>
             ) : null}
-            <div className="mt-5 space-y-3 border-t border-[#ecece9] pt-4 text-sm">
+            <div className="mt-4 space-y-2.5 border-t border-[#ecece9] pt-4 text-[13px]">
               <div className="flex justify-between text-[#777a80]"><span>Tạm tính</span><strong className="text-[#17191c]">{money(subtotal)}</strong></div>
               <div className="flex justify-between text-[#777a80]"><span>Giảm giá</span><span>{discount ? `− ${money(discount)}` : "—"}</span></div>
               <div className="flex justify-between text-[#777a80]"><span>Phí giao hàng</span><span>{form.phuong_thuc_nhan === "nhan_tai_showroom" ? "Miễn phí" : "Xác nhận sau"}</span></div>
               <div className="border-t border-[#ecece9] pt-4">
-                <span className="text-xs text-[#85888d]">Tổng tạm tính</span>
-                <strong className="mt-1 block text-2xl font-extrabold text-[#b10e27]">{money(total)}</strong>
-                <small className="mt-1 block text-xs text-[#85888d]">Chưa ghi nhận thanh toán. Phí giao hàng (nếu có) được xác nhận trước khi xử lý.</small>
+                <span className="text-[11px] text-[#85888d]">Tổng tạm tính</span>
+                <strong className="mt-1 block text-xl font-extrabold text-[#AC0021]">{money(total)}</strong>
+                <small className="mt-1 block text-[11px] text-[#85888d]">Chưa ghi nhận thanh toán. Phí giao hàng (nếu có) được xác nhận trước khi xử lý.</small>
               </div>
             </div>
           </aside>

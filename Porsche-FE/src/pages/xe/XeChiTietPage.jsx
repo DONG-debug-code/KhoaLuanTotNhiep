@@ -277,7 +277,7 @@ export default function XeChiTietPage() {
     return (
       <>
         <Navbar luonSang />
-        <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[100px] text-sm text-[#63635E] max-[860px]:px-5 max-[860px]:pt-[84px]">
+        <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[96px] text-[13px] text-[#63635E] max-[860px]:pt-[80px]">
           {dangTai ? "Đang tải thông tin xe..." : null}
           {loi ? <p role="alert" className="text-red-700">{loi}</p> : null}
         </div>
@@ -301,9 +301,9 @@ export default function XeChiTietPage() {
     <>
       <Navbar luonSang />
 
-      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[84px] max-[860px]:pt-[84px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-10 pt-[80px] max-[860px]:pt-[80px]">
         {/* Breadcrumb */}
-        <div className="border-b border-[#ECECE9] bg-[#F1F1EF] px-12 py-3 text-sm text-[#63635E] max-[860px]:px-5">
+        <div className="border-b border-[#ECECE9] bg-[#F1F1EF] px-[1.3rem] py-2 text-[13px] text-[#63635E]">
           <Link to="/" className="hover:text-[#17171A]">Trang chủ</Link>
           <span className="mx-2">›</span>
           <Link to="/#xe-dang-ban" className="hover:text-[#17171A]">Xe đang bán</Link>
@@ -311,7 +311,7 @@ export default function XeChiTietPage() {
           <span className="text-[#17171A]">{xe.ten}</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-10 px-12 pt-8 lg:grid-cols-[1.3fr_1fr] max-[860px]:px-5">
+        <div className="grid grid-cols-1 gap-6 px-[1.3rem] pt-5 lg:grid-cols-[1.3fr_1fr]">
 
           {/* === Gallery === */}
           <div>
@@ -323,13 +323,13 @@ export default function XeChiTietPage() {
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
 
-              <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">
+              <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-semibold text-white">
                 <Crown className="h-3.5 w-3.5" />
                 SHOWROOM CERTIFIED
               </span>
 
               {xe.nhan && (
-                <span className="absolute right-4 top-4 rounded-full bg-[#B60F0F] px-3 py-1.5 text-xs font-semibold text-white">
+                <span className="absolute right-4 top-4 rounded-full bg-[#AC0021] px-3 py-1.5 text-[11px] font-semibold text-white">
                   {xe.nhan}
                 </span>
               )}
@@ -351,7 +351,7 @@ export default function XeChiTietPage() {
                 </>
               )}
 
-              <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+              <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1 text-[11px] font-semibold text-white">
                 {String(anhDangXem + 1).padStart(2, "0")} / {String(danhSachAnhDangXem.length).padStart(2, "0")}
               </span>
 
@@ -359,14 +359,14 @@ export default function XeChiTietPage() {
                 <button
                   type="button"
                   onClick={() => { setDangXem360((value) => !value); setAnhDangXem(0); }}
-                  className="absolute bottom-4 right-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white"
+                  className="absolute bottom-4 right-4 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-semibold text-white"
                 >
                   {dangXem360 ? "Ảnh thường" : "Xem ảnh 360°"}
                 </button>
               ) : null}
 
               {xe.coVideoGioiThieu && (
-                <button className="absolute bottom-4 left-4 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
+                <button className="absolute bottom-4 left-4 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-semibold text-white">
                   <Play className="h-3.5 w-3.5" />
                   Video giới thiệu
                 </button>
@@ -381,7 +381,7 @@ export default function XeChiTietPage() {
                     onClick={() => setAnhDangXem(i)}
                     aria-label={`Xem ảnh ${i + 1}`}
                     className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 ${
-                      anhDangXem === i ? "border-[#B60F0F]" : "border-transparent"
+                      anhDangXem === i ? "border-[#AC0021]" : "border-transparent"
                     }`}
                   >
                     <img src={anh} alt={`${xe.ten} - ảnh ${i + 1}`} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
@@ -392,74 +392,74 @@ export default function XeChiTietPage() {
           </div>
 
           {/* === Info panel === */}
-          <div className="rounded-2xl border border-[#ECECE9] bg-white p-7">
+          <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-[#F1F1EF] px-3 py-1 text-xs font-semibold text-[#17171A]">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#F1F1EF] px-3 py-1 text-[11px] font-semibold text-[#17171A]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#2FA84F]" />
                 {xe.trangThai} tại showroom
               </span>
               {xe.nhan && (
-                <span className="rounded-full bg-[#FBF3E4] px-3 py-1 text-xs font-semibold text-[#8A6D1F]">
+                <span className="rounded-full bg-[#FBF3E4] px-3 py-1 text-[11px] font-semibold text-[#8A6D1F]">
                   {xe.nhan}
                 </span>
               )}
             </div>
 
-            <div className="mb-1 text-xs font-semibold text-[#8A8A85]">
+            <div className="mb-1 text-[11px] font-semibold text-[#8A8A85]">
               PORSCHE {xe.dong} · {xe.nam}
             </div>
-            <h1 className="mb-5 text-3xl font-extrabold tracking-[-0.3px]">{xe.ten}</h1>
+            <h1 className="mb-5 text-[26px] font-extrabold tracking-[-0.3px]">{xe.ten}</h1>
 
             <div className="mb-5 flex items-end justify-between border-y border-[#ECECE9] py-5">
               <div>
-                <div className="mb-1 text-xs text-[#8A8A85]">Giá niêm yết</div>
-                <div className="text-[28px] font-extrabold text-[#B60F0F]">{xe.gia}</div>
+                <div className="mb-1 text-[11px] text-[#8A8A85]">Giá niêm yết</div>
+                <div className="text-[24px] font-extrabold text-[#AC0021]">{xe.gia}</div>
               </div>
               <div className="text-right">
-                <div className="mb-1 text-xs text-[#8A8A85]">Số km đã đi</div>
-                <div className="text-base font-bold">{xe.soKmDaDi}</div>
+                <div className="mb-1 text-[11px] text-[#8A8A85]">Số km đã đi</div>
+                <div className="text-[14px] font-bold">{xe.soKmDaDi}</div>
               </div>
             </div>
 
             <div className="mb-6 grid grid-cols-3 gap-3">
               <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
                 <Gauge className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-xs text-[#8A8A85]">Công suất</div>
-                <div className="text-sm font-bold">{xe.congSuat}</div>
+                <div className="text-[11px] text-[#8A8A85]">Công suất</div>
+                <div className="text-[13px] font-bold">{xe.congSuat}</div>
               </div>
               <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
                 <Timer className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-xs text-[#8A8A85]">0–100 km/h</div>
-                <div className="text-sm font-bold">{xe.toc0_100}</div>
+                <div className="text-[11px] text-[#8A8A85]">0–100 km/h</div>
+                <div className="text-[13px] font-bold">{xe.toc0_100}</div>
               </div>
               <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
                 <Zap className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-xs text-[#8A8A85]">Tốc độ tối đa</div>
-                <div className="text-sm font-bold">{xe.tocDoToiDa}</div>
+                <div className="text-[11px] text-[#8A8A85]">Tốc độ tối đa</div>
+                <div className="text-[13px] font-bold">{xe.tocDoToiDa}</div>
               </div>
             </div>
 
-            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#B60F0F] py-3.5 text-sm font-semibold text-white">
+            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#AC0021] py-3.5 text-[13px] font-semibold text-white">
               <CalendarCheck className="h-4 w-4" />
               Đặt lịch lái thử
             </button>
 
-            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#ECECE9] py-3.5 text-sm font-semibold text-[#17171A]">
+            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#ECECE9] py-3.5 text-[13px] font-semibold text-[#17171A]">
               <Phone className="h-4 w-4" />
               Hotline 0900 123 456
             </button>
 
-            <div className="mb-5 flex items-start gap-2 text-xs text-[#8A8A85]">
+            <div className="mb-5 flex items-start gap-2 text-[11px] text-[#8A8A85]">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2FA84F]" />
               Bảo hành chính hãng, hồ sơ xuất xưởng minh bạch
             </div>
 
-            <div className="flex items-start gap-2 rounded-lg bg-[#F1F1EF] p-3 text-xs text-[#4A4A46]">
+            <div className="flex items-start gap-2 rounded-lg bg-[#F1F1EF] p-3 text-[11px] text-[#4A4A46]">
               <Crown className="mt-0.5 h-4 w-4 shrink-0" />
               Tặng gói kiểm tra kỹ thuật 111 điểm trước bàn giao
             </div>
 
-            <button className="mt-4 flex w-full items-center justify-between rounded-lg bg-[#17171A] px-5 py-3.5 text-sm font-semibold text-white">
+            <button className="mt-4 flex w-full items-center justify-between rounded-lg bg-[#17171A] px-5 py-3.5 text-[13px] font-semibold text-white">
               Cần tư vấn cấu hình?
               <span>Nhận báo giá →</span>
             </button>
@@ -467,11 +467,11 @@ export default function XeChiTietPage() {
         </div>
 
         {/* === Thông số vận hành (nền đen) === */}
-        <div className="mt-14 bg-[#0A0A0B] px-12 py-14 text-white max-[860px]:px-5">
-          <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#B60F0F]">
+        <div className="mt-10 bg-[#0A0A0B] px-[1.3rem] py-8 text-white">
+          <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
             Thông số vận hành
           </div>
-          <h2 className="mb-8 text-3xl font-extrabold tracking-[-0.3px]">
+          <h2 className="mb-5 text-[26px] font-extrabold tracking-[-0.3px]">
             Hiệu năng của {xe.ten}
           </h2>
 
@@ -486,70 +486,70 @@ export default function XeChiTietPage() {
             ].map(({ icon: Icon, nhan, giaTri }) => (
               <div key={nhan} className="rounded-xl border border-white/10 p-4">
                 <Icon className="mb-3 h-5 w-5 text-[#9A9992]" />
-                <div className="mb-1 text-xs text-[#9A9992]">{nhan}</div>
-                <div className="text-base font-bold">{giaTri}</div>
+                <div className="mb-1 text-[11px] text-[#9A9992]">{nhan}</div>
+                <div className="text-[14px] font-bold">{giaTri}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* === Tổng quan + Thông tin nhanh === */}
-        <div className="grid grid-cols-1 gap-10 px-12 pt-14 lg:grid-cols-[1.3fr_1fr] max-[860px]:px-5">
+        <div className="grid grid-cols-1 gap-10 px-[1.3rem] pt-14 lg:grid-cols-[1.3fr_1fr]">
           <div>
-            <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#B60F0F]">
+            <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
               Tổng quan
             </div>
-            <h2 className="mb-4 text-2xl font-extrabold tracking-[-0.3px]">
+            <h2 className="mb-4 text-[20px] font-extrabold tracking-[-0.3px]">
               Vì sao nên chọn chiếc {xe.ten} này
             </h2>
-            <p className="mb-8 text-[15px] leading-[1.7] text-[#63635E]">{xe.lyDoChon}</p>
+            <p className="mb-5 text-[13px] leading-[1.7] text-[#63635E]">{xe.lyDoChon}</p>
 
-            <div className="mb-2 text-sm font-bold">Điểm nhấn trang bị</div>
+            <div className="mb-2 text-[13px] font-bold">Điểm nhấn trang bị</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {xe.diemNhanTrangBi.map((diem) => (
                 <div key={diem} className="flex items-center gap-3 rounded-xl bg-[#F1F1EF] px-4 py-3.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#8A6D1F]/15 text-[#8A6D1F]">
                     <Check className="h-3.5 w-3.5" />
                   </span>
-                  <span className="text-sm font-semibold">{diem}</span>
+                  <span className="text-[13px] font-semibold">{diem}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#ECECE9] bg-white p-7">
-            <div className="mb-5 text-sm font-bold">Thông tin nhanh</div>
+          <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
+            <div className="mb-5 text-[13px] font-bold">Thông tin nhanh</div>
 
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
-                <span className="flex items-center gap-2.5 text-sm text-[#63635E]">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
                   <Palette className="h-4 w-4" /> Ngoại thất
                 </span>
-                <span className="text-sm font-semibold">{xe.ngoaiThat}</span>
+                <span className="text-[13px] font-semibold">{xe.ngoaiThat}</span>
               </div>
               <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
-                <span className="flex items-center gap-2.5 text-sm text-[#63635E]">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
                   <Armchair className="h-4 w-4" /> Nội thất
                 </span>
-                <span className="text-sm font-semibold">{xe.noiThat}</span>
+                <span className="text-[13px] font-semibold">{xe.noiThat}</span>
               </div>
               <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
-                <span className="flex items-center gap-2.5 text-sm text-[#63635E]">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
                   <Car className="h-4 w-4" /> Dòng xe
                 </span>
-                <span className="text-sm font-semibold">Porsche {xe.dong}</span>
+                <span className="text-[13px] font-semibold">Porsche {xe.dong}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2.5 text-sm text-[#63635E]">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
                   <CalendarCheck className="h-4 w-4" /> Năm sản xuất
                 </span>
-                <span className="text-sm font-semibold">{xe.nam}</span>
+                <span className="text-[13px] font-semibold">{xe.nam}</span>
               </div>
             </div>
 
             {xe.mauSacs.length > 0 ? (
               <div className="mt-5 border-t border-[#ECECE9] pt-4">
-                <div className="mb-3 text-sm font-bold">Màu sơn & mã màu</div>
+                <div className="mb-3 text-[13px] font-bold">Màu sơn & mã màu</div>
                 <div className="flex flex-wrap gap-3">
                   {xe.mauSacs.map((mau, index) => {
                     const maMau = chuanHoaMaMau(mau.maMau);
@@ -560,7 +560,7 @@ export default function XeChiTietPage() {
                           className="h-5 w-5 rounded-full border border-black/15"
                           style={maMau ? { backgroundColor: maMau } : undefined}
                         />
-                        <span className="text-xs font-semibold">{mau.ten}</span>
+                        <span className="text-[11px] font-semibold">{mau.ten}</span>
                         {maMau ? <code className="text-[11px] text-[#63635E]">{maMau.toUpperCase()}</code> : null}
                       </div>
                     );
@@ -569,15 +569,15 @@ export default function XeChiTietPage() {
               </div>
             ) : null}
 
-            <div className="mt-6 rounded-xl border border-[#E9D9AE] bg-[#FBF3E4] p-5">
-              <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#8A6D1F]">
+            <div className="mt-6 rounded-xl border border-[#E9D9AE] bg-[#FBF3E4] p-4">
+              <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[#8A6D1F]">
                 <Crown className="h-4 w-4" /> Kiểm định 111 điểm
               </div>
-              <p className="mb-4 text-xs leading-[1.6] text-[#8A6D1F]">
+              <p className="mb-4 text-[11px] leading-[1.6] text-[#8A6D1F]">
                 Mỗi xe đều trải qua quy trình kiểm tra 111 hạng mục trước khi bàn giao, kèm báo cáo
                 tình trạng minh bạch.
               </p>
-              <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#8A6D1F] py-3 text-sm font-semibold text-white">
+              <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#8A6D1F] py-3 text-[13px] font-semibold text-white">
                 <FileText className="h-4 w-4" />
                 Yêu cầu báo cáo kiểm định
               </button>
@@ -586,18 +586,18 @@ export default function XeChiTietPage() {
         </div>
 
         {/* === Phiên bản & giá === */}
-        <div className="mt-14 bg-[#F1F1EF] px-12 py-14 max-[860px]:px-5">
-          <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#B60F0F]">
+        <div className="mt-10 bg-[#F1F1EF] px-[1.3rem] py-8">
+          <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
             Phiên bản & giá
           </div>
-          <h2 className="mb-3 text-2xl font-extrabold tracking-[-0.3px]">Chọn phiên bản phù hợp</h2>
-          <p className="mb-8 max-w-[560px] text-sm leading-[1.7] text-[#63635E]">
+          <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.3px]">Chọn phiên bản phù hợp</h2>
+          <p className="mb-5 max-w-[560px] text-[13px] leading-[1.7] text-[#63635E]">
             Giá đã bao gồm thuế trước bạ theo quy định. Chi phí đăng ký, biển số và bảo hiểm sẽ
             được tư vấn chi tiết.
           </p>
 
           <div className="overflow-hidden rounded-2xl border border-[#ECECE9] bg-white">
-            <div className="grid grid-cols-[2fr_1fr_1.2fr_1fr] gap-4 border-b border-[#ECECE9] bg-[#FAFAF9] px-6 py-3 text-xs font-bold uppercase tracking-wide text-[#8A8A85] max-[860px]:hidden">
+            <div className="grid grid-cols-[2fr_1fr_1.2fr_1fr] gap-4 border-b border-[#ECECE9] bg-[#FAFAF9] px-6 py-3 text-[11px] font-bold uppercase tracking-wide text-[#8A8A85] max-[860px]:hidden">
               <div>Phiên bản</div>
               <div>Công suất</div>
               <div>Giá niêm yết</div>
@@ -612,9 +612,9 @@ export default function XeChiTietPage() {
                 <div className="flex items-center gap-2 font-bold">
                   {pb.ten}
                 </div>
-                <div className="text-sm text-[#63635E]">{pb.congSuat}</div>
-                <div className="text-lg font-extrabold text-[#B60F0F]">{pb.gia}</div>
-                <button className="flex items-center justify-center gap-1.5 rounded-lg bg-[#17171A] px-4 py-2.5 text-sm font-semibold text-white md:justify-self-end">
+                <div className="text-[13px] text-[#63635E]">{pb.congSuat}</div>
+                <div className="text-[16px] font-extrabold text-[#AC0021]">{pb.gia}</div>
+                <button className="flex items-center justify-center gap-1.5 rounded-lg bg-[#17171A] px-4 py-2.5 text-[13px] font-semibold text-white md:justify-self-end">
                   <CalendarCheck className="h-4 w-4" />
                   Đặt xe phiên bản này
                 </button>
@@ -624,18 +624,18 @@ export default function XeChiTietPage() {
         </div>
 
         {/* === Hồ sơ kỹ thuật đầy đủ === */}
-        <div className="px-12 pt-14 max-[860px]:px-5">
-          <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#B60F0F]">
+        <div className="px-[1.3rem] pt-14">
+          <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
             Thông số kỹ thuật
           </div>
-          <h2 className="mb-3 text-2xl font-extrabold tracking-[-0.3px]">Hồ sơ kỹ thuật đầy đủ</h2>
-          <p className="mb-8 max-w-[640px] text-sm leading-[1.7] text-[#63635E]">
+          <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.3px]">Hồ sơ kỹ thuật đầy đủ</h2>
+          <p className="mb-5 max-w-[640px] text-[13px] leading-[1.7] text-[#63635E]">
             Toàn bộ thông số dưới đây được đối chiếu với hồ sơ xuất xưởng của xe và cập nhật theo
             tình trạng thực tế tại showroom.
           </p>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-[#ECECE9] bg-white p-6">
+            <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
               <div className="mb-4 flex items-center gap-2.5 font-bold">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#17171A] text-white">
                   <Gauge className="h-4 w-4" />
@@ -653,20 +653,20 @@ export default function XeChiTietPage() {
                 ["Hệ dẫn động", xe.heDanDong],
                 ["Nhiên liệu", xe.nhienLieu],
               ].map(([nhan, giaTri]) => (
-                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-sm last:border-0">
+                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
                   <span className="font-semibold">{giaTri}</span>
                 </div>
               ))}
               {xe.thongSoBoSung.map(({ nhan, giaTri }) => (
-                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-sm last:border-0">
+                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
                   <span className="font-semibold">{giaTri}</span>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl border border-[#ECECE9] bg-white p-6">
+            <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
               <div className="mb-4 flex items-center gap-2.5 font-bold">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#17171A] text-white">
                   <Car className="h-4 w-4" />
@@ -683,7 +683,7 @@ export default function XeChiTietPage() {
                 ["Số km đã đi", xe.soKmDaDi],
                 ["Tình trạng", xe.tinhTrang],
               ].map(([nhan, giaTri]) => (
-                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-sm last:border-0">
+                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
                   <span className="font-semibold">{giaTri}</span>
                 </div>
@@ -691,7 +691,7 @@ export default function XeChiTietPage() {
             </div>
           </div>
 
-          <div className="mt-5 flex items-start gap-2 text-xs text-[#8A8A85]">
+          <div className="mt-5 flex items-start gap-2 text-[11px] text-[#8A8A85]">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             Một số trang bị có thể thay đổi theo từng lô xe. Vui lòng liên hệ showroom để xác nhận
             cấu hình chính xác của xe trước khi quyết định.
@@ -699,15 +699,15 @@ export default function XeChiTietPage() {
         </div>
 
         {xeTuongTu.length > 0 ? (
-          <section className="mt-14 bg-[#F1F1EF] px-12 py-14 max-[860px]:px-5">
-            <div className="mb-8">
-              <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#B60F0F]">
+          <section className="mt-10 bg-[#F1F1EF] px-[1.3rem] py-8">
+            <div className="mb-5">
+              <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
                 Gợi ý thêm
               </div>
-              <h2 className="mb-2 text-2xl font-extrabold tracking-[-0.3px]">
+              <h2 className="mb-2 text-[20px] font-extrabold tracking-[-0.3px]">
                 Xe tương tự tại showroom
               </h2>
-              <p className="text-sm leading-[1.7] text-[#63635E]">
+              <p className="text-[13px] leading-[1.7] text-[#63635E]">
                 Những mẫu Porsche {xe.dong} khác cùng dòng đang có tại showroom.
               </p>
             </div>
@@ -728,18 +728,18 @@ export default function XeChiTietPage() {
                         onError={(event) => { event.currentTarget.style.display = "none"; }}
                       />
                     ) : null}
-                    <span className="absolute left-3.5 top-3.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#17171A]">
+                    <span className="absolute left-3.5 top-3.5 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-[#17171A]">
                       <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#2FA84F]" />
                       {item.trangThai}
                     </span>
                     {item.nhan ? (
-                      <span className="absolute left-3.5 top-[50px] rounded-full bg-[#17171A] px-3 py-1 text-xs text-white">
+                      <span className="absolute left-3.5 top-[50px] rounded-full bg-[#17171A] px-3 py-1 text-[11px] text-white">
                         {item.nhan}
                       </span>
                     ) : null}
                   </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <div className="mb-1 text-xs font-semibold tracking-[0.3px] text-[#8A8A85]">
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="mb-1 text-[11px] font-semibold tracking-[0.3px] text-[#8A8A85]">
                       PORSCHE {item.dong} · {item.nam}
                     </div>
                     <div className="mb-3 font-bold">{item.ten}</div>
@@ -750,17 +750,17 @@ export default function XeChiTietPage() {
                         ["Tốc độ tối đa", item.tocDoToiDa],
                       ].map(([nhan, giaTri]) => (
                         <div key={nhan}>
-                          <div className="text-xs text-[#8A8A85]">{nhan}</div>
-                          <div className="mt-1 text-sm font-semibold">{giaTri}</div>
+                          <div className="text-[11px] text-[#8A8A85]">{nhan}</div>
+                          <div className="mt-1 text-[13px] font-semibold">{giaTri}</div>
                         </div>
                       ))}
                     </div>
                     <div className="mt-3 flex items-end justify-between gap-3">
                       <div>
-                        <div className="text-xs text-[#8A8A85]">Giá niêm yết từ</div>
-                        <div className="font-extrabold text-[#B60F0F]">{item.gia}</div>
+                        <div className="text-[11px] text-[#8A8A85]">Giá niêm yết từ</div>
+                        <div className="font-extrabold text-[#AC0021]">{item.gia}</div>
                       </div>
-                      <span className="shrink-0 rounded-lg bg-[#17171A] px-3 py-2 text-xs font-semibold text-white">
+                      <span className="shrink-0 rounded-lg bg-[#17171A] px-3 py-2 text-[11px] font-semibold text-white">
                         Xem chi tiết →
                       </span>
                     </div>

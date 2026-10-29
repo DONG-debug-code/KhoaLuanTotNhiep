@@ -9,7 +9,7 @@ const TAB = {
     icon: Wrench,
     moTa: "Gợi ý gói độ theo xe & ngân sách",
     tinNhanMoDau: [
-      "Xin chào, tôi là Trợ lý độ xe của DU_AN_XE. Bạn đang sở hữu dòng Porsche nào và muốn nâng cấp theo hướng nào ạ?",
+      "Xin chào, tôi là Trợ lý độ xe của Porsche. Bạn đang sở hữu dòng Porsche nào và muốn nâng cấp theo hướng nào ạ?",
       "Tôi có thể gợi ý gói độ theo xe, ngân sách và mục đích sử dụng — đường phố, track day hay thuần thẩm mỹ.",
     ],
     goiY: [
@@ -24,7 +24,7 @@ const TAB = {
     icon: HeartPulse,
     moTa: "Nhắc lịch bảo dưỡng theo số km",
     tinNhanMoDau: [
-      "Xin chào, tôi là Trợ lý bảo dưỡng của DU_AN_XE. Cho tôi biết dòng xe và số km hiện tại để tư vấn chính xác nhé.",
+      "Xin chào, tôi là Trợ lý bảo dưỡng của Porsche. Cho tôi biết dòng xe và số km hiện tại để tư vấn chính xác nhé.",
     ],
     goiY: [
       "Xe 15.000 km cần làm gì?",
@@ -139,7 +139,7 @@ export default function TroLyAIChat() {
           onClick={() => setDangMo(true)}
           className="fixed bottom-7 right-7 z-[60] flex items-center gap-2.5 rounded-full border-0 bg-[#000] px-[12px] py-2 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(226,60,60,0.35)]"
         >
-          <div className="h-[35px] bg-[#c71430] w-[35px] flex items-center justify-center rounded-full">
+          <div className="h-[35px] bg-[#AC0021] w-[35px] flex items-center justify-center rounded-full">
             <Sparkles  />
           </div>
           Trợ lý AI tư vấn
@@ -153,7 +153,7 @@ export default function TroLyAIChat() {
           {/* Header */}
           <div className="bg-[#0A0A0B] text-white">
             <div className="px-3 pb-2 pt-2 flex items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B60F0F]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#AC0021]">
                 <tab.icon className="h-4.5 w-4.5 text-white" />
               </span>
 
@@ -205,7 +205,7 @@ export default function TroLyAIChat() {
                   type="button"
                   onClick={xoaLichSu}
                   disabled={dangXoaLichSu}
-                  className="flex items-center gap-1.5 font-semibold text-[#B60F0F] disabled:opacity-50"
+                  className="flex items-center gap-1.5 font-semibold text-[#AC0021] disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   {dangXoaLichSu ? "Đang xóa..." : "Xóa lịch sử"}
@@ -219,7 +219,7 @@ export default function TroLyAIChat() {
                   className={`flex items-start gap-2.5 ${tin.nguoiGui === "khach" ? "flex-row-reverse" : ""}`}
                 >
                   {tin.nguoiGui === "ai" && (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B60F0F]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#AC0021]">
                       <Sparkles className="h-3.5 w-3.5 text-white" />
                     </span>
                   )}
@@ -247,7 +247,7 @@ export default function TroLyAIChat() {
                 <button
                   key={goiY}
                   onClick={() => guiTinNhan(goiY)}
-                  className="rounded-full border border-[#ECECE9] bg-white px-3.5 py-2 text-xs text-[#4A4A46] hover:border-[#B60F0F] hover:text-[#B60F0F]"
+                  className="rounded-full border border-[#ECECE9] bg-white px-3.5 py-2 text-xs text-[#4A4A46] hover:border-[#AC0021] hover:text-[#AC0021]"
                 >
                   {goiY}
                 </button>
@@ -271,7 +271,7 @@ export default function TroLyAIChat() {
             <button
               onClick={() => void guiTinNhan(noiDungNhap)}
               disabled={dangGui}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B60F0F] text-white disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#AC0021] text-white disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
             </button>

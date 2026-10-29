@@ -163,15 +163,15 @@ function orderStatusLabel(status) {
 
 function MetricCard({ label, value, icon: Icon, hint }) {
   return (
-    <article className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
+    <article className="rounded-2xl border border-[#e9e9e6] bg-white p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-[#777a80]">{label}</span>
+        <span className="text-[13px] text-[#777a80]">{label}</span>
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f3f1] text-[#565b61]">
           <Icon className="h-[18px] w-[18px]" />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-extrabold tracking-tight text-[#111317]">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-[#85888d]">{hint}</p> : null}
+      <p className="mt-3 text-xl font-extrabold tracking-tight text-[#111317]">{value}</p>
+      {hint ? <p className="mt-1 text-[11px] text-[#85888d]">{hint}</p> : null}
     </article>
   );
 }
@@ -418,20 +418,20 @@ function CustomerPortalPage() {
 
   const avatarUrl = getWorkspaceAssetUrl(profile?.avatar);
   const profileSummary = (
-    <section className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-5 text-center">
+    <section className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-4 text-center">
       <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[#f0f0ed] bg-[#e6e7e4] text-3xl font-bold text-[#555a60]">
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
       </div>
-      <h2 className="mt-3 text-lg font-bold">{profile?.ho_ten || "Khách hàng"}</h2>
-      <span className="mt-1 inline-flex rounded-full bg-[#faedce] px-3 py-1 text-xs font-medium text-[#775a2d]">Thành viên Porsche</span>
-      <div className="my-5 space-y-3 border-y border-[#ecece9] py-4 text-left text-sm text-[#5f6369]">
+      <h2 className="!mb-0 mt-3 text-[15px] font-bold">{profile?.ho_ten || "Khách hàng"}</h2>
+      <span className="mt-1 inline-flex rounded-full bg-[#faedce] px-3 py-1 text-[11px] font-medium text-[#775a2d]">Thành viên Porsche</span>
+      <div className="my-5 space-y-3 border-y border-[#ecece9] py-4 text-left text-[13px] text-[#5f6369]">
         <p className="flex items-center gap-2.5 break-all"><MessageSquareText className="h-4 w-4 shrink-0 text-[#8c9298]" />{profile?.email || "—"}</p>
         <p className="flex items-center gap-2.5"><Smartphone className="h-4 w-4 shrink-0 text-[#8c9298]" />{profile?.so_dien_thoai || "Chưa cập nhật"}</p>
         <p className="flex items-center gap-2.5"><Clock3 className="h-4 w-4 shrink-0 text-[#8c9298]" />Thành viên từ {formatMemberSince(profile?.created_at)}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-[#f4f4f1] px-2 py-3"><strong className="block text-xl">{profile?.garage?.length ?? 0}</strong><span className="text-xs text-[#777a80]">Xe của tôi</span></div>
-        <div className="rounded-xl bg-[#f4f4f1] px-2 py-3"><strong className="block text-xl">{appointments.length}</strong><span className="text-xs text-[#777a80]">Lịch dịch vụ</span></div>
+        <div className="rounded-xl bg-[#f4f4f1] px-2 py-3"><strong className="block text-lg">{profile?.garage?.length ?? 0}</strong><span className="text-[11px] text-[#777a80]">Xe của tôi</span></div>
+        <div className="rounded-xl bg-[#f4f4f1] px-2 py-3"><strong className="block text-lg">{appointments.length}</strong><span className="text-[11px] text-[#777a80]">Lịch dịch vụ</span></div>
       </div>
     </section>
   );
@@ -440,8 +440,8 @@ function CustomerPortalPage() {
     <CustomerWorkspaceLayout activeKey={activeKey} onNavigate={goTo} onBook={() => goTo("booking")}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[#e5e5e1] pb-5">
         <div>
-          <h1 className="!mb-1 !mt-0 !text-3xl !font-extrabold !tracking-tight">{pageTitle(activeKey)}</h1>
-          <p className="text-sm text-[#73777d]">
+          <h1 className="!mb-1 !mt-0 !text-[26px] !font-extrabold !tracking-tight">{pageTitle(activeKey)}</h1>
+          <p className="text-[13px] text-[#73777d]">
             {activeKey === "garage" ? "Tình trạng xe, lịch bảo dưỡng và chi phí dịch vụ của bạn."
               : activeKey === "profile" ? "Quản lý thông tin tài khoản, ảnh đại diện và bảo mật đăng nhập."
                 : activeKey === "appointments" ? "Theo dõi tiến độ và quản lý lịch dịch vụ Workshop."
@@ -455,9 +455,9 @@ function CustomerPortalPage() {
         </button>
       </div>
 
-      {error ? <p role="alert" className="mb-4 flex items-start gap-2 rounded-xl bg-[#fae9eb] px-4 py-3 text-sm text-[#9d1026]"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p> : null}
-      {notice ? <p role="status" className="mb-4 flex items-start gap-2 rounded-xl bg-[#e8f5ec] px-4 py-3 text-sm text-[#24613a]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{notice}</p> : null}
-      {loading ? <p className="mb-4 text-sm text-[#73777d]">Đang tải dữ liệu...</p> : null}
+      {error ? <p role="alert" className="mb-4 flex items-start gap-2 rounded-xl bg-[#fae9eb] px-4 py-3 text-[13px] text-[#8C001B]"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p> : null}
+      {notice ? <p role="status" className="mb-4 flex items-start gap-2 rounded-xl bg-[#e8f5ec] px-4 py-3 text-[13px] text-[#24613a]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{notice}</p> : null}
+      {loading ? <p className="mb-4 text-[13px] text-[#73777d]">Đang tải dữ liệu...</p> : null}
 
       {!loading && activeKey === "garage" ? (
         <>
@@ -471,8 +471,8 @@ function CustomerPortalPage() {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(280px,0.8fr)]">
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold">Xe của tôi</h2>
-                <button type="button" onClick={() => goTo("booking")} className="text-sm font-semibold text-[#b10e27] hover:underline">Đặt lịch Workshop</button>
+                <h2 className="text-[15px] font-bold">Xe của tôi</h2>
+                <button type="button" onClick={() => goTo("booking")} className="text-[13px] font-semibold text-[#8C001B] hover:underline">Đặt lịch Workshop</button>
               </div>
               {profile?.garage?.length ? (
                 <div className="space-y-4">
@@ -484,19 +484,19 @@ function CustomerPortalPage() {
                       <div className="flex-1 p-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-lg font-bold">{vehicleName(vehicle)}</h3>
-                            {vehicle.bien_so_xe ? <p className="mt-1 font-mono text-sm text-[#73777d]">{vehicle.bien_so_xe}</p> : null}
+                            <h3 className="text-[15px] font-bold">{vehicleName(vehicle)}</h3>
+                            {vehicle.bien_so_xe ? <p className="mt-1 font-mono text-[13px] text-[#73777d]">{vehicle.bien_so_xe}</p> : null}
                           </div>
-                          <span className="rounded-full border border-[#e7e7e3] px-3 py-1 text-xs text-[#62666b]">Trong garage</span>
+                          <span className="rounded-full border border-[#e7e7e3] px-3 py-1 text-[11px] text-[#62666b]">Trong garage</span>
                         </div>
-                        <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-                          <div><span className="block text-xs text-[#85888d]">Thông tin xe</span><strong className="mt-1 block">{vehicle.thong_tin_xe || "Chưa cập nhật"}</strong></div>
-                          <div><span className="block text-xs text-[#85888d]">Lịch sử Workshop</span><strong className="mt-1 block">{appointments.filter((item) => item.bien_so_xe === vehicle.bien_so_xe).length} lịch</strong></div>
-                          <div><span className="block text-xs text-[#85888d]">Bảo dưỡng kế tiếp</span><strong className="mt-1 block text-[#777a80]">Chưa có dữ liệu</strong></div>
+                        <div className="mt-5 grid gap-3 text-[13px] sm:grid-cols-3">
+                          <div><span className="block text-[11px] text-[#85888d]">Thông tin xe</span><strong className="mt-1 block">{vehicle.thong_tin_xe || "Chưa cập nhật"}</strong></div>
+                          <div><span className="block text-[11px] text-[#85888d]">Lịch sử Workshop</span><strong className="mt-1 block">{appointments.filter((item) => item.bien_so_xe === vehicle.bien_so_xe).length} lịch</strong></div>
+                          <div><span className="block text-[11px] text-[#85888d]">Bảo dưỡng kế tiếp</span><strong className="mt-1 block text-[#777a80]">Chưa có dữ liệu</strong></div>
                         </div>
                         <div className="mt-5 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => { setBooking((current) => ({ ...current, bien_so_xe: vehicle.bien_so_xe || "", ten_xe: vehicleName(vehicle) })); goTo("booking"); }} className="rounded-lg bg-[#080a0d] px-4 py-2 text-xs font-semibold text-white">Tư vấn bảo dưỡng</button>
-                          <button type="button" onClick={() => goTo("booking")} className="rounded-lg border border-[#d7d7d3] px-4 py-2 text-xs font-semibold">Tư vấn gói độ</button>
+                          <button type="button" onClick={() => { setBooking((current) => ({ ...current, bien_so_xe: vehicle.bien_so_xe || "", ten_xe: vehicleName(vehicle) })); goTo("booking"); }} className="rounded-lg bg-[#080a0d] px-4 py-2 text-[11px] font-semibold text-white">Tư vấn bảo dưỡng</button>
+                          <button type="button" onClick={() => goTo("booking")} className="rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold">Tư vấn gói độ</button>
                         </div>
                       </div>
                     </article>
@@ -506,15 +506,15 @@ function CustomerPortalPage() {
                 <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center">
                   <CarFront className="mx-auto h-9 w-9 text-[#9da1a4]" />
                   <p className="mt-3 font-semibold">Chưa có xe trong garage</p>
-                  <p className="mt-1 text-sm text-[#777a80]">Xe sẽ xuất hiện sau khi có lịch Workshop gắn với tài khoản.</p>
-                  <button type="button" onClick={() => goTo("booking")} className="mt-4 rounded-lg bg-[#080a0d] px-4 py-2 text-sm font-semibold text-white">Đặt lịch Workshop</button>
+                  <p className="mt-1 text-[13px] text-[#777a80]">Xe sẽ xuất hiện sau khi có lịch Workshop gắn với tài khoản.</p>
+                  <button type="button" onClick={() => goTo("booking")} className="mt-4 rounded-lg bg-[#080a0d] px-4 py-2 text-[13px] font-semibold text-white">Đặt lịch Workshop</button>
                 </div>
               )}
             </section>
 
-            <section className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-5">
-              <h2 className="text-lg font-bold">Tình trạng bảo dưỡng</h2>
-              <p className="mt-1 text-sm text-[#777a80]">Thông tin hiển thị theo lịch sử dịch vụ đã có.</p>
+            <section className="h-fit rounded-2xl border border-[#e9e9e6] bg-white p-4">
+              <h2 className="text-[15px] font-bold">Tình trạng bảo dưỡng</h2>
+              <p className="mt-1 text-[13px] text-[#777a80]">Thông tin hiển thị theo lịch sử dịch vụ đã có.</p>
               {appointments.length ? (
                 <div className="mt-4 space-y-3">
                   {appointments.slice(0, 4).map((item) => (
@@ -522,16 +522,16 @@ function CustomerPortalPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold">{item.thong_tin_xe || item.bien_so_xe || "Lịch Workshop"}</p>
-                          <p className="mt-1 text-xs text-[#777a80]">{formatDate(item.ngay_dat)}{item.gio_dat ? ` · ${item.gio_dat}` : ""}</p>
+                          <p className="mt-1 text-[11px] text-[#777a80]">{formatDate(item.ngay_dat)}{item.gio_dat ? ` · ${item.gio_dat}` : ""}</p>
                         </div>
                         <span className="shrink-0 rounded-full bg-[#f1f1ef] px-2.5 py-1 text-[11px] font-medium">{appointmentStateLabel(item.trang_thai)}</span>
                       </div>
                     </article>
                   ))}
-                  <button type="button" onClick={() => goTo("appointments")} className="text-sm font-semibold text-[#b10e27] hover:underline">Xem tất cả lịch hẹn</button>
+                  <button type="button" onClick={() => goTo("appointments")} className="text-[13px] font-semibold text-[#8C001B] hover:underline">Xem tất cả lịch hẹn</button>
                 </div>
               ) : (
-                <div className="mt-4 rounded-xl bg-[#f5f5f3] p-4 text-sm text-[#777a80]">Chưa có lịch sử bảo dưỡng. Đặt lịch để theo dõi dịch vụ tại đây.</div>
+                <div className="mt-4 rounded-xl bg-[#f5f5f3] p-4 text-[13px] text-[#777a80]">Chưa có lịch sử bảo dưỡng. Đặt lịch để theo dõi dịch vụ tại đây.</div>
               )}
             </section>
           </div>
@@ -544,35 +544,35 @@ function CustomerPortalPage() {
           <section className="min-w-0">
             <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-[#e9e9e6] bg-white p-1.5 sm:grid-cols-2 lg:grid-cols-4">
               {PROFILE_TABS.map(({ key, label, icon: Icon }) => (
-                <button key={key} type="button" onClick={() => setProfileTab(key)} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-xs font-medium transition-colors sm:text-sm ${profileTab === key ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-[#f3f3f1]"}`}>
+                <button key={key} type="button" onClick={() => setProfileTab(key)} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-[11px] font-medium transition-colors sm:text-[13px] ${profileTab === key ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-[#f3f3f1]"}`}>
                   <Icon className="h-4 w-4 shrink-0" />{label}
                 </button>
               ))}
             </div>
 
             {profileTab === "details" ? (
-              <form onSubmit={saveProfile} className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Thông tin cá nhân</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Thông tin này dùng cho liên hệ dịch vụ và hồ sơ xe.</p>
+              <form onSubmit={saveProfile} className="rounded-2xl border border-[#e9e9e6] bg-white p-4 sm:p-6">
+                <h2 className="!mb-0 text-[15px] font-bold">Thông tin cá nhân</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Thông tin này dùng cho liên hệ dịch vụ và hồ sơ xe.</p>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <label className="text-sm font-medium">Họ và tên<input required name="ho_ten" value={profile?.ho_ten ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
-                  <label className="text-sm font-medium">Email<input value={profile?.email ?? ""} readOnly className="mt-1.5 w-full rounded-lg border border-[#e9e9e6] bg-[#f4f4f2] px-3.5 py-3 font-normal text-[#777a80]" /></label>
-                  <label className="text-sm font-medium">Số điện thoại<input required name="so_dien_thoai" value={profile?.so_dien_thoai ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
-                  <label className="text-sm font-medium md:col-span-2">Địa chỉ<input name="dia_chi" value={profile?.dia_chi ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
+                  <label className="text-[13px] font-medium">Họ và tên<input required name="ho_ten" value={profile?.ho_ten ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
+                  <label className="text-[13px] font-medium">Email<input value={profile?.email ?? ""} readOnly className="mt-1.5 w-full rounded-lg border border-[#e9e9e6] bg-[#f4f4f2] px-3.5 py-3 font-normal text-[#777a80]" /></label>
+                  <label className="text-[13px] font-medium">Số điện thoại<input required name="so_dien_thoai" value={profile?.so_dien_thoai ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
+                  <label className="text-[13px] font-medium md:col-span-2">Địa chỉ<input name="dia_chi" value={profile?.dia_chi ?? ""} onChange={updateProfileField} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
                 </div>
-                <button type="submit" disabled={saving || !profile} className="mt-5 rounded-lg bg-[#cf102d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
+                <button type="submit" disabled={saving || !profile} className="mt-5 rounded-lg bg-[#AC0021] px-5 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
               </form>
             ) : null}
 
             {profileTab === "avatar" ? (
-              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Ảnh đại diện</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Chọn ảnh cá nhân để cập nhật ảnh đại diện (JPG, PNG hoặc WebP, tối đa 2 MB).</p>
+              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-4 sm:p-6">
+                <h2 className="!mb-0 text-[15px] font-bold">Ảnh đại diện</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Chọn ảnh cá nhân để cập nhật ảnh đại diện (JPG, PNG hoặc WebP, tối đa 2 MB).</p>
                 <div className="mt-5 flex flex-wrap items-center gap-5">
                   <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[#e7e8e5] text-3xl font-bold text-[#555a60]">
                     {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : profile?.ho_ten?.[0] || "P"}
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-sm font-semibold">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-[13px] font-semibold">
                     <UserRoundPen className="h-4 w-4" /> Tải ảnh lên
                     <input type="file" accept="image/jpeg,image/png,image/webp" onChange={saveAvatar} className="sr-only" />
                   </label>
@@ -581,22 +581,22 @@ function CustomerPortalPage() {
             ) : null}
 
             {profileTab === "password" ? (
-              <form onSubmit={changePassword} className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Đổi mật khẩu</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Nên đổi mật khẩu định kỳ để bảo vệ tài khoản của bạn.</p>
+              <form onSubmit={changePassword} className="rounded-2xl border border-[#e9e9e6] bg-white p-4 sm:p-6">
+                <h2 className="!mb-0 text-[15px] font-bold">Đổi mật khẩu</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Nên đổi mật khẩu định kỳ để bảo vệ tài khoản của bạn.</p>
                 <div className="mt-5 grid max-w-xl gap-4">
-                  <label className="text-sm font-medium">Mật khẩu hiện tại<input required type="password" autoComplete="current-password" value={password.old_password} onChange={(event) => setPassword({ ...password, old_password: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
-                  <label className="text-sm font-medium">Mật khẩu mới<input required minLength={6} type="password" autoComplete="new-password" value={password.password} onChange={(event) => setPassword({ ...password, password: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /><span className="mt-1 block text-xs text-[#85888d]">Tối thiểu 6 ký tự.</span></label>
-                  <label className="text-sm font-medium">Xác nhận mật khẩu mới<input required minLength={6} type="password" autoComplete="new-password" value={password.password_confirmation} onChange={(event) => setPassword({ ...password, password_confirmation: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
+                  <label className="text-[13px] font-medium">Mật khẩu hiện tại<input required type="password" autoComplete="current-password" value={password.old_password} onChange={(event) => setPassword({ ...password, old_password: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
+                  <label className="text-[13px] font-medium">Mật khẩu mới<input required minLength={6} type="password" autoComplete="new-password" value={password.password} onChange={(event) => setPassword({ ...password, password: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /><span className="mt-1 block text-[11px] text-[#85888d]">Tối thiểu 6 ký tự.</span></label>
+                  <label className="text-[13px] font-medium">Xác nhận mật khẩu mới<input required minLength={6} type="password" autoComplete="new-password" value={password.password_confirmation} onChange={(event) => setPassword({ ...password, password_confirmation: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal outline-none focus:border-[#202226]" /></label>
                 </div>
-                <button type="submit" disabled={saving} className="mt-5 rounded-lg bg-[#080a0d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Đang cập nhật..." : "Đổi mật khẩu"}</button>
+                <button type="submit" disabled={saving} className="mt-5 rounded-lg bg-[#080a0d] px-5 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50">{saving ? "Đang cập nhật..." : "Đổi mật khẩu"}</button>
               </form>
             ) : null}
 
             {profileTab === "vouchers" ? (
-              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Voucher của bạn</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Mã giảm giá đã được cấp sẽ được áp dụng khi đặt hàng nếu đáp ứng điều kiện.</p>
+              <section className="rounded-2xl border border-[#e9e9e6] bg-white p-4 sm:p-6">
+                <h2 className="!mb-0 text-[15px] font-bold">Voucher của bạn</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Mã giảm giá đã được cấp sẽ được áp dụng khi đặt hàng nếu đáp ứng điều kiện.</p>
                 {profile?.vouchers?.length ? (
                   <div className="mt-5 grid gap-3 md:grid-cols-2">
                     {profile.vouchers.map((voucher) => {
@@ -607,24 +607,24 @@ function CustomerPortalPage() {
                         <article key={voucher.id} className="rounded-xl border border-dashed border-[#d7d7d3] bg-[#fafaf8] p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-[#777a80]">Mã voucher</p>
-                              <p className="mt-1 font-mono text-lg font-bold tracking-wide text-[#c8102e]">{voucher.code}</p>
+                              <p className="text-[11px] font-medium uppercase tracking-wide text-[#777a80]">Mã voucher</p>
+                              <p className="mt-1 font-mono text-[15px] font-bold tracking-wide text-[#AC0021]">{voucher.code}</p>
                             </div>
-                            <Tag className="h-5 w-5 shrink-0 text-[#c8102e]" />
+                            <Tag className="h-5 w-5 shrink-0 text-[#AC0021]" />
                           </div>
-                          <p className="mt-3 text-sm font-semibold">Giảm {discount}</p>
+                          <p className="mt-3 text-[13px] font-semibold">Giảm {discount}</p>
                           {Number(voucher.gia_tri_don_hang_toi_thieu) > 0 ? (
-                            <p className="mt-1 text-xs text-[#777a80]">Đơn tối thiểu {money(voucher.gia_tri_don_hang_toi_thieu)}</p>
+                            <p className="mt-1 text-[11px] text-[#777a80]">Đơn tối thiểu {money(voucher.gia_tri_don_hang_toi_thieu)}</p>
                           ) : null}
                           {voucher.ngay_ket_thuc ? (
-                            <p className="mt-1 text-xs text-[#777a80]">Hạn sử dụng: {formatDate(voucher.ngay_ket_thuc)}</p>
+                            <p className="mt-1 text-[11px] text-[#777a80]">Hạn sử dụng: {formatDate(voucher.ngay_ket_thuc)}</p>
                           ) : null}
                         </article>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="mt-5 rounded-xl border border-dashed border-[#d9d9d5] p-6 text-center text-sm text-[#777a80]">
+                  <div className="mt-5 rounded-xl border border-dashed border-[#d9d9d5] p-6 text-center text-[13px] text-[#777a80]">
                     Bạn chưa có voucher nào. Voucher sẽ được cấp khi đăng ký tài khoản.
                   </div>
                 )}
@@ -645,34 +645,34 @@ function CustomerPortalPage() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e9e9e6] bg-white p-2">
             <div className="flex flex-wrap gap-1">
               {APPOINTMENT_FILTERS.map((filter) => (
-                <button key={filter.key} type="button" onClick={() => setAppointmentFilter(filter.key)} className={`rounded-xl px-4 py-2 text-sm font-medium ${appointmentFilter === filter.key ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-[#f3f3f1]"}`}>{filter.label}</button>
+                <button key={filter.key} type="button" onClick={() => setAppointmentFilter(filter.key)} className={`rounded-xl px-4 py-2 text-[13px] font-medium ${appointmentFilter === filter.key ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-[#f3f3f1]"}`}>{filter.label}</button>
               ))}
             </div>
-            <button type="button" onClick={() => goTo("booking")} className="rounded-lg bg-[#cf102d] px-4 py-2.5 text-sm font-semibold text-white">+ Đặt lịch mới</button>
+            <button type="button" onClick={() => goTo("booking")} className="rounded-lg bg-[#AC0021] px-4 py-2.5 text-[13px] font-semibold text-white">+ Đặt lịch mới</button>
           </div>
           {filteredAppointments.length ? (
             <div className="space-y-3">
               {filteredAppointments.map((item) => (
-                <article key={item.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                <article key={item.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e9e9e6] bg-white p-4">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fae9eb] text-[#c8102e]"><Wrench className="h-5 w-5" /></span>
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fae9eb] text-[#AC0021]"><Wrench className="h-5 w-5" /></span>
                     <div className="min-w-0">
-                      <h3 className="font-semibold">{item.thong_tin_xe || item.bien_so_xe || "Lịch Workshop"}</h3>
-                      <p className="mt-1 text-xs text-[#777a80]">{item.ma_dat_lich ? `${item.ma_dat_lich} · ` : ""}{item.bien_so_xe || ""}</p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#73777d]">
+                      <h3 className="text-[14px] font-semibold">{item.thong_tin_xe || item.bien_so_xe || "Lịch Workshop"}</h3>
+                      <p className="mt-1 text-[11px] text-[#777a80]">{item.ma_dat_lich ? `${item.ma_dat_lich} · ` : ""}{item.bien_so_xe || ""}</p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#73777d]">
                         <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formatDate(item.ngay_dat)}{item.gio_dat ? ` · ${item.gio_dat}` : ""}</span>
                         {item.ten_chuyen_gia ? <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.ten_chuyen_gia}</span> : null}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="rounded-full bg-[#f1f1ef] px-3 py-1 text-xs font-semibold">{appointmentStateLabel(item.trang_thai)}</span>
-                    {appointmentState(item.trang_thai) === "active" ? <button type="button" disabled={saving} onClick={() => void cancelAppointment(item)} className="text-sm font-semibold text-[#c8102e] disabled:opacity-50">Hủy lịch</button> : null}
+                    <span className="rounded-full bg-[#f1f1ef] px-3 py-1 text-[11px] font-semibold">{appointmentStateLabel(item.trang_thai)}</span>
+                    {appointmentState(item.trang_thai) === "active" ? <button type="button" disabled={saving} onClick={() => void cancelAppointment(item)} className="text-[13px] font-semibold text-[#AC0021] disabled:opacity-50">Hủy lịch</button> : null}
                   </div>
                 </article>
               ))}
             </div>
-          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-sm text-[#777a80]">Không có lịch hẹn trong danh mục này.</div>}
+          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-[13px] text-[#777a80]">Không có lịch hẹn trong danh mục này.</div>}
         </section>
       ) : null}
 
@@ -687,33 +687,33 @@ function CustomerPortalPage() {
           {orders.length ? (
             <div className="space-y-3">
               {orders.map((order, index) => (
-                <details key={order.id ?? index} className="group rounded-2xl border border-[#e9e9e6] bg-white p-5">
+                <details key={order.id ?? index} className="group rounded-2xl border border-[#e9e9e6] bg-white p-4">
                   <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fae9eb] text-[#c8102e]"><CarFront className="h-5 w-5" /></span>
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fae9eb] text-[#AC0021]"><CarFront className="h-5 w-5" /></span>
                       <div>
                         <p className="font-semibold">Đơn hàng #{order.id ?? index + 1}</p>
-                        <p className="mt-1 text-xs text-[#777a80]">{formatDate(order.created_at || order.ngay_tao)} · {order.chi_tiet?.length ?? 0} dòng sản phẩm</p>
+                        <p className="mt-1 text-[11px] text-[#777a80]">{formatDate(order.created_at || order.ngay_tao)} · {order.chi_tiet?.length ?? 0} dòng sản phẩm</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-right"><small className="block text-xs text-[#85888d]">{orderStatusLabel(order.trang_thai)}</small><strong>{money(order.thanh_tien)}</strong></span>
-                      <span className="rounded-lg border border-[#d7d7d3] px-3 py-2 text-xs font-semibold">Xem chi tiết</span>
+                      <span className="text-right"><small className="block text-[11px] text-[#85888d]">{orderStatusLabel(order.trang_thai)}</small><strong>{money(order.thanh_tien)}</strong></span>
+                      <span className="rounded-lg border border-[#d7d7d3] px-3 py-2 text-[11px] font-semibold">Xem chi tiết</span>
                     </div>
                   </summary>
-                  <div className="mt-4 border-t border-[#ededeb] pt-4 text-sm text-[#5f6369]">
+                  <div className="mt-4 border-t border-[#ededeb] pt-4 text-[13px] text-[#5f6369]">
                     <p><span className="font-semibold">Trạng thái đơn:</span> {orderStatusLabel(order.trang_thai)}</p>
                     <p className="mt-2"><span className="font-semibold">Thanh toán:</span> {order.trang_thai_thanh_toan === "da_thanh_toan" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
                     {order.chi_tiet?.map((detail) => (
                       <p key={detail.id} className="mt-2 flex justify-between gap-4"><span>{detail.ten_san_pham || "Sản phẩm showroom"} × {detail.so_luong}</span><span className="font-medium">{money(detail.thanh_tien)}</span></p>
                     ))}
                     <p className="mt-2"><span className="font-semibold">Hình thức nhận:</span> {order.phuong_thuc_nhan === "nhan_tai_showroom" ? "Nhận tại showroom" : order.phuong_thuc_nhan === "giao_tan_noi" ? `Giao tận nơi${order.dia_chi_nguoi_nhan ? ` · ${order.dia_chi_nguoi_nhan}` : ""}` : "—"}</p>
-                    <button type="button" onClick={() => setDetailOrderId(order.id)} className="mt-4 rounded-lg bg-[#c8102e] px-4 py-2 text-xs font-semibold text-white">Xem chi tiết đầy đủ &amp; in hóa đơn PDF</button>
+                    <button type="button" onClick={() => setDetailOrderId(order.id)} className="mt-4 rounded-lg bg-[#AC0021] px-4 py-2 text-[11px] font-semibold text-white">Xem chi tiết đầy đủ &amp; in hóa đơn PDF</button>
                   </div>
                 </details>
               ))}
             </div>
-          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-sm text-[#777a80]">Bạn chưa có đơn hàng nào.</div>}
+          ) : <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center text-[13px] text-[#777a80]">Bạn chưa có đơn hàng nào.</div>}
           {detailOrderId ? <OrderDetailModal orderId={detailOrderId} onClose={() => setDetailOrderId(null)} /> : null}
         </section>
       ) : null}
@@ -727,62 +727,62 @@ function CustomerPortalPage() {
               const current = bookingStep === step;
               return (
                 <div key={label} className={`flex items-center gap-2 ${step < 4 ? "after:ml-2 after:h-px after:flex-1 after:bg-[#dededb] after:content-['']" : ""}`}>
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${current ? "border-[#c8102e] bg-[#fae9eb] text-[#c8102e]" : complete ? "border-[#c8102e] bg-[#c8102e] text-white" : "border-[#e1e1de] text-[#85888d]"}`}>
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-[13px] font-semibold ${current ? "border-[#AC0021] bg-[#fae9eb] text-[#AC0021]" : complete ? "border-[#AC0021] bg-[#AC0021] text-white" : "border-[#e1e1de] text-[#85888d]"}`}>
                     {complete ? <Check className="h-4 w-4" /> : step}
                   </span>
-                  <span className={`hidden min-w-0 sm:block ${current ? "text-[#c8102e]" : "text-[#777a80]"}`}><small className="block text-[10px] uppercase">Bước {step}</small><span className="text-xs font-medium">{label}</span></span>
+                  <span className={`hidden min-w-0 sm:block ${current ? "text-[#AC0021]" : "text-[#777a80]"}`}><small className="block text-[10px] uppercase">Bước {step}</small><span className="text-[11px] font-medium">{label}</span></span>
                 </div>
               );
             })}
           </div>
 
-          <form onSubmit={submitBooking} className="rounded-2xl border border-[#e9e9e6] bg-white p-5 sm:p-6">
+          <form onSubmit={submitBooking} className="rounded-2xl border border-[#e9e9e6] bg-white p-4 sm:p-6">
             {bookingStep === 1 ? (
               <>
-                <h2 className="font-bold">Chọn xe</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Chọn xe trong Garage của bạn hoặc nhập thông tin xe.</p>
+                <h2 className="!mb-0 text-[15px] font-bold">Chọn xe</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Chọn xe trong Garage của bạn hoặc nhập thông tin xe.</p>
                 {profile?.garage?.length ? (
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {profile.garage.map((vehicle, index) => {
                       const selected = booking.bien_so_xe === vehicle.bien_so_xe;
-                      return <button key={`${vehicle.bien_so_xe || "vehicle"}-${index}`} type="button" onClick={() => setBooking({ ...booking, bien_so_xe: vehicle.bien_so_xe || "", ten_xe: vehicleName(vehicle) })} className={`rounded-xl border p-4 text-left ${selected ? "border-[#cf102d] bg-[#fff4f4]" : "border-[#e9e9e6] hover:border-[#c7c7c2]"}`}><strong className="block">{vehicleName(vehicle)}</strong><span className="mt-1 block text-sm text-[#777a80]">{vehicle.bien_so_xe || "Chưa có biển số"}</span></button>;
+                      return <button key={`${vehicle.bien_so_xe || "vehicle"}-${index}`} type="button" onClick={() => setBooking({ ...booking, bien_so_xe: vehicle.bien_so_xe || "", ten_xe: vehicleName(vehicle) })} className={`rounded-xl border p-4 text-left ${selected ? "border-[#AC0021] bg-[#fff4f4]" : "border-[#e9e9e6] hover:border-[#c7c7c2]"}`}><strong className="block">{vehicleName(vehicle)}</strong><span className="mt-1 block text-[13px] text-[#777a80]">{vehicle.bien_so_xe || "Chưa có biển số"}</span></button>;
                     })}
                   </div>
                 ) : null}
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <label className="text-sm font-medium">Mẫu xe<input required value={booking.ten_xe} onChange={(event) => setBooking({ ...booking, ten_xe: event.target.value })} placeholder="Ví dụ: Porsche 911 Carrera" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
-                  <label className="text-sm font-medium">Biển số xe<input required value={booking.bien_so_xe} onChange={(event) => setBooking({ ...booking, bien_so_xe: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
+                  <label className="text-[13px] font-medium">Mẫu xe<input required value={booking.ten_xe} onChange={(event) => setBooking({ ...booking, ten_xe: event.target.value })} placeholder="Ví dụ: Porsche 911 Carrera" className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
+                  <label className="text-[13px] font-medium">Biển số xe<input required value={booking.bien_so_xe} onChange={(event) => setBooking({ ...booking, bien_so_xe: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
                 </div>
               </>
             ) : null}
 
             {bookingStep === 2 ? (
               <>
-                <h2 className="font-bold">Chọn chuyên gia</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Chọn chuyên gia phù hợp cho yêu cầu Workshop của bạn.</p>
-                <label className="mt-5 block max-w-xl text-sm font-medium">Chuyên gia phụ trách<select required value={booking.id_chuyen_gia} onChange={(event) => setBooking({ ...booking, id_chuyen_gia: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal"><option value="">Chọn chuyên gia</option>{bookingOptions.chuyen_gias.map((expert) => <option key={expert.id} value={expert.id}>{expert.ho_ten}{expert.ma_so_tuner ? ` · ${expert.ma_so_tuner}` : ""}</option>)}</select></label>
-                {!bookingOptions.chuyen_gias.length ? <p className="mt-3 text-sm text-[#777a80]">Hiện chưa có chuyên gia khả dụng. Vui lòng thử lại sau.</p> : null}
+                <h2 className="!mb-0 text-[15px] font-bold">Chọn chuyên gia</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Chọn chuyên gia phù hợp cho yêu cầu Workshop của bạn.</p>
+                <label className="mt-5 block max-w-xl text-[13px] font-medium">Chuyên gia phụ trách<select required value={booking.id_chuyen_gia} onChange={(event) => setBooking({ ...booking, id_chuyen_gia: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal"><option value="">Chọn chuyên gia</option>{bookingOptions.chuyen_gias.map((expert) => <option key={expert.id} value={expert.id}>{expert.ho_ten}{expert.ma_so_tuner ? ` · ${expert.ma_so_tuner}` : ""}</option>)}</select></label>
+                {!bookingOptions.chuyen_gias.length ? <p className="mt-3 text-[13px] text-[#777a80]">Hiện chưa có chuyên gia khả dụng. Vui lòng thử lại sau.</p> : null}
               </>
             ) : null}
 
             {bookingStep === 3 ? (
               <>
-                <h2 className="font-bold">Chọn ngày và thời gian</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Chọn thời gian mong muốn và khu vực Workshop.</p>
+                <h2 className="!mb-0 text-[15px] font-bold">Chọn ngày và thời gian</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Chọn thời gian mong muốn và khu vực Workshop.</p>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <label className="text-sm font-medium">Ngày mong muốn<input required type="date" min={new Date().toISOString().slice(0, 10)} value={booking.ngay_dat} onChange={(event) => setBooking({ ...booking, ngay_dat: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
-                  <label className="text-sm font-medium">Giờ mong muốn<input required type="time" value={booking.gio_dat} onChange={(event) => setBooking({ ...booking, gio_dat: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
-                  <label className="text-sm font-medium md:col-span-2">Khu vực Workshop<select required value={booking.id_khu_vuc_workshop} onChange={(event) => setBooking({ ...booking, id_khu_vuc_workshop: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal"><option value="">Chọn khu vực</option>{bookingOptions.khu_vuc_workshops.map((area) => <option key={area.id} value={area.id}>{area.ten_khu_vuc}</option>)}</select></label>
-                  <label className="text-sm font-medium md:col-span-2">Ghi chú cho chuyên gia (tùy chọn)<textarea maxLength={1000} rows={4} value={booking.ghi_chu} onChange={(event) => setBooking({ ...booking, ghi_chu: event.target.value })} placeholder="Mô tả tình trạng xe hoặc yêu cầu riêng của bạn..." className="mt-1.5 w-full resize-y rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
+                  <label className="text-[13px] font-medium">Ngày mong muốn<input required type="date" min={new Date().toISOString().slice(0, 10)} value={booking.ngay_dat} onChange={(event) => setBooking({ ...booking, ngay_dat: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
+                  <label className="text-[13px] font-medium">Giờ mong muốn<input required type="time" value={booking.gio_dat} onChange={(event) => setBooking({ ...booking, gio_dat: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
+                  <label className="text-[13px] font-medium md:col-span-2">Khu vực Workshop<select required value={booking.id_khu_vuc_workshop} onChange={(event) => setBooking({ ...booking, id_khu_vuc_workshop: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#dededb] bg-white px-3.5 py-3 font-normal"><option value="">Chọn khu vực</option>{bookingOptions.khu_vuc_workshops.map((area) => <option key={area.id} value={area.id}>{area.ten_khu_vuc}</option>)}</select></label>
+                  <label className="text-[13px] font-medium md:col-span-2">Ghi chú cho chuyên gia (tùy chọn)<textarea maxLength={1000} rows={4} value={booking.ghi_chu} onChange={(event) => setBooking({ ...booking, ghi_chu: event.target.value })} placeholder="Mô tả tình trạng xe hoặc yêu cầu riêng của bạn..." className="mt-1.5 w-full resize-y rounded-lg border border-[#dededb] px-3.5 py-3 font-normal" /></label>
                 </div>
               </>
             ) : null}
 
             {bookingStep === 4 ? (
               <>
-                <h2 className="font-bold">Xác nhận lịch hẹn</h2>
-                <p className="mt-1 text-sm text-[#777a80]">Kiểm tra thông tin trước khi gửi yêu cầu đặt lịch.</p>
-                <dl className="mt-5 grid gap-4 rounded-xl bg-[#f5f5f3] p-5 text-sm sm:grid-cols-2">
+                <h2 className="!mb-0 text-[15px] font-bold">Xác nhận lịch hẹn</h2>
+                <p className="mt-1 text-[13px] text-[#777a80]">Kiểm tra thông tin trước khi gửi yêu cầu đặt lịch.</p>
+                <dl className="mt-5 grid gap-4 rounded-xl bg-[#f5f5f3] p-5 text-[13px] sm:grid-cols-2">
                   <div><dt className="text-[#777a80]">Xe</dt><dd className="mt-1 font-semibold">{booking.ten_xe} · {booking.bien_so_xe}</dd></div>
                   <div><dt className="text-[#777a80]">Chuyên gia</dt><dd className="mt-1 font-semibold">{bookingOptions.chuyen_gias.find((item) => String(item.id) === String(booking.id_chuyen_gia))?.ho_ten || "—"}</dd></div>
                   <div><dt className="text-[#777a80]">Ngày và giờ</dt><dd className="mt-1 font-semibold">{formatDate(booking.ngay_dat)} · {booking.gio_dat}</dd></div>
@@ -793,7 +793,7 @@ function CustomerPortalPage() {
             ) : null}
 
             <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[#ededeb] pt-5">
-              {bookingStep > 1 ? <button type="button" onClick={() => setBookingStep((step) => step - 1)} className="inline-flex items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-sm font-semibold"><ArrowLeft className="h-4 w-4" /> Quay lại</button> : <button type="button" onClick={() => goTo("appointments")} className="inline-flex items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-sm font-semibold">Lịch hẹn của tôi</button>}
+              {bookingStep > 1 ? <button type="button" onClick={() => setBookingStep((step) => step - 1)} className="inline-flex items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-[13px] font-semibold"><ArrowLeft className="h-4 w-4" /> Quay lại</button> : <button type="button" onClick={() => goTo("appointments")} className="inline-flex items-center gap-2 rounded-lg border border-[#d7d7d3] px-4 py-2.5 text-[13px] font-semibold">Lịch hẹn của tôi</button>}
               {bookingStep < 4 ? (
                 <button type="button" onClick={() => {
                   setError("");
@@ -801,9 +801,9 @@ function CustomerPortalPage() {
                   if (bookingStep === 2 && !booking.id_chuyen_gia) return setError("Vui lòng chọn chuyên gia.");
                   if (bookingStep === 3 && (!booking.ngay_dat || !booking.gio_dat || !booking.id_khu_vuc_workshop)) return setError("Vui lòng chọn ngày, giờ và khu vực Workshop.");
                   setBookingStep((step) => step + 1);
-                }} className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-5 py-2.5 text-sm font-semibold text-white">Tiếp tục <ArrowRight className="h-4 w-4" /></button>
+                }} className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-5 py-2.5 text-[13px] font-semibold text-white">Tiếp tục <ArrowRight className="h-4 w-4" /></button>
               ) : (
-                <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Đang gửi..." : "Xác nhận đặt lịch"} <Check className="h-4 w-4" /></button>
+                <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-[#080a0d] px-5 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50">{saving ? "Đang gửi..." : "Xác nhận đặt lịch"} <Check className="h-4 w-4" /></button>
               )}
             </div>
           </form>
@@ -813,20 +813,20 @@ function CustomerPortalPage() {
       {!loading && activeKey === "ai-history" ? (
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e9e9e6] bg-white p-4">
-            <p className="text-sm text-[#777a80]">Các câu hỏi và câu trả lời đã lưu trong tài khoản.</p>
-            <button type="button" onClick={() => void clearHistory()} disabled={saving || history.length === 0} className="rounded-lg border border-[#efc8ce] px-4 py-2 text-sm font-semibold text-[#b10e27] disabled:opacity-50">{saving ? "Đang xóa..." : "Xóa toàn bộ"}</button>
+            <p className="text-[13px] text-[#777a80]">Các câu hỏi và câu trả lời đã lưu trong tài khoản.</p>
+            <button type="button" onClick={() => void clearHistory()} disabled={saving || history.length === 0} className="rounded-lg border border-[#efc8ce] px-4 py-2 text-[13px] font-semibold text-[#8C001B] disabled:opacity-50">{saving ? "Đang xóa..." : "Xóa toàn bộ"}</button>
           </div>
           {history.length ? (
             <div className="space-y-3">
               {history.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-[#e9e9e6] bg-white p-5">
-                  <p className="mb-3 flex items-center gap-2 text-xs text-[#85888d]"><Sparkles className="h-4 w-4 text-[#a17d42]" />{item.created_at ? new Date(item.created_at).toLocaleString("vi-VN") : ""}</p>
+                <article key={item.id} className="rounded-2xl border border-[#e9e9e6] bg-white p-4">
+                  <p className="mb-3 flex items-center gap-2 text-[11px] text-[#85888d]"><Sparkles className="h-4 w-4 text-[#a17d42]" />{item.created_at ? new Date(item.created_at).toLocaleString("vi-VN") : ""}</p>
                   <p className="font-semibold">Bạn: {item.input_user}</p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#555a60]">Trợ lý: {item.output_ai}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-[13px] leading-6 text-[#555a60]">Trợ lý: {item.output_ai}</p>
                 </article>
               ))}
             </div>
-          ) : <p className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white px-4 py-8 text-center text-sm text-[#777a80]">Chưa có lịch sử tư vấn AI.</p>}
+          ) : <p className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white px-4 py-8 text-center text-[13px] text-[#777a80]">Chưa có lịch sử tư vấn AI.</p>}
         </section>
       ) : null}
     </CustomerWorkspaceLayout>

@@ -29,8 +29,8 @@ function TuningTable({ customer, vehicle, onSave, saving }) {
       {rows.map((row, index) => (
         <div key={row.hang_muc} className="grid grid-cols-[1.2fr_1fr_1.2fr] items-center gap-3 border-t border-[#ECECE9] px-5 py-2.5 text-sm max-sm:grid-cols-1">
           <span>{row.hang_muc}</span>
-          <input value={row.truoc} onChange={(event) => update(index, "truoc", event.target.value)} aria-label={`${row.hang_muc} trước`} placeholder="—" className="rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-[#63635E] outline-none hover:border-[#DCDCD7] focus:border-[#B60F0F] focus:bg-white" />
-          <input value={row.hien_tai} onChange={(event) => update(index, "hien_tai", event.target.value)} aria-label={`${row.hang_muc} hiện tại`} placeholder="—" className="rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-semibold outline-none hover:border-[#DCDCD7] focus:border-[#B60F0F] focus:bg-white" />
+          <input value={row.truoc} onChange={(event) => update(index, "truoc", event.target.value)} aria-label={`${row.hang_muc} trước`} placeholder="—" className="rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-[#63635E] outline-none hover:border-[#DCDCD7] focus:border-[#AC0021] focus:bg-white" />
+          <input value={row.hien_tai} onChange={(event) => update(index, "hien_tai", event.target.value)} aria-label={`${row.hang_muc} hiện tại`} placeholder="—" className="rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-semibold outline-none hover:border-[#DCDCD7] focus:border-[#AC0021] focus:bg-white" />
         </div>
       ))}
     </section>
@@ -78,7 +78,7 @@ export default function ExpertCustomersView({ customers, onSaveTuning, onSaveNot
               return (
                 <li key={item.key}>
                   <button type="button" onClick={() => setSelectedKey(item.key)} className={`flex w-full items-center gap-3 border-t border-[#ECECE9] px-5 py-4 text-left transition-colors ${active ? "bg-[#F4F4F2]" : "hover:bg-[#FAFAF9]"}`}>
-                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold ${active ? "bg-[#C9161F] text-white" : "bg-[#E8E8E5] text-[#4A4A46]"}`}>{initials(item.ho_ten)}</span>
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold ${active ? "bg-[#AC0021] text-white" : "bg-[#E8E8E5] text-[#4A4A46]"}`}>{initials(item.ho_ten)}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
                         <span className="truncate font-semibold">{item.ho_ten}</span>

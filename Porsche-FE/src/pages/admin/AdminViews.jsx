@@ -49,7 +49,7 @@ function AssignModal({ appointment, experts, bays, onClose, onSubmit }) {
             {bays.filter((item) => Number(item.trang_thai) === 1).map((item) => <option key={item.id} value={item.id}>{item.ten_khu_vuc}</option>)}
           </select>
         </label>
-        <div className="flex justify-end gap-2"><ActionButton onClick={onClose}>Đóng</ActionButton><button type="submit" className="rounded-lg bg-[#C9161F] px-4 py-2 text-xs font-semibold text-white">Lưu phân công</button></div>
+        <div className="flex justify-end gap-2"><ActionButton onClick={onClose}>Đóng</ActionButton><button type="submit" className="rounded-lg bg-[#AC0021] px-4 py-2 text-xs font-semibold text-white">Lưu phân công</button></div>
       </form>
     </div>
   );

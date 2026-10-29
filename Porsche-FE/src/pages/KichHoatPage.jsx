@@ -138,7 +138,7 @@ export default function KichHoatPage() {
                 onChange={(event) => capNhatMa(index, event.target.value)}
                 onPaste={xuLyDanMa}
                 onKeyDown={(event) => xuLyPhimMa(index, event)}
-                className="h-[50px] min-w-0 rounded-[9px] border border-[#DCDDDF] bg-white text-center text-lg font-semibold text-[#17191E] outline-none transition-colors focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/10"
+                className="h-[50px] min-w-0 rounded-[9px] border border-[#DCDDDF] bg-white text-center text-lg font-semibold text-[#17191E] outline-none transition-colors focus:border-[#AC0021] focus:ring-2 focus:ring-[#AC0021]/10"
               />
             ))}
           </div>
@@ -151,7 +151,7 @@ export default function KichHoatPage() {
               from: location.state?.from,
               pendingCartItem: location.state?.pendingCartItem,
             }}
-            className="font-semibold text-[#C8102E] hover:underline"
+            className="font-semibold text-[#AC0021] hover:underline"
           >
             Đăng ký lại
           </Link>
@@ -168,7 +168,7 @@ export default function KichHoatPage() {
             from: location.state?.from,
             pendingCartItem: location.state?.pendingCartItem,
           }}
-          className="font-semibold text-[#C8102E] hover:underline"
+          className="font-semibold text-[#AC0021] hover:underline"
         >
           Đăng nhập
         </Link>

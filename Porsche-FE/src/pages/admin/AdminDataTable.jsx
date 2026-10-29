@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export function Chip({ children, tone = "gold" }) {
   const tones = {
     gold: "bg-[#FBF1DC] text-[#8A6414] border-[#F0DDB0]",
-    red: "bg-[#FDE8E8] text-[#B60F0F] border-[#F6C9C9]",
+    red: "bg-[#FDE8E8] text-[#AC0021] border-[#F6C9C9]",
     dark: "bg-[#17171A] text-white border-[#17171A]",
     gray: "bg-[#F1F1EF] text-[#63635E] border-[#E4E4E0]",
     green: "bg-[#E4F5EA] text-[#1F7A3D] border-[#BFE5CD]",
@@ -29,7 +29,7 @@ export function ActionButton({ children, onClick, tone = "default", disabled }) 
   const tones = {
     default: "border border-[#E4E4E0] text-[#17171A] hover:bg-[#F1F1EF]",
     primary: "bg-[#17171A] text-white hover:bg-black",
-    danger: "border border-[#F1CACA] text-[#B60F0F] hover:bg-[#FBE9E9]",
+    danger: "border border-[#F1CACA] text-[#AC0021] hover:bg-[#FBE9E9]",
   };
   return <button type="button" disabled={disabled} onClick={onClick} className={`rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${tones[tone]}`}>{children}</button>;
 }

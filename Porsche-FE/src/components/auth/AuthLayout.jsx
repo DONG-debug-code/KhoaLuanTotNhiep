@@ -130,7 +130,7 @@ export function AuthSubmit({ children, disabled = false, onClick, type = "submit
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className="flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[9px] bg-[#C8102E] px-4 py-2 text-[16px] text-white transition-colors hover:bg-[#AD0D27] disabled:cursor-wait disabled:opacity-60"
+      className="flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[9px] bg-[#AC0021] px-4 py-2 text-[16px] text-white transition-colors hover:bg-[#AC0021] disabled:cursor-wait disabled:opacity-60"
     >
       {children}
     </button>
@@ -139,7 +139,7 @@ export function AuthSubmit({ children, disabled = false, onClick, type = "submit
 
 export function AuthError({ children }) {
   return children ? (
-    <div role="alert" className="mb-3 rounded-lg border border-[#F4C7CD] bg-[#FFF0F1] px-4 py-2 text-sm leading-relaxed text-[#A70D25]">
+    <div role="alert" className="mb-3 rounded-lg border border-[#F4C7CD] bg-[#FFF0F1] px-4 py-2 text-sm leading-relaxed text-[#8C001B]">
       {children}
     </div>
   ) : null;

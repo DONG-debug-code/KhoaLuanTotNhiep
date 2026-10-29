@@ -63,8 +63,8 @@ function DetailList({ title, value }) {
 
   return (
     <section>
-      <h3 className="mb-2 text-sm font-bold text-[#17171A]">{title}</h3>
-      <ul className="space-y-2 text-sm leading-5 text-[#63635E]">
+      <h3 className="mb-2 text-[13px] font-bold text-[#17171A]">{title}</h3>
+      <ul className="space-y-2 text-[13px] leading-5 text-[#63635E]">
         {lines.map((line, index) => (
           <li key={`${line}-${index}`} className="flex gap-2">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#a78343]" aria-hidden="true" />
@@ -201,10 +201,10 @@ export default function ProductDetailModal({ product, onClose }) {
       >
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#ECECE9] px-6 py-4 sm:px-7">
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#B60F0F]">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#AC0021]">
               Porsche Equipment · {product.type === "phu_tung" ? "Phụ tùng" : "Gói độ"}
             </p>
-            <h2 id="product-detail-title" className="text-xl font-extrabold text-[#17171A] sm:text-2xl">
+            <h2 id="product-detail-title" className="text-lg font-extrabold text-[#17171A] sm:text-xl">
               {detail?.ten || product.ten}
             </h2>
           </div>
@@ -220,18 +220,18 @@ export default function ProductDetailModal({ product, onClose }) {
         </header>
 
         {loading ? (
-          <div className="flex min-h-72 items-center justify-center px-6 text-sm text-[#63635E]">
+          <div className="flex min-h-72 items-center justify-center px-6 text-[13px] text-[#63635E]">
             Đang tải đầy đủ thông tin từ showroom...
           </div>
         ) : error ? (
           <div className="flex min-h-72 flex-col items-center justify-center gap-4 px-6 text-center">
-            <p role="alert" className="flex items-center gap-2 text-sm text-red-700">
+            <p role="alert" className="flex items-center gap-2 text-[13px] text-red-700">
               <AlertCircle className="h-4 w-4 shrink-0" />{error}
             </p>
             <button
               type="button"
               onClick={() => setRetryKey((current) => current + 1)}
-              className="rounded-lg border border-[#dededb] bg-white px-4 py-2 text-sm font-semibold text-[#17171A]"
+              className="rounded-lg border border-[#dededb] bg-white px-4 py-2 text-[13px] font-semibold text-[#17171A]"
             >
               Thử tải lại
             </button>
@@ -249,31 +249,31 @@ export default function ProductDetailModal({ product, onClose }) {
               <div className="grid grid-cols-3 gap-2">
                 <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-[#ECECE9] bg-[#F3F3F1] px-2 text-center">
                   <Star className="mb-1 h-4 w-4 text-[#a78343]" aria-hidden="true" />
-                  <span className="text-xs text-[#555a60]">{rating ? `${formattedRating} đánh giá` : "Chính hãng Porsche"}</span>
+                  <span className="text-[11px] text-[#555a60]">{rating ? `${formattedRating} đánh giá` : "Chính hãng Porsche"}</span>
                 </div>
                 <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-[#ECECE9] bg-[#F3F3F1] px-2 text-center">
                   <ShoppingBag className="mb-1 h-4 w-4 text-[#a78343]" aria-hidden="true" />
-                  <span className="text-xs text-[#555a60]">{sold ? `${sold} đã bán` : `Còn ${stock} sản phẩm`}</span>
+                  <span className="text-[11px] text-[#555a60]">{sold ? `${sold} đã bán` : `Còn ${stock} sản phẩm`}</span>
                 </div>
                 <div className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-[#ECECE9] bg-[#F3F3F1] px-2 text-center">
                   <ShieldCheck className="mb-1 h-4 w-4 text-[#a78343]" aria-hidden="true" />
-                  <span className="text-xs text-[#555a60]">{warranty || "Bảo hành chính hãng"}</span>
+                  <span className="text-[11px] text-[#555a60]">{warranty || "Bảo hành chính hãng"}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col">
-              <p className="mb-4 text-sm leading-6 text-[#63635E]">
+              <p className="mb-4 text-[13px] leading-6 text-[#63635E]">
                 {description || "Chưa có mô tả chi tiết cho sản phẩm này."}
               </p>
               <div className="mb-4 rounded-xl border border-[#ECECE9] bg-[#F3F3F1] p-4">
-                <span className="block text-xs text-[#777a80]">
+                <span className="block text-[11px] text-[#777a80]">
                   {product.type === "phu_tung" ? "Giá trọn gói (đã gồm công lắp đặt)" : "Giá bán"}
                 </span>
-                <strong className="mt-1 block text-2xl font-extrabold text-[#B60F0F]">
+                <strong className="mt-1 block text-xl font-extrabold text-[#AC0021]">
                   {Number.isFinite(price) ? formatMoney(price) : detail.gia || "Liên hệ"}
                 </strong>
-                <span className={`mt-1 block text-xs ${isInStock ? "text-[#63635E]" : "text-[#B60F0F]"}`}>
+                <span className={`mt-1 block text-[11px] ${isInStock ? "text-[#63635E]" : "text-[#AC0021]"}`}>
                   {isInStock ? `Còn ${stock} sản phẩm trong kho` : "Tạm hết hàng"}
                   {warranty ? ` · Bảo hành ${warranty}` : ""}
                 </span>
@@ -286,9 +286,9 @@ export default function ProductDetailModal({ product, onClose }) {
               </div>
 
               <div className="mt-auto pt-5">
-                {notice ? <p role="status" className="mb-3 text-xs text-[#63635E]">{notice}</p> : null}
+                {notice ? <p role="status" className="mb-3 text-[11px] text-[#63635E]">{notice}</p> : null}
                 <div className="mb-3 flex items-center justify-between border-t border-[#ECECE9] pt-4">
-                  <span className="text-sm text-[#63635E]">Số lượng</span>
+                  <span className="text-[13px] text-[#63635E]">Số lượng</span>
                   <div className="flex items-center rounded-lg border border-[#dededb] bg-white">
                     <button
                       type="button"
@@ -299,7 +299,7 @@ export default function ProductDetailModal({ product, onClose }) {
                     >
                       <Minus className="h-4 w-4" />
                     </button>
-                    <span className="min-w-10 text-center text-sm font-semibold">{quantity}</span>
+                    <span className="min-w-10 text-center text-[13px] font-semibold">{quantity}</span>
                     <button
                       type="button"
                       aria-label="Tăng số lượng"
@@ -316,7 +316,7 @@ export default function ProductDetailModal({ product, onClose }) {
                     type="button"
                     onClick={() => addToCart()}
                     disabled={!isInStock}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#c6c7c8] bg-white px-4 py-3 text-sm font-semibold text-[#17171A] hover:bg-[#f3f3f1] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#c6c7c8] bg-white px-4 py-3 text-[13px] font-semibold text-[#17171A] hover:bg-[#f3f3f1] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <ShoppingBag className="h-4 w-4" /> Thêm vào giỏ
                   </button>
@@ -324,13 +324,13 @@ export default function ProductDetailModal({ product, onClose }) {
                     type="button"
                     onClick={() => addToCart(true)}
                     disabled={!isInStock}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#C8102E] px-4 py-3 text-sm font-bold text-white hover:bg-[#B10E27] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#AC0021] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#8C001B] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Mua ngay <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
                 {!canShop ? (
-                  <p className="mt-2 text-center text-xs text-[#777a80]">Đăng nhập bằng tài khoản khách hàng để đặt mua.</p>
+                  <p className="mt-2 text-center text-[11px] text-[#777a80]">Đăng nhập bằng tài khoản khách hàng để đặt mua.</p>
                 ) : null}
               </div>
             </div>

@@ -18,7 +18,7 @@ export default function ChuyenGiaPage() {
   return (
     <>
       <Navbar luonSang/>
-      <div className="min-h-screen bg-[#FAFAF9] px-12 pb-16 pt-[130px] max-[860px]:px-5">
+      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
         <h1 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px]">
           Đội ngũ chuyên gia
         </h1>
