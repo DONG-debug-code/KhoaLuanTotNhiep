@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle, Check, Package, Search, ShoppingBag } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import Footer from "../../components/layouts/partials/Footer";
 import { getGoiDoVaPhuTungClient } from "../../api/PublicApi";
 import { useCart } from "../../context/CartContext";
@@ -9,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import ProductDetailModal from "../../components/product/ProductDetailModal";
 
 const formatMoney = (value) => `${Number(value).toLocaleString("vi-VN")} ₫`;
+const SO_SAN_PHAM_MOI_TRANG = 12;
 
 export function toStoreItem(item, type) {
   return {
@@ -88,6 +90,7 @@ export default function HangPhuTungPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Tất cả");
   const [sort, setSort] = useState("popular");
+  const [page, setPage] = useState(1);
   const [addedKey, setAddedKey] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { addItem, itemCount, subtotal } = useCart();
@@ -134,6 +137,13 @@ export default function HangPhuTungPage() {
     if (sort === "price-desc") return [...matching].sort((a, b) => b.giaSo - a.giaSo);
     return matching;
   }, [category, products, search, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleProducts.length / SO_SAN_PHAM_MOI_TRANG));
+  const currentPage = Math.min(page, totalPages);
+  const pagedProducts = visibleProducts.slice(
+    (currentPage - 1) * SO_SAN_PHAM_MOI_TRANG,
+    currentPage * SO_SAN_PHAM_MOI_TRANG
+  );
 
   const addProduct = (product) => {
     if (!canShop) {
@@ -197,10 +207,10 @@ export default function HangPhuTungPage() {
     <>
       <Navbar luonSang />
       <main className="min-h-screen bg-[#fafaf9] pt-[80px]">
+        <Breadcrumb items={[{ label: "Trang chủ", to: "/" }, { label: "Gói độ & phụ kiện" }]} />
         <section className="border-b border-[#e6e6e3] bg-[#f3f3f1] px-[1.3rem] py-8">
           <div className="mx-auto flex flex-wrap items-center justify-between gap-6">
             <div>
-              <p className="mb-3 text-[13px] text-[#777a80]">Trang chủ　›　Gói độ &amp; phụ kiện</p>
               <h1 className="!my-0 text-2xl font-extrabold tracking-tight sm:text-3xl">Gói độ &amp; phụ kiện chính hãng</h1>
               <p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#63666b]">
                 Sản phẩm, giá bán và số lượng tồn được tải trực tiếp từ hệ thống showroom.
@@ -221,11 +231,11 @@ export default function HangPhuTungPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <label className="flex min-w-[260px] flex-1 items-center gap-2 rounded-lg border border-[#dededb] bg-white px-3.5 py-2 sm:max-w-[520px]">
               <Search className="h-4 w-4 text-[#85888d]" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên sản phẩm, hãng hoặc dòng xe..." className="w-full bg-transparent text-[13px] outline-none" />
+              <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Tìm theo tên sản phẩm, hãng hoặc dòng xe..." className="w-full bg-transparent text-[13px] outline-none" />
             </label>
             <label className="flex items-center gap-3 text-[13px] text-[#777a80]">
               Sắp xếp
-              <select value={sort} onChange={(event) => setSort(event.target.value)} className="rounded-lg border border-[#dededb] bg-white px-3 py-2 text-[13px] text-[#17191c]">
+              <select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }} className="rounded-lg border border-[#dededb] bg-white px-3 py-2 text-[13px] text-[#17191c]">
                 <option value="popular">Phổ biến</option>
                 <option value="price-asc">Giá tăng dần</option>
                 <option value="price-desc">Giá giảm dần</option>
@@ -235,7 +245,7 @@ export default function HangPhuTungPage() {
 
           <div className="my-6 flex gap-2 overflow-x-auto rounded-full border border-[#e9e9e6] bg-[#f3f3f1] p-1">
             {categories.map((item) => (
-              <button key={item} type="button" onClick={() => setCategory(item)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium ${category === item ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-white"}`}>
+              <button key={item} type="button" onClick={() => { setCategory(item); setPage(1); }} className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium ${category === item ? "bg-[#080a0d] text-white" : "text-[#555a60] hover:bg-white"}`}>
                 {item}
               </button>
             ))}
@@ -245,7 +255,7 @@ export default function HangPhuTungPage() {
           {loading ? <p className="py-12 text-center text-[13px] text-[#777a80]">Đang tải sản phẩm từ showroom...</p> : null}
           {!loading && visibleProducts.length ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {visibleProducts.map((product) => (
+              {pagedProducts.map((product) => (
                 <StoreProductCard
                   key={`${product.type}:${product.id}`}
                   product={product}
@@ -254,6 +264,27 @@ export default function HangPhuTungPage() {
                   justAdded={addedKey === `${product.type}:${product.id}`}
                 />
               ))}
+            </div>
+          ) : null}
+          {!loading && totalPages > 1 ? (
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setPage(currentPage - 1)}
+                className="rounded-lg border border-[#DCDCD7] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
+              >
+                Trước
+              </button>
+              <span className="text-sm text-[#63635E]">Trang {currentPage} / {totalPages}</span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage(currentPage + 1)}
+                className="rounded-lg border border-[#DCDCD7] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
+              >
+                Sau
+              </button>
             </div>
           ) : null}
           {!loading && !visibleProducts.length && !error ? <p className="rounded-xl border border-dashed border-[#d9d9d5] bg-white p-10 text-center text-[13px] text-[#777a80]">Không tìm thấy sản phẩm phù hợp.</p> : null}

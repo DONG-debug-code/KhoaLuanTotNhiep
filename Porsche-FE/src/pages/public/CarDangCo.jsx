@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { BadgeCheck, Search } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { CarItem } from "./CarItem";
 import { getXeDangBanClient } from "../../api/PublicApi";
 
 const BO_LOC = ["Tất cả", "911", "718", "Taycan", "Panamera", "Cayenne", "Macan"];
-const SO_XE_MOI_TRANG = 9;
+const SO_XE_MOI_TRANG = 12;
 
 function layThongSo(xe, aliases) {
   for (const alias of aliases) {
@@ -46,6 +47,7 @@ function chuyenDoiXe(sanPham) {
 }
 
 export const CarDangCo = () => {
+  const location = useLocation();
   const [danhSachXe, setDanhSachXe] = useState([]);
   const [locDang, setLocDang] = useState("Tất cả");
   const [tuKhoa, setTuKhoa] = useState("");
@@ -75,6 +77,14 @@ export const CarDangCo = () => {
     };
   }, []);
 
+  // Nhận từ khóa từ ô tìm kiếm trên Navbar
+  useEffect(() => {
+    if (typeof location.state?.tuKhoa !== "string") return;
+    setTuKhoa(location.state.tuKhoa);
+    setLocDang("Tất cả");
+    setTrang(1);
+  }, [location.key, location.state]);
+
   const xeLoc = danhSachXe.filter((xe) => {
     const khopDong = locDang === "Tất cả" || xe.dong === locDang;
     const tuKhoaChuanHoa = tuKhoa.trim().toLocaleLowerCase();
@@ -91,7 +101,7 @@ export const CarDangCo = () => {
   );
 
   return (
-    <div id="xe-dang-ban" className="scroll-mt-[80px] relative min-h-screen px-[1.3rem] bg-[#FAFAF9] font-['Inter',sans-serif] text-[#17171A]">
+    <div id="xe-dang-ban" className="scroll-mt-[80px] relative min-h-screen px-[1.3rem] bg-[#FAFAF9] font-sans text-[#17171A]">
       <div className="flex items-start justify-between gap-6 border-b border-[#ECECE9] pb-7 pt-10 max-[860px]:flex-col max-[860px]:pb-5 max-[860px]:pt-7">
         <div>
           <h1 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px]">

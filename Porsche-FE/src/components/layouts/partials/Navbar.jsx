@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { User, LogOut, ChevronDown, ShoppingBag } from "lucide-react";
+import { User, LogOut, ChevronDown, ShoppingBag, Search, X } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 
@@ -15,6 +15,9 @@ export default function Navbar({ luonSang = false }) {
   const [daCuon, setDaCuon] = useState(false);
   const [muctieuDangHien, setMucTieuDangHien] = useState("home");
   const [menuMo, setMenuMo] = useState(false);
+  const [timKiemMo, setTimKiemMo] = useState(false);
+  const [tuKhoa, setTuKhoa] = useState("");
+  const oTimKiemRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const quanSatVien = useRef(null);
@@ -70,6 +73,22 @@ export default function Navbar({ luonSang = false }) {
 
   const dangSang = luonSang || daCuon;
 
+  useEffect(() => {
+    if (!timKiemMo) return undefined;
+    oTimKiemRef.current?.focus();
+    const xuLyPhim = (e) => {
+      if (e.key === "Escape") setTimKiemMo(false);
+    };
+    window.addEventListener("keydown", xuLyPhim);
+    return () => window.removeEventListener("keydown", xuLyPhim);
+  }, [timKiemMo]);
+
+  const xuLyTimKiem = (e) => {
+    e.preventDefault();
+    navigate("/", { state: { cuonToi: "xe-dang-ban", tuKhoa: tuKhoa.trim() } });
+    setTimKiemMo(false);
+  };
+
   const veTrangChu = () => {
     if (location.pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -122,20 +141,29 @@ export default function Navbar({ luonSang = false }) {
           : "bg-transparent border-transparent"
         }`}
     >
-      <button onClick={veTrangChu} className="flex items-center gap-2.5">
-        <div className="flex h-12 w-[90px] items-center justify-center rounded-[9px] max-[860px]:h-9 max-[860px]:w-[70px]">
-          <img src="/src/assets/img/logo.png" className="h-full w-full object-contain" />
-        </div>
+      <button onClick={veTrangChu} className="flex items-center gap-3">
+        <img
+          src="/src/assets/img/logo.png"
+          alt="Porsche"
+          className="h-12 w-auto object-contain max-[860px]:h-9"
+        />
+        <span
+          className={`text-[20px] font-bold tracking-[0.3em] transition-colors duration-300 max-[860px]:text-[15px]
+            ${dangSang ? "text-[#17171A]" : "text-[#F5F4F1]"}`}
+        >
+          PORSCHE
+        </span>
       </button>
 
       <div
         className={`flex gap-9 text-sm max-[860px]:hidden transition-colors duration-300
-          ${dangSang ? "text-[#17171A]" : "text-[#d8d4d4]"}`}
+          ${dangSang ? "text-[#17171A]" : "text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]"}`}
       >
         {NAV_LINKS.map((link) => {
           const active = kiemTraActive(link);
+          const mauActive = dangSang ? "text-[#AC0021]" : "text-white underline underline-offset-8 decoration-2";
           const lopChung = `cursor-pointer transition-colors duration-200 ${
-            active ? "text-[#AC0021] font-semibold" : "hover:opacity-70"
+            active ? `${mauActive} font-semibold` : "hover:opacity-70"
           }`;
 
           if (link.loai === "home") {
@@ -161,10 +189,21 @@ export default function Navbar({ luonSang = false }) {
       </div>
 
       <div className="flex items-center gap-3.5">
+        <button
+          type="button"
+          onClick={() => setTimKiemMo((truoc) => !truoc)}
+          aria-label="Tìm kiếm xe"
+          aria-expanded={timKiemMo}
+          className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            dangSang ? "text-[#17171A] hover:bg-[#F1F1EF]" : "text-white hover:bg-white/10"
+          }`}
+        >
+          {timKiemMo ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+        </button>
         <Link
           to="/gio-hang"
           aria-label={`Giỏ hàng, ${itemCount} sản phẩm`}
-          className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
             dangSang ? "text-[#17171A] hover:bg-[#F1F1EF]" : "text-white hover:bg-white/10"
           }`}
         >
@@ -179,7 +218,7 @@ export default function Navbar({ luonSang = false }) {
           <div ref={menuRef} className="relative">
             <button
               onClick={() => setMenuMo((truoc) => !truoc)}
-              className={`flex items-center gap-2 rounded-lg border-none px-3.5 py-2.5 text-sm font-semibold transition-colors duration-300
+              className={`flex items-center gap-2 rounded-full border-none py-1.5 pl-1.5 pr-3.5 text-sm font-semibold transition-colors duration-300
                 bg-[#17171A] text-white`}
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#AC0021] text-xs font-bold text-white">
@@ -212,13 +251,33 @@ export default function Navbar({ luonSang = false }) {
         ) : (
           <Link
             to="/dang-nhap"
-            className={`cursor-pointer rounded-lg border-none px-5 py-2.5 text-sm font-semibold transition-colors duration-300
+            className={`cursor-pointer rounded-full border-none px-6 py-2.5 text-sm font-semibold transition-colors duration-300
               ${dangSang ? "bg-[#17171A] text-white" : "bg-[#F5F4F1] text-[#0A0A0B]"}`}
           >
             Đăng nhập ngay
           </Link>
         )}
       </div>
+
+      {timKiemMo && (
+        <form
+          onSubmit={xuLyTimKiem}
+          className="absolute left-0 right-0 top-full flex justify-end px-12 pt-2 max-[860px]:px-5"
+        >
+          <label className="relative block w-full max-w-[420px]">
+            <span className="sr-only">Tìm xe theo tên hoặc dòng xe</span>
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A85]" />
+            <input
+              ref={oTimKiemRef}
+              type="search"
+              value={tuKhoa}
+              onChange={(e) => setTuKhoa(e.target.value)}
+              placeholder="Tìm tên xe hoặc dòng xe"
+              className="h-11 w-full rounded-full border border-[#DCDCD7] bg-white pl-11 pr-4 text-sm text-[#17171A] shadow-lg outline-none focus:border-[#17171A]"
+            />
+          </label>
+        </form>
+      )}
     </nav>
   );
 }

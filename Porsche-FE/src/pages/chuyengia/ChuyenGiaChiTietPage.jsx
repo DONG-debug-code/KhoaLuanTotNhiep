@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import { ChuyenGiaAnh } from "../public/ChuyenGiaItem";
 import ChuyenGiaDatLichForm from "./ChuyenGiaDatLichForm";
 import { getChuyenGiaTuningClientById, getGoiDoClient } from "../../api/PublicApi";
@@ -67,15 +68,19 @@ export default function ChuyenGiaChiTietPage() {
   return (
     <>
       <Navbar luonSang/>
-      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[80px]">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", to: "/" },
+            { label: "Chuyên gia", to: "/chuyen-gia" },
+            { label: chuyenGia?.ten || "Chi tiết chuyên gia" },
+          ]}
+        />
+        <div className="px-[1.3rem] pt-5">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin chuyên gia...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !chuyenGia ? <p role="alert" className="text-sm text-[#63635E]">Không tìm thấy chuyên gia.</p> : null}
         {chuyenGia ? <>
-        <Link to="/chuyen-gia" className="mb-6 inline-block text-sm text-[#63635E]">
-          ← Đội ngũ chuyên gia
-        </Link>
-
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[380px_1fr]">
           <div className="group overflow-hidden rounded-2xl border border-[#ECECE9]">
             <ChuyenGiaAnh chuyenGia={chuyenGia} className="aspect-[4/3] w-full" />
@@ -212,6 +217,7 @@ export default function ChuyenGiaChiTietPage() {
           </div>
         )}
         </> : null}
+        </div>
       </div>
     </>
   );

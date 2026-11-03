@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Barlow nhỏ hơn font cũ nên tăng nhẹ các cỡ chữ cố định (px) trên toàn hệ thống */
+@layer utilities {
+  .text-\[10px\] { font-size: 12px; }
+  .text-\[11px\] { font-size: 12px; }
+  .text-\[12px\] { font-size: 13px; }
+  .text-\[13px\] { font-size: 14px; }
+  .text-\[14px\] { font-size: 15px; }
+  .text-\[15px\] { font-size: 16px; }
+  .text-\[16px\] { font-size: 17px; }
+  .text-\[17px\] { font-size: 18px; }
+  .text-\[18px\] { font-size: 19px; }
+  .text-\[20px\] { font-size: 21px; }
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -15,9 +29,9 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: 'Barlow', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Barlow', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'Barlow', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;

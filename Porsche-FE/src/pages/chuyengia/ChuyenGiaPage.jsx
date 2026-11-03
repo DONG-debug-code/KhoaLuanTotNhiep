@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import { ChuyenGiaItem } from "../public/ChuyenGiaItem";
 import { getChuyenGiaTuningClient } from "../../api/PublicApi";
 
@@ -18,7 +19,9 @@ export default function ChuyenGiaPage() {
   return (
     <>
       <Navbar luonSang/>
-      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[80px]">
+        <Breadcrumb items={[{ label: "Trang chủ", to: "/" }, { label: "Chuyên gia" }]} />
+        <div className="px-[1.3rem] pt-8">
         <h1 className="mb-3 text-[34px] font-extrabold tracking-[-0.3px]">
           Đội ngũ chuyên gia
         </h1>
@@ -32,6 +35,7 @@ export default function ChuyenGiaPage() {
           {dangTai ? <p className="text-sm text-[#63635E]">Đang tải chuyên gia...</p> : null}
           {!dangTai && !loi && chuyenGia.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có dữ liệu chuyên gia.</p> : null}
           <ChuyenGiaItem CHUYEN_GIA={chuyenGia} />
+        </div>
         </div>
       </div>
     </>

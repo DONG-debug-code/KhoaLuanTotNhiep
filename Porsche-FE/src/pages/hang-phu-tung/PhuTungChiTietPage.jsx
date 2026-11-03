@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Package } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import { getPhuTungClientById } from "../../api/PublicApi";
 
 function PhuTungImage({ phuTung }) {
@@ -54,16 +55,21 @@ export default function PhuTungChiTietPage() {
   return (
     <>
       <Navbar luonSang />
-      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[80px]">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", to: "/" },
+            { label: "Gói độ & phụ kiện", to: "/hang-phu-tung" },
+            { label: phuTung?.ten || "Phụ tùng" },
+          ]}
+        />
+        <div className="px-[1.3rem] pt-5">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin phụ tùng...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !phuTung ? (
           <p role="alert" className="text-sm text-[#63635E]">Không tìm thấy phụ tùng.</p>
         ) : null}
         {phuTung ? <>
-          <Link to="/hang-phu-tung" className="mb-6 inline-block text-sm text-[#63635E]">
-            ← Tất cả gói độ &amp; phụ tùng
-          </Link>
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.2fr_1fr]">
             <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl border border-[#ECECE9] bg-[#F1F1EF]">
               <PhuTungImage key={phuTung.id} phuTung={phuTung} />
@@ -100,6 +106,7 @@ export default function PhuTungChiTietPage() {
             </div>
           </div>
         </> : null}
+        </div>
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import { getGoiDoClientById } from "../../api/PublicApi";
 
 function layThongSo(thongSo) {
@@ -43,20 +44,21 @@ export default function GoiDoChiTietPage() {
   return (
     <>
       <Navbar luonSang />
-      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[80px]">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", to: "/" },
+            { label: "Gói độ & phụ kiện", to: "/hang-phu-tung" },
+            { label: goi?.ten || "Gói độ" },
+          ]}
+        />
+        <div className="px-[1.3rem] pt-5">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin gói độ...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !goi ? (
           <p role="alert" className="text-sm text-[#63635E]">Không tìm thấy gói độ.</p>
         ) : null}
         {goi ? <>
-          <Link
-            to="/hang-phu-tung"
-            className="mb-6 inline-block text-sm text-[#63635E]"
-          >
-            ← Tất cả gói độ
-          </Link>
-
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.2fr_1fr]">
             <div className="overflow-hidden rounded-2xl border border-[#ECECE9] bg-[#F1F1EF]">
               {goi.anh ? (
@@ -98,6 +100,7 @@ export default function GoiDoChiTietPage() {
             </div>
           </div>
         </> : null}
+        </div>
       </div>
     </>
   );

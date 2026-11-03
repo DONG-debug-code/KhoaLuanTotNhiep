@@ -7,6 +7,7 @@ import {
   FileText, Check,
 } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import Footer from "../../components/layouts/partials/Footer";
 import { timXeTheoSlug } from "../../data/xeData";
 import { getSanPhamClientById } from "../../api/PublicApi";
@@ -303,13 +304,13 @@ export default function XeChiTietPage() {
 
       <div className="min-h-screen bg-[#FAFAF9] pb-10 pt-[80px] max-[860px]:pt-[80px]">
         {/* Breadcrumb */}
-        <div className="border-b border-[#ECECE9] bg-[#F1F1EF] px-[1.3rem] py-2 text-[13px] text-[#63635E]">
-          <Link to="/" className="hover:text-[#17171A]">Trang chủ</Link>
-          <span className="mx-2">›</span>
-          <Link to="/#xe-dang-ban" className="hover:text-[#17171A]">Xe đang bán</Link>
-          <span className="mx-2">›</span>
-          <span className="text-[#17171A]">{xe.ten}</span>
-        </div>
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", to: "/" },
+            { label: "Xe đang bán", to: "/#xe-dang-ban" },
+            { label: xe.ten },
+          ]}
+        />
 
         <div className="grid grid-cols-1 gap-6 px-[1.3rem] pt-5 lg:grid-cols-[1.3fr_1fr]">
 

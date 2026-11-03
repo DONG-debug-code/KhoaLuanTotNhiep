@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
+import Breadcrumb from "../../components/common/Breadcrumb";
 import { getHangPhuTungClientById } from "../../api/PublicApi";
 
 export default function HangChiTietPage() {
@@ -29,7 +30,15 @@ export default function HangChiTietPage() {
   return (
     <>
       <Navbar luonSang/>
-      <div className="min-h-screen bg-[#FAFAF9] px-[1.3rem] pb-16 pt-[126px]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-16 pt-[80px]">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", to: "/" },
+            { label: "Gói độ & phụ kiện", to: "/hang-phu-tung" },
+            { label: hang?.ten || "Hãng phụ tùng" },
+          ]}
+        />
+        <div className="px-[1.3rem] pt-5">
         {dangTai ? <p className="text-sm text-[#63635E]">Đang tải thông tin hãng phụ tùng...</p> : null}
         {loi ? <p role="alert" className="text-sm text-red-700">{loi}</p> : null}
         {!dangTai && !loi && !hang ? <p role="alert" className="text-sm text-[#63635E]">Không tìm thấy hãng phụ tùng.</p> : null}
@@ -70,6 +79,7 @@ export default function HangChiTietPage() {
           ))}
         </div>
         </> : null}
+        </div>
       </div>
     </>
   );
