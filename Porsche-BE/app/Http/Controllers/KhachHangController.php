@@ -448,18 +448,12 @@ class KhachHangController extends Controller
                 ->first();
 
             $garage = collect();
-            if (
-                Schema::hasTable('phieu_dat_lichs')
-                && Schema::hasColumn('phieu_dat_lichs', 'id_khach_hang')
-                && Schema::hasColumn('phieu_dat_lichs', 'bien_so_xe')
-                && Schema::hasColumn('phieu_dat_lichs', 'thong_tin_xe')
-            ) {
-                $garage = DB::table('phieu_dat_lichs')
-                    ->select('bien_so_xe', 'thong_tin_xe')
-                    ->where('id_khach_hang', $khachHangId)
-                    ->whereNotNull('bien_so_xe')
-                    ->distinct()
-                    ->get();
+            if (Schema::hasTable('xe_khach_hangs')) {
+                $garage = DB::table('xe_khach_hangs')
+                    ->where('user_id', $khachHangId)
+                    ->orderByDesc('id')
+                    ->get()
+                    ->map(fn ($xe) => \App\Http\Controllers\XeKhachHangController::present($xe));
             }
 
             $vouchers = $this->getAssignedVouchers($khachHangId);

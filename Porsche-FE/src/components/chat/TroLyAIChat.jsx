@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Wrench, HeartPulse, History, Trash2, X, Sparkles, Send } from "lucide-react";
+import { Wrench, HeartPulse, History, Trash2, X, Sparkles, Send, Globe } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { askPorscheAI, clearAIHistory, getAIHistory } from "../../api/WorkspaceApi";
+import ChatMarkdown from "./ChatMarkdown";
+
+const SO_TIN_NHAN_NGU_CANH = 10;
 
 const TAB = {
   goiDo: {
+    mode: "goi_do",
     ten: "Tư vấn gói độ",
     icon: Wrench,
     moTa: "Gợi ý gói độ theo xe & ngân sách",
@@ -20,6 +24,7 @@ const TAB = {
     ],
   },
   baoDuong: {
+    mode: "bao_duong",
     ten: "Tư vấn bảo dưỡng",
     icon: HeartPulse,
     moTa: "Nhắc lịch bảo dưỡng theo số km",
@@ -35,13 +40,16 @@ const TAB = {
   },
 };
 
+const taoTinNhanMoDau = (key) =>
+  TAB[key].tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung, moDau: true }));
+
 export default function TroLyAIChat() {
   const { vaiTro } = useAuth();
   const [dangMo, setDangMo] = useState(false);
   const [tabDangChon, setTabDangChon] = useState("goiDo");
   const [lichSuTinNhan, setLichSuTinNhan] = useState({
-    goiDo: TAB.goiDo.tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
-    baoDuong: TAB.baoDuong.tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
+    goiDo: taoTinNhanMoDau("goiDo"),
+    baoDuong: taoTinNhanMoDau("baoDuong"),
   });
   const [noiDungNhap, setNoiDungNhap] = useState("");
   const [dangGui, setDangGui] = useState(false);
@@ -62,6 +70,11 @@ export default function TroLyAIChat() {
     const cauHoi = noiDung.trim();
     if (!cauHoi || dangGui) return;
 
+    const nguCanh = tinNhanHienTai
+      .filter((tin) => !tin.moDau)
+      .slice(-SO_TIN_NHAN_NGU_CANH)
+      .map((tin) => ({ role: tin.nguoiGui === "khach" ? "user" : "ai", content: tin.noiDung }));
+
     setLoiChat("");
     setDangGui(true);
     setLichSuDaTai(false);
@@ -72,11 +85,14 @@ export default function TroLyAIChat() {
     }));
 
     try {
-      const traLoi = await askPorscheAI(cauHoi);
-      if (!traLoi) throw new Error("Trợ lý AI chưa gửi được câu trả lời. Vui lòng thử lại.");
+      const traLoi = await askPorscheAI(cauHoi, { mode: tab.mode, history: nguCanh });
+      if (!traLoi.answer) throw new Error("Trợ lý AI chưa gửi được câu trả lời. Vui lòng thử lại.");
       setLichSuTinNhan((truoc) => ({
         ...truoc,
-        [tabDangChon]: [...truoc[tabDangChon], { nguoiGui: "ai", noiDung: traLoi }],
+        [tabDangChon]: [
+          ...truoc[tabDangChon],
+          { nguoiGui: "ai", noiDung: traLoi.answer, nguon: traLoi.sources },
+        ],
       }));
     } catch (error) {
       setLoiChat(
@@ -103,7 +119,7 @@ export default function TroLyAIChat() {
         ...truoc,
         [tabDangChon]: messages.length
           ? messages
-          : TAB[tabDangChon].tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
+          : taoTinNhanMoDau(tabDangChon),
       }));
       setLichSuDaTai(true);
     } catch (error) {
@@ -121,7 +137,7 @@ export default function TroLyAIChat() {
       await clearAIHistory();
       setLichSuTinNhan((truoc) => ({
         ...truoc,
-        [tabDangChon]: TAB[tabDangChon].tinNhanMoDau.map((noiDung) => ({ nguoiGui: "ai", noiDung })),
+        [tabDangChon]: taoTinNhanMoDau(tabDangChon),
       }));
       setLichSuDaTai(false);
     } catch (error) {
@@ -229,7 +245,23 @@ export default function TroLyAIChat() {
                         : "bg-[#f3f3f0] text-[#17171A] border border-[#ECECE9]"
                       }`}
                   >
-                    {tin.noiDung}
+                    {tin.nguoiGui === "ai" ? <ChatMarkdown text={tin.noiDung} /> : tin.noiDung}
+                    {tin.nguon?.length ? (
+                      <div className="mt-2.5 border-t border-[#E0E0DB] pt-2 text-[12px] text-[#63635E]">
+                        <div className="mb-1 flex items-center gap-1 font-semibold">
+                          <Globe className="h-3 w-3" /> Nguồn tham khảo
+                        </div>
+                        <ul className="space-y-0.5">
+                          {tin.nguon.map((nguon) => (
+                            <li key={nguon.url}>
+                              <a href={nguon.url} target="_blank" rel="noopener noreferrer" className="text-[#AC0021] underline break-all">
+                                {nguon.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

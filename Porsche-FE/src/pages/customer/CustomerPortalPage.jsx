@@ -2,15 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle, ArrowLeft, ArrowRight, CalendarCheck, CalendarDays, CarFront,
   Check, CheckCircle2, Clock3, CreditCard, FileText, LockKeyhole,
-  MessageSquareText, RefreshCw, Smartphone, Sparkles, Tag,
+  MessageSquareText, Pencil, Plus, RefreshCw, Smartphone, Sparkles, Tag, Trash2,
   UserRound, UserRoundPen, Wrench,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import CustomerWorkspaceLayout from "../../components/workspaces/CustomerWorkspaceLayout";
 import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
+import VehicleFormModal from "../../components/workspaces/VehicleFormModal";
 import { useAuth } from "../../context/AuthContext";
 import {
-  changeWorkspacePassword, clearAIHistory, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
+  changeWorkspacePassword, clearAIHistory, deleteCustomerVehicle, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
   postWorkspaceData, updateWorkspaceProfile, uploadWorkspaceAvatar,
 } from "../../api/WorkspaceApi";
 
@@ -135,7 +136,7 @@ function appointmentDate(item) {
 }
 
 function vehicleName(vehicle) {
-  const text = vehicle.thong_tin_xe || vehicle.ten_xe || "Xe Porsche";
+  const text = vehicle.ten_xe || vehicle.thong_tin_xe || "Xe Porsche";
   return text.split(/[·|,]/)[0].trim() || "Xe Porsche";
 }
 
@@ -206,6 +207,7 @@ function CustomerPortalPage() {
   const [invoices, setInvoices] = useState([]);
   const [orders, setOrders] = useState([]);
   const [detailOrderId, setDetailOrderId] = useState(null);
+  const [vehicleModal, setVehicleModal] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -389,6 +391,29 @@ function CustomerPortalPage() {
     }
   };
 
+  const removeVehicle = async (vehicle) => {
+    if (!window.confirm(`Xóa xe ${vehicleName(vehicle)} (${vehicle.bien_so_xe}) khỏi garage?`)) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      await deleteCustomerVehicle(vehicle.id);
+      await loadData();
+      setNotice("Đã xóa xe khỏi garage.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || requestError.message || "Không thể xóa xe.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onVehicleSaved = async (message) => {
+    setVehicleModal(null);
+    setNotice(message);
+    setError("");
+    await loadData();
+  };
+
   const clearHistory = async () => {
     if (!window.confirm("Xóa toàn bộ lịch sử tư vấn AI của tài khoản?")) return;
     setSaving(true);
@@ -472,12 +497,17 @@ function CustomerPortalPage() {
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="text-[15px] font-bold">Xe của tôi</h2>
-                <button type="button" onClick={() => goTo("booking")} className="text-[13px] font-semibold text-[#8C001B] hover:underline">Đặt lịch Workshop</button>
+                <div className="flex items-center gap-4">
+                  <button type="button" onClick={() => setVehicleModal({ vehicle: null })} className="flex items-center gap-1.5 rounded-lg bg-[#080a0d] px-3.5 py-2 text-[13px] font-semibold text-white">
+                    <Plus className="h-4 w-4" />Thêm xe
+                  </button>
+                  <button type="button" onClick={() => goTo("booking")} className="text-[13px] font-semibold text-[#8C001B] hover:underline">Đặt lịch Workshop</button>
+                </div>
               </div>
               {profile?.garage?.length ? (
                 <div className="space-y-4">
                   {profile.garage.map((vehicle, index) => (
-                    <article key={`${vehicle.bien_so_xe || "vehicle"}-${index}`} className="overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white sm:flex">
+                    <article key={vehicle.id ?? `${vehicle.bien_so_xe || "vehicle"}-${index}`} className="overflow-hidden rounded-2xl border border-[#e9e9e6] bg-white sm:flex">
                       <div className="flex min-h-[170px] items-center justify-center bg-[#e7e8e5] p-6 sm:w-[34%]">
                         <CarFront className="h-20 w-20 text-[#9da1a4]" strokeWidth={1} />
                       </div>
@@ -490,13 +520,21 @@ function CustomerPortalPage() {
                           <span className="rounded-full border border-[#e7e7e3] px-3 py-1 text-[11px] text-[#62666b]">Trong garage</span>
                         </div>
                         <div className="mt-5 grid gap-3 text-[13px] sm:grid-cols-3">
-                          <div><span className="block text-[11px] text-[#85888d]">Thông tin xe</span><strong className="mt-1 block">{vehicle.thong_tin_xe || "Chưa cập nhật"}</strong></div>
+                          <div><span className="block text-[11px] text-[#85888d]">Thông tin xe</span><strong className="mt-1 block">{[vehicle.dong_xe, vehicle.nam_san_xuat, vehicle.mau_sac].filter(Boolean).join(" · ") || "Chưa cập nhật"}</strong></div>
+                          <div><span className="block text-[11px] text-[#85888d]">Số km đã đi</span><strong className="mt-1 block">{vehicle.so_km !== null && vehicle.so_km !== undefined ? `${Number(vehicle.so_km).toLocaleString("vi-VN")} km` : "Chưa cập nhật"}</strong></div>
                           <div><span className="block text-[11px] text-[#85888d]">Lịch sử Workshop</span><strong className="mt-1 block">{appointments.filter((item) => item.bien_so_xe === vehicle.bien_so_xe).length} lịch</strong></div>
-                          <div><span className="block text-[11px] text-[#85888d]">Bảo dưỡng kế tiếp</span><strong className="mt-1 block text-[#777a80]">Chưa có dữ liệu</strong></div>
                         </div>
+                        {vehicle.so_khung ? <p className="mt-3 text-[12px] text-[#777a80]">Số khung: <span className="font-mono">{vehicle.so_khung}</span></p> : null}
+                        {vehicle.ghi_chu ? <p className="mt-2 text-[12px] text-[#777a80]">{vehicle.ghi_chu}</p> : null}
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button type="button" onClick={() => { setBooking((current) => ({ ...current, bien_so_xe: vehicle.bien_so_xe || "", ten_xe: vehicleName(vehicle) })); goTo("booking"); }} className="rounded-lg bg-[#080a0d] px-4 py-2 text-[11px] font-semibold text-white">Tư vấn bảo dưỡng</button>
                           <button type="button" onClick={() => goTo("booking")} className="rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold">Tư vấn gói độ</button>
+                          {vehicle.id ? (
+                            <>
+                              <button type="button" onClick={() => setVehicleModal({ vehicle })} className="flex items-center gap-1.5 rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold"><Pencil className="h-3.5 w-3.5" />Sửa</button>
+                              <button type="button" onClick={() => removeVehicle(vehicle)} disabled={saving} className="flex items-center gap-1.5 rounded-lg border border-[#f0c9ce] px-4 py-2 text-[11px] font-semibold text-[#8C001B] disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Xóa</button>
+                            </>
+                          ) : null}
                         </div>
                       </div>
                     </article>
@@ -506,8 +544,8 @@ function CustomerPortalPage() {
                 <div className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white p-8 text-center">
                   <CarFront className="mx-auto h-9 w-9 text-[#9da1a4]" />
                   <p className="mt-3 font-semibold">Chưa có xe trong garage</p>
-                  <p className="mt-1 text-[13px] text-[#777a80]">Xe sẽ xuất hiện sau khi có lịch Workshop gắn với tài khoản.</p>
-                  <button type="button" onClick={() => goTo("booking")} className="mt-4 rounded-lg bg-[#080a0d] px-4 py-2 text-[13px] font-semibold text-white">Đặt lịch Workshop</button>
+                  <p className="mt-1 text-[13px] text-[#777a80]">Thêm xe của bạn để theo dõi lịch bảo dưỡng và nhận tư vấn chính xác hơn.</p>
+                  <button type="button" onClick={() => setVehicleModal({ vehicle: null })} className="mt-4 rounded-lg bg-[#080a0d] px-4 py-2 text-[13px] font-semibold text-white">Thêm xe đầu tiên</button>
                 </div>
               )}
             </section>
@@ -828,6 +866,13 @@ function CustomerPortalPage() {
             </div>
           ) : <p className="rounded-2xl border border-dashed border-[#d9d9d5] bg-white px-4 py-8 text-center text-[13px] text-[#777a80]">Chưa có lịch sử tư vấn AI.</p>}
         </section>
+      ) : null}
+      {vehicleModal ? (
+        <VehicleFormModal
+          vehicle={vehicleModal.vehicle}
+          onClose={() => setVehicleModal(null)}
+          onSaved={onVehicleSaved}
+        />
       ) : null}
     </CustomerWorkspaceLayout>
   );

@@ -1,10 +1,15 @@
 import axios from "axios";
 import { apiClient, BASE_URL } from "./Authapi";
 
-export async function askPorscheAI(message) {
+export async function askPorscheAI(message, { mode = "goi_do", history = [] } = {}) {
   const client = localStorage.getItem("nguoiDung") ? apiClient : axios;
-  const { data } = await client.post(`${BASE_URL}/ai/ask`, { message });
-  return data?.data?.answer ?? data?.answer ?? "";
+  const { data } = await client.post(`${BASE_URL}/ai/ask`, { message, mode, history });
+  const result = data?.data ?? data ?? {};
+  return {
+    answer: result.answer ?? "",
+    sources: Array.isArray(result.sources) ? result.sources : [],
+    web: Boolean(result.web),
+  };
 }
 
 export async function getAIHistory() {
@@ -37,6 +42,21 @@ export function getWorkspaceAssetUrl(path) {
 
 export async function postWorkspaceData(role, path, payload) {
   const { data } = await apiClient.post(`/${role}/${path}`, payload);
+  return data;
+}
+
+export async function createCustomerVehicle(payload) {
+  const { data } = await apiClient.post("/khach-hang/xe", payload);
+  return data;
+}
+
+export async function updateCustomerVehicle(id, payload) {
+  const { data } = await apiClient.put(`/khach-hang/xe/${id}`, payload);
+  return data;
+}
+
+export async function deleteCustomerVehicle(id) {
+  const { data } = await apiClient.delete(`/khach-hang/xe/${id}`);
   return data;
 }
 

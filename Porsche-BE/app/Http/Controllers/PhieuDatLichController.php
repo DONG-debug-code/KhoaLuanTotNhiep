@@ -329,6 +329,16 @@ class PhieuDatLichController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                // Xe nhập khi đặt lịch được lưu luôn vào garage (không ghi đè xe đã có)
+                DB::table('xe_khach_hangs')->insertOrIgnore([
+                    'user_id' => $customerId,
+                    'ten_xe' => mb_substr(trim($validated['ten_xe']), 0, 150),
+                    'bien_so_xe' => mb_strtoupper(mb_substr(trim($validated['bien_so_xe']), 0, 20)),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
                 return ['appointment' => DB::table('phieu_dat_lichs')->where('id', $appointmentId)->first()];
             });
 

@@ -255,6 +255,12 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('profile/change-password', [KhachHangController::class, 'changePassword']);
     Route::get('vouchers', [KhachHangController::class, 'getMyVouchers']);
 
+    // Quản lý xe trong garage
+    Route::get('/xe', [\App\Http\Controllers\XeKhachHangController::class, 'index']);
+    Route::post('/xe', [\App\Http\Controllers\XeKhachHangController::class, 'store']);
+    Route::put('/xe/{id}', [\App\Http\Controllers\XeKhachHangController::class, 'update'])->whereNumber('id');
+    Route::delete('/xe/{id}', [\App\Http\Controllers\XeKhachHangController::class, 'destroy'])->whereNumber('id');
+
     // Theo dõi tiến độ đơn hàng
     Route::get('/lich-hen/data', [KhachHangController::class, 'getDataLichHenCuaToi']);
 
@@ -286,7 +292,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
 |--------------------------------------------------------------------------
 */
 // 🔥 🤖 ROUTE CHATBOT TRỢ LÝ AI (Công khai - Cho phép cả khách vãng lai trải nghiệm)
-Route::post('/ai/ask', [AiController::class, 'askAI']);
+Route::post('/ai/ask', [AiController::class, 'askAI'])->middleware('throttle:20,1');
 Route::get('/webhooks/vnpay', [\App\Http\Controllers\VnpayController::class, 'ipn']);
 
 Route::get('/flash-sale/active', [ChuongTrinhSaleController::class, 'getActiveFlashSale']);
