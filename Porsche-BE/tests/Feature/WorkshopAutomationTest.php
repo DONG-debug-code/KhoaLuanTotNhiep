@@ -27,6 +27,7 @@ class WorkshopAutomationTest extends TestCase
             $table->time('gio_dat');
             $table->string('ghi_chu')->nullable();
             $table->unsignedTinyInteger('trang_thai');
+            $table->string('giai_doan')->nullable();
             $table->timestamp('reminder_sent_at')->nullable();
             $table->timestamps();
         });
@@ -40,9 +41,44 @@ class WorkshopAutomationTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_appointments_past_their_time_are_cancelled_unless_work_has_started(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-21 12:00:00', 'Asia/Ho_Chi_Minh'));
+        Mail::fake();
+
+        $row = fn (string $code, int $status, string $time, ?string $stage = null) => [
+            'ma_dat_lich' => $code,
+            'ten_khach_hang' => 'Customer',
+            'email' => $code . '@example.test',
+            'ngay_dat' => '2026-10-21',
+            'gio_dat' => $time,
+            'trang_thai' => $status,
+            'giai_doan' => $stage,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+        DB::table('phieu_dat_lichs')->insert([
+            $row('PENDING-LATE', 0, '08:00:00'),
+            $row('CONFIRMED-NO-SHOW', 1, '09:00:00', 'cho_nhan_xe'),
+            $row('IN-PROGRESS', 1, '08:00:00', 'dang_thi_cong'),
+            $row('WITHIN-GRACE', 1, '10:30:00', 'cho_nhan_xe'),
+            $row('FUTURE', 0, '15:00:00'),
+        ]);
+
+        $this->assertSame(0, Artisan::call('workshop:cancel-expired-appointments'));
+
+        $status = DB::table('phieu_dat_lichs')->pluck('trang_thai', 'ma_dat_lich')->map(fn ($v) => (int) $v)->all();
+        $this->assertSame(3, $status['PENDING-LATE']);
+        $this->assertSame(3, $status['CONFIRMED-NO-SHOW']);
+        $this->assertSame(1, $status['IN-PROGRESS']);
+        $this->assertSame(1, $status['WITHIN-GRACE']);
+        $this->assertSame(0, $status['FUTURE']);
+        Mail::assertQueued(LichHenMail::class, 2);
+    }
+
     public function test_expired_holds_are_cancelled_and_confirmed_appointments_are_reminded_once(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-10-21 08:00:00'));
+        Carbon::setTestNow(Carbon::parse('2026-10-21 08:00:00', 'Asia/Ho_Chi_Minh'));
         Mail::fake();
 
         DB::table('phieu_dat_lichs')->insert([

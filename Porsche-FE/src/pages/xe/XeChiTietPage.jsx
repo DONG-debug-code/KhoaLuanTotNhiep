@@ -8,6 +8,7 @@ import Navbar from "../../components/layouts/partials/Navbar";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import Footer from "../../components/layouts/partials/Footer";
 import { getSanPhamClientById } from "../../api/PublicApi";
+import { HOTLINE_HIEN_THI, HOTLINE_LINK } from "../../constants/shop";
 
 function chuanHoaTen(ten) {
   return String(ten)
@@ -308,15 +309,25 @@ export default function XeChiTietPage() {
               </div>
             </div>
 
-            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#AC0021] py-3.5 text-[13px] font-semibold text-white">
+            <Link
+              to="/#dang-ky-lai-thu"
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#AC0021] py-3.5 text-[13px] font-semibold text-white"
+            >
               <CalendarCheck className="h-4 w-4" />
               Đặt lịch lái thử
-            </button>
+            </Link>
 
-            <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#ECECE9] py-3.5 text-[13px] font-semibold text-[#17171A]">
+            <a
+              href={HOTLINE_LINK}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#ECECE9] py-3.5 text-[13px] font-semibold text-[#17171A]"
+            >
               <Phone className="h-4 w-4" />
-              Hotline 0900 123 456
-            </button>
+              Hotline {HOTLINE_HIEN_THI}
+            </a>
+
+            <p className="mb-3 text-[11px] leading-[1.6] text-[#8A8A85]">
+              Xe không bán trực tuyến. Vui lòng gọi hotline để trao đổi trực tiếp với nhân viên tư vấn.
+            </p>
 
             <div className="mb-5 flex items-start gap-2 text-[11px] text-[#8A8A85]">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2FA84F]" />

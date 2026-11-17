@@ -1,21 +1,7 @@
 import { timGoiDoTheoSlug } from "../../data/hangDoData";
-import { timXeTheoSlug } from "../../data/xeData";
-
 
 // Mức đặt cọc theo từng loại dịch vụ
 export function layThongTinDatCoc(loai, slug) {
-  if (loai === "lai-thu") {
-    const xe = timXeTheoSlug(slug);
-    if (!xe) return null;
-    return {
-      tieuDe: `Đặt lịch lái thử ${xe.ten}`,
-      moTaNgan: `PORSCHE ${xe.dong}`,
-      anh: xe.anhGallery?.[0],
-      tienCoc: 2000000, // cọc cố định cho lịch lái thử
-      ghiChuCoc: "Khoản cọc sẽ được hoàn lại hoặc trừ vào giá xe nếu bạn quyết định mua.",
-    };
-  }
-
   if (loai === "goi-do") {
     const ketQua = timGoiDoTheoSlug(slug);
     if (!ketQua) return null;

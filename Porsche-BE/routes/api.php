@@ -80,6 +80,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     Route::post('/khach-hang/search', [KhachHangController::class, 'searchKhachHang']);
     Route::post('/khach-hang/chi-tiet-lich-su-do/{id}', [KhachHangController::class, 'lichSuDoXeById']);
 
+    // 🚗 ĐĂNG KÝ LÁI THỬ (nhân viên tư vấn xe xử lý)
+    Route::get('/workspace/lai-thu', [\App\Http\Controllers\LaiThuController::class, 'adminData']);
+    Route::post('/lai-thu/cap-nhat', [\App\Http\Controllers\LaiThuController::class, 'adminCapNhat']);
+
     // 🖼️ QUẢN LÝ SLIDE & BANNER MARKETING
     Route::get('/slide/data', [SlideController::class, 'getDataSlide']);
     Route::post('/slide/create', [SlideController::class, 'createSlide']);
@@ -254,6 +258,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('profile/update-avatar', [KhachHangController::class, 'updateProfileAvatar']);
     Route::post('profile/change-password', [KhachHangController::class, 'changePassword']);
     Route::get('vouchers', [KhachHangController::class, 'getMyVouchers']);
+    Route::get('lai-thu', [\App\Http\Controllers\LaiThuController::class, 'cuaToi']);
 
     // Quản lý xe trong garage
     Route::get('/xe', [\App\Http\Controllers\XeKhachHangController::class, 'index']);
@@ -293,6 +298,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
 */
 // 🔥 🤖 ROUTE CHATBOT TRỢ LÝ AI (Công khai - Cho phép cả khách vãng lai trải nghiệm)
 Route::post('/ai/ask', [AiController::class, 'askAI'])->middleware('throttle:20,1');
+Route::post('/lai-thu/dang-ky', [\App\Http\Controllers\LaiThuController::class, 'dangKy'])->middleware('throttle:5,1');
 Route::get('/webhooks/vnpay', [\App\Http\Controllers\VnpayController::class, 'ipn']);
 
 Route::get('/flash-sale/active', [ChuongTrinhSaleController::class, 'getActiveFlashSale']);

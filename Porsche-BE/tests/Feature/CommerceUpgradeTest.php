@@ -316,7 +316,7 @@ class CommerceUpgradeTest extends TestCase
             ->assertJsonPath('data.0.hinh_anh', 'products/911.jpg');
     }
 
-    public function test_purchase_applies_flash_sale_and_schema_compatible_voucher(): void
+    public function test_cars_cannot_be_purchased_online(): void
     {
         DB::table('san_phams')->insert([
             'id' => 1,
@@ -327,48 +327,6 @@ class CommerceUpgradeTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $campaignId = DB::table('chuong_trinh_sales')->insertGetId([
-            'ten_su_kien' => 'Test sale',
-            'slug' => 'test-sale',
-            'ngay_bat_dau' => now()->subHour(),
-            'ngay_ket_thuc' => now()->addHour(),
-            'trang_thai' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $saleDetailId = DB::table('chi_tiet_san_pham_sales')->insertGetId([
-            'chuong_trinh_sale_id' => $campaignId,
-            'san_pham_id' => 1,
-            'gia_goc' => 1000,
-            'gia_khuyen_mai' => 800,
-            'loai_giam_gia' => 'phan_tram',
-            'gia_tri_giam' => 20,
-            'so_luong_sale' => 3,
-            'da_ban' => 0,
-            'gioi_han_moi_khach' => 2,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        DB::table('phieu_giam_gias')->insert([
-            'id' => 1,
-            'code' => 'SAVE10',
-            'loai' => 'phan_tram',
-            'gia_tri' => 10,
-            'gia_tri_don_hang_toi_thieu' => 0,
-            'giam_toi_da' => 500,
-            'so_luong' => 10,
-            'ngay_bat_dau' => now()->subHour(),
-            'ngay_ket_thuc' => now()->addHour(),
-            'trang_thai' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        DB::table('user_vouchers')->insert([
-            'user_id' => 42,
-            'phieu_id' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
         $user = new User();
         $user->id = 42;
@@ -376,18 +334,15 @@ class CommerceUpgradeTest extends TestCase
             'san_pham_id' => 1,
             'phuong_thuc_tt' => 'cod',
             'so_luong' => 1,
-            'ma_voucher' => 'SAVE10',
         ]);
         $request->setUserResolver(fn () => $user);
 
         $response = app(DonHangController::class)->datMuaXe($request);
 
-        $this->assertSame(201, $response->getStatusCode());
-        $this->assertSame(720.0, (float) $response->getData(true)['data']['thanh_tien']);
-        $this->assertSame(2, (int) DB::table('san_phams')->where('id', 1)->value('so_luong'));
-        $this->assertSame(2, (int) DB::table('san_phams')->where('id', 1)->value('so_luong_kho'));
-        $this->assertSame(1, (int) DB::table('chi_tiet_san_pham_sales')->where('id', $saleDetailId)->value('da_ban'));
-        $this->assertSame('da_su_dung', DB::table('lich_su_su_dung_phieus')->value('trang_thai'));
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame('0797306295', $response->getData(true)['hotline']);
+        $this->assertSame(3, (int) DB::table('san_phams')->where('id', 1)->value('so_luong'));
+        $this->assertSame(0, DB::table('don_hangs')->count());
     }
 
     public function test_voucher_cannot_be_applied_by_a_customer_it_was_not_assigned_to(): void

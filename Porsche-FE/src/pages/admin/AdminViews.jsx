@@ -103,6 +103,92 @@ export function AppointmentsView({ rows, experts, bays, search, run, busy }) {
   );
 }
 
+const TEST_DRIVE_STATUS = {
+  0: { label: "Mới đăng ký", tone: "gold" },
+  1: { label: "Đã xác nhận", tone: "gray" },
+  2: { label: "Đã lái thử", tone: "dark" },
+  3: { label: "Đã hủy", tone: "red" },
+};
+
+function TestDriveModal({ registration, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    ngay_hen: String(registration.ngay_hen).slice(0, 10),
+    gio_hen: registration.gio_hen,
+    dia_diem: registration.dia_diem,
+    ghi_chu_nhan_vien: registration.ghi_chu_nhan_vien || "",
+  });
+  const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <form onClick={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); onSubmit({ id: registration.id, ...form, trang_thai: 1 }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6">
+        <h3 className="text-lg font-extrabold">Đổi lịch lái thử {registration.ma_lai_thu}</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm font-medium">Ngày
+            <input required type="date" value={form.ngay_hen} onChange={set("ngay_hen")} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+          </label>
+          <label className="block text-sm font-medium">Giờ
+            <input required type="time" value={form.gio_hen} onChange={set("gio_hen")} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+          </label>
+        </div>
+        <label className="block text-sm font-medium">Địa điểm
+          <input required value={form.dia_diem} onChange={set("dia_diem")} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+        </label>
+        <label className="block text-sm font-medium">Ghi chú gửi khách
+          <textarea rows={3} value={form.ghi_chu_nhan_vien} onChange={set("ghi_chu_nhan_vien")} className="mt-1 w-full resize-none rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+        </label>
+        <p className="text-xs text-[#63635E]">Khách hàng sẽ nhận email thông báo lịch mới và có thể trả lời trực tiếp email đó.</p>
+        <div className="flex justify-end gap-2"><ActionButton onClick={onClose}>Đóng</ActionButton><button type="submit" className="rounded-lg bg-[#AC0021] px-4 py-2 text-xs font-semibold text-white">Lưu và gửi email</button></div>
+      </form>
+    </div>
+  );
+}
+
+export function TestDrivesView({ rows, search, run, busy }) {
+  const [editing, setEditing] = useState(null);
+  const count = (status) => rows.filter((row) => Number(row.trang_thai) === status).length;
+  const tabs = [
+    { key: "all", label: "Tất cả" },
+    ...[0, 1, 2, 3].map((status) => ({ key: String(status), label: TEST_DRIVE_STATUS[status].label, test: (row) => Number(row.trang_thai) === status })),
+  ];
+
+  return (
+    <div className="space-y-6">
+      <StatCards items={[
+        { label: "Mới đăng ký", value: count(0), dot: "#B8862B" },
+        { label: "Đã xác nhận", value: count(1) },
+        { label: "Đã lái thử", value: count(2) },
+        { label: "Đã hủy", value: count(3), dot: "#8B8B86" },
+      ]} />
+      <AdminDataTable
+        rows={rows}
+        search={search}
+        tabs={tabs}
+        searchText={(row) => `${row.ma_lai_thu} ${row.ho_ten} ${row.email} ${row.so_dien_thoai} ${row.dong_xe}`}
+        emptyMessage="Chưa có đăng ký lái thử nào."
+        columns={[
+          { label: "Mã", render: (row) => <Person name={<span className="font-mono">{row.ma_lai_thu}</span>} sub={dateTime(row.created_at)} /> },
+          { label: "Khách hàng", render: (row) => <Person name={row.ho_ten} sub={`${row.so_dien_thoai} · ${row.email}`} /> },
+          { label: "Dòng xe", render: (row) => <Person name={row.dong_xe || "—"} sub={row.ghi_chu} /> },
+          { label: "Lịch hẹn", render: (row) => <Person name={`${formatDate(row.ngay_hen)} ${row.gio_hen}`} sub={row.dia_diem} /> },
+          { label: "Trạng thái", render: (row) => { const meta = TEST_DRIVE_STATUS[Number(row.trang_thai)]; return <Chip tone={meta.tone}>{meta.label}</Chip>; } },
+        ]}
+        actions={(row) => {
+          const status = Number(row.trang_thai);
+          if (status > 1) return null;
+          return (
+            <>
+              <ActionButton disabled={busy} onClick={() => setEditing(row)}>Đổi lịch</ActionButton>
+              <ActionButton tone="primary" disabled={busy} onClick={() => run("lai-thu/cap-nhat", { id: row.id, trang_thai: 2 }, "Đã ghi nhận khách đã lái thử.")}>Hoàn tất</ActionButton>
+              <ActionButton tone="danger" disabled={busy} onClick={() => window.confirm(`Hủy lịch lái thử ${row.ma_lai_thu}? Khách hàng sẽ nhận email thông báo.`) && run("lai-thu/cap-nhat", { id: row.id, trang_thai: 3 }, "Đã hủy lịch lái thử.")}>Hủy</ActionButton>
+            </>
+          );
+        }}
+      />
+      {editing ? <TestDriveModal registration={editing} onClose={() => setEditing(null)} onSubmit={async (payload) => { if (await run("lai-thu/cap-nhat", payload, "Đã cập nhật lịch lái thử và gửi email cho khách.")) setEditing(null); }} /> : null}
+    </div>
+  );
+}
+
 export function OrdersView({ rows, search, run, busy, openOrder }) {
   const count = (test) => rows.filter(test).length;
   const tabs = [

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaYoutube, FaTiktok } from "react-icons/fa";
+import { HOTLINE_HIEN_THI, HOTLINE_LINK } from "../../../constants/shop";
 
 const LINK_SHOWROOM = [
     { ten: "Xe đang bán", duongDan: "/#xe-dang-ban" },
@@ -87,7 +88,7 @@ export default function Footer() {
                         </div>
                         <div className="flex items-center gap-2.5 text-sm text-[#63635E]">
                             <Phone className="h-4 w-4 shrink-0" />
-                            0900 123 456
+                            <a href={HOTLINE_LINK}>{HOTLINE_HIEN_THI}</a>
                         </div>
                         <div className="flex items-center gap-2.5 text-sm text-[#63635E]">
                             <Mail className="h-4 w-4 shrink-0" />

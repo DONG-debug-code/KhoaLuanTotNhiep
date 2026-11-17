@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "./config";
+import { apiClient } from "./Authapi";
 
 const PUBLIC_CACHE_TTL = 5 * 60 * 1000;
 const publicDataCache = new Map();
@@ -467,4 +468,10 @@ export async function getChuyenGiaTuningClientById(id) {
     const detail = data?.data ?? data;
     return detail && typeof detail === "object" ? normalizeChuyenGia(detail) : null;
   });
+}
+
+/** Đăng ký lái thử: gửi kèm token (nếu đã đăng nhập) để gắn lịch vào tài khoản khách. */
+export async function dangKyLaiThu(payload) {
+  const { data } = await apiClient.post("/lai-thu/dang-ky", payload);
+  return data;
 }
