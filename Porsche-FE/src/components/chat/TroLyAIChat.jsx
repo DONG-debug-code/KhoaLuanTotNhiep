@@ -8,13 +8,14 @@ import { SU_KIEN_MO_CHAT_NHAN_VIEN } from "../../constants/chat";
 
 const SO_TIN_NHAN_NGU_CANH = 10;
 
-const TAB_NHAN_VIEN = { ten: "Nhân viên", icon: Headset, moTa: "Trao đổi trực tiếp với nhân viên" };
+const TAB_NHAN_VIEN = { ten: "Nhân viên", tenNgan: "Nhân viên", icon: Headset, moTa: "Trao đổi trực tiếp với nhân viên" };
 const KHONG_TIN_NHAN = [];
 
 const TAB = {
   goiDo: {
     mode: "goi_do",
     ten: "Tư vấn gói độ",
+    tenNgan: "Gói độ",
     icon: Wrench,
     moTa: "Gợi ý gói độ theo xe & ngân sách",
     tinNhanMoDau: [
@@ -31,6 +32,7 @@ const TAB = {
   baoDuong: {
     mode: "bao_duong",
     ten: "Tư vấn bảo dưỡng",
+    tenNgan: "Bảo dưỡng",
     icon: HeartPulse,
     moTa: "Nhắc lịch bảo dưỡng theo số km",
     tinNhanMoDau: [
@@ -212,18 +214,19 @@ export default function TroLyAIChat() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1.5 bg-[#f3f3f0] p-2">
+            <div className="grid grid-cols-3 gap-1.5 bg-[#f3f3f0] p-2">
               {Object.entries({ ...TAB, nhanVien: TAB_NHAN_VIEN }).map(([key, val]) => (
                 <button
                   key={key}
+                  title={val.ten}
                   onClick={() => { if (key === "nhanVien") setLichHenChat(null); setTabDangChon(key); }}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-[50px] py-1.5 text-[12px] font-semibold transition-colors ${tabDangChon === key
+                  className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[50px] px-2 py-1.5 text-[12px] font-semibold transition-colors ${tabDangChon === key
                       ? "bg-[#000] text-[#fff]"
                       : "text-[#313131] hover:text-[#000]"
                     }`}
                 >
-                  <val.icon className="h-3.5 w-3.5" />
-                  {val.ten}
+                  <val.icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{val.tenNgan ?? val.ten}</span>
                 </button>
               ))}
             </div>
