@@ -9,6 +9,7 @@ import Breadcrumb from "../../components/common/Breadcrumb";
 import Footer from "../../components/layouts/partials/Footer";
 import { getSanPhamClientById } from "../../api/PublicApi";
 import { HOTLINE_HIEN_THI, HOTLINE_LINK } from "../../constants/shop";
+import ReviewsSection from "../../components/reviews/ReviewsSection";
 
 function chuanHoaTen(ten) {
   return String(ten)
@@ -602,6 +603,9 @@ export default function XeChiTietPage() {
           </section>
         ) : null}
 
+        <div className="mx-auto mt-10 max-w-3xl px-[1.3rem]">
+          <ReviewsSection loai="san_pham" id={xe.id} title="Đánh giá xe" />
+        </div>
       </div>
 
       <Footer />

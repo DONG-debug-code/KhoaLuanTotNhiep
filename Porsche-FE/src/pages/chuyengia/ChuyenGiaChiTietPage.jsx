@@ -5,6 +5,7 @@ import Breadcrumb from "../../components/common/Breadcrumb";
 import { ChuyenGiaAnh } from "../public/ChuyenGiaItem";
 import ChuyenGiaDatLichForm from "./ChuyenGiaDatLichForm";
 import { getChuyenGiaTuningClientById, getGoiDoClient } from "../../api/PublicApi";
+import ReviewsSection from "../../components/reviews/ReviewsSection";
 
 export default function ChuyenGiaChiTietPage() {
   const { chuyenGiaSlug } = useParams();
@@ -151,19 +152,7 @@ export default function ChuyenGiaChiTietPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
-            <h2 className="mb-4 text-lg font-extrabold">Đánh giá</h2>
-            {chuyenGia.danhGia.length === 0 ? <p className="text-sm text-[#63635E]">Chưa có đánh giá.</p> : (
-              <ul className="space-y-3 text-sm">
-                {chuyenGia.danhGia.map((dg, index) => (
-                  <li key={dg.id ?? index}>
-                    <div className="font-semibold">{dg.ten_khach_hang || "Khách hàng"} · {dg.so_sao}/5</div>
-                    <div className="text-[#63635E]">{dg.noi_dung}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <ReviewsSection loai="chuyen_gia" id={chuyenGia.id} title="Đánh giá chuyên gia" />
 
           <section className="rounded-2xl border border-[#ECECE9] bg-white p-5">
             <h2 className="mb-4 text-lg font-extrabold">Lịch sử công việc</h2>

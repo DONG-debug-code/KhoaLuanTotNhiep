@@ -274,6 +274,11 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::get('vouchers', [KhachHangController::class, 'getMyVouchers']);
     Route::get('lai-thu', [\App\Http\Controllers\LaiThuController::class, 'cuaToi']);
 
+    // Đánh giá sản phẩm và chuyên gia (chỉ khách đã mua / đã hoàn thành lịch)
+    Route::get('/danh-gia/dieu-kien', [\App\Http\Controllers\ReviewController::class, 'dieuKien']);
+    Route::post('/danh-gia/san-pham', [\App\Http\Controllers\ReviewController::class, 'guiSanPham'])->middleware('throttle:10,1');
+    Route::post('/danh-gia/chuyen-gia', [\App\Http\Controllers\ReviewController::class, 'guiChuyenGia'])->middleware('throttle:10,1');
+
     // Chat với nhân viên
     Route::get('/chat/hien-tai', [\App\Http\Controllers\ChatController::class, 'khachHienTai'])->middleware('throttle:120,1');
     Route::post('/chat/ket-noi', [\App\Http\Controllers\ChatController::class, 'khachKetNoi'])->middleware('throttle:20,1');
@@ -341,6 +346,10 @@ Route::get('/client/mau-xe/data', [HomePageController::class, 'getMauXeClient'])
 // 🏎️ 🟢 SẢN PHẨM / XE PORSCHE (CÔNG KHAI - MỚI BỔ SUNG)
 Route::get('/san-pham', [SanPhamController::class, 'index']);
 Route::get('/san-pham/{id}', [SanPhamController::class, 'show']);
+
+// Xem đánh giá công khai: loai = san_pham | phu_tung | chuyen_gia
+Route::get('/danh-gia/{loai}/{id}', [\App\Http\Controllers\ReviewController::class, 'danhSach'])
+    ->whereIn('loai', ['san_pham', 'phu_tung', 'chuyen_gia'])->whereNumber('id');
 /*
 |--------------------------------------------------------------------------
 | ===================== ⚙️ V. CRONJOB / WEBHOOK AUTOMATION =====================

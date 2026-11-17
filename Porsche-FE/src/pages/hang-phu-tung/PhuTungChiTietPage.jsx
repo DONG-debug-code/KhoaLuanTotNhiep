@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import { getPhuTungClientById } from "../../api/PublicApi";
+import ReviewsSection from "../../components/reviews/ReviewsSection";
 
 function PhuTungImage({ phuTung }) {
   const [imageError, setImageError] = useState(false);
@@ -104,6 +105,9 @@ export default function PhuTungChiTietPage() {
                 {phuTung.soLuong > 0 ? `Còn ${phuTung.soLuong} sản phẩm` : "Tạm hết hàng"}
               </div>
             </div>
+          </div>
+          <div className="mt-10 max-w-3xl">
+            <ReviewsSection loai="phu_tung" id={phuTung.id} title="Đánh giá sản phẩm" />
           </div>
         </> : null}
         </div>
