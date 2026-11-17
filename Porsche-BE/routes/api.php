@@ -84,6 +84,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     Route::get('/workspace/lai-thu', [\App\Http\Controllers\LaiThuController::class, 'adminData']);
     Route::post('/lai-thu/cap-nhat', [\App\Http\Controllers\LaiThuController::class, 'adminCapNhat']);
 
+    // 🚘 LỊCH SỬ XE KHÁCH HÀNG (nâng cấp / thay đổi tại showroom)
+    Route::get('/workspace/xe-khach-hang', [\App\Http\Controllers\XeKhachHangController::class, 'adminDanhSach']);
+    Route::get('/xe-khach-hang/{id}/lich-su', [\App\Http\Controllers\XeKhachHangController::class, 'adminLichSu'])->whereNumber('id');
+    Route::post('/xe-khach-hang/lich-su/them', [\App\Http\Controllers\XeKhachHangController::class, 'adminThemLichSu']);
+
     // 🖼️ QUẢN LÝ SLIDE & BANNER MARKETING
     Route::get('/slide/data', [SlideController::class, 'getDataSlide']);
     Route::post('/slide/create', [SlideController::class, 'createSlide']);
@@ -265,6 +270,7 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('/xe', [\App\Http\Controllers\XeKhachHangController::class, 'store']);
     Route::put('/xe/{id}', [\App\Http\Controllers\XeKhachHangController::class, 'update'])->whereNumber('id');
     Route::delete('/xe/{id}', [\App\Http\Controllers\XeKhachHangController::class, 'destroy'])->whereNumber('id');
+    Route::get('/xe/{id}/lich-su', [\App\Http\Controllers\XeKhachHangController::class, 'lichSu'])->whereNumber('id');
 
     // Theo dõi tiến độ đơn hàng
     Route::get('/lich-hen/data', [KhachHangController::class, 'getDataLichHenCuaToi']);

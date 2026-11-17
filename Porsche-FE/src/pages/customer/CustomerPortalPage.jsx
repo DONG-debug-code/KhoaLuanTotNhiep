@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle, ArrowLeft, ArrowRight, CalendarCheck, CalendarDays, CarFront,
-  Check, CheckCircle2, Clock3, CreditCard, FileText, LockKeyhole,
+  Check, CheckCircle2, Clock3, CreditCard, FileText, History, LockKeyhole,
   MessageSquareText, Pencil, Plus, RefreshCw, Smartphone, Sparkles, Tag, Trash2,
   UserRound, UserRoundPen, Wrench,
 } from "lucide-react";
@@ -9,6 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import CustomerWorkspaceLayout from "../../components/workspaces/CustomerWorkspaceLayout";
 import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
 import VehicleFormModal from "../../components/workspaces/VehicleFormModal";
+import VehicleHistoryModal from "../../components/workspaces/VehicleHistoryModal";
 import { useAuth } from "../../context/AuthContext";
 import {
   changeWorkspacePassword, clearAIHistory, deleteCustomerVehicle, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
@@ -208,6 +209,7 @@ function CustomerPortalPage() {
   const [orders, setOrders] = useState([]);
   const [detailOrderId, setDetailOrderId] = useState(null);
   const [vehicleModal, setVehicleModal] = useState(null);
+  const [vehicleHistoryModal, setVehicleHistoryModal] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -531,6 +533,7 @@ function CustomerPortalPage() {
                           <button type="button" onClick={() => goTo("booking")} className="rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold">Tư vấn gói độ</button>
                           {vehicle.id ? (
                             <>
+                              <button type="button" onClick={() => setVehicleHistoryModal(vehicle)} className="flex items-center gap-1.5 rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold"><History className="h-3.5 w-3.5" />Lịch sử xe</button>
                               <button type="button" onClick={() => setVehicleModal({ vehicle })} className="flex items-center gap-1.5 rounded-lg border border-[#d7d7d3] px-4 py-2 text-[11px] font-semibold"><Pencil className="h-3.5 w-3.5" />Sửa</button>
                               <button type="button" onClick={() => removeVehicle(vehicle)} disabled={saving} className="flex items-center gap-1.5 rounded-lg border border-[#f0c9ce] px-4 py-2 text-[11px] font-semibold text-[#8C001B] disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Xóa</button>
                             </>
@@ -879,6 +882,7 @@ function CustomerPortalPage() {
           onSaved={onVehicleSaved}
         />
       ) : null}
+      {vehicleHistoryModal ? <VehicleHistoryModal vehicle={vehicleHistoryModal} onClose={() => setVehicleHistoryModal(null)} /> : null}
     </CustomerWorkspaceLayout>
   );
 }

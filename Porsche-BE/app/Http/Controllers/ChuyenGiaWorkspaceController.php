@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\LichHenMail;
+use App\Services\VehicleHistoryService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -413,6 +414,10 @@ class ChuyenGiaWorkspaceController extends Controller
                 DB::table('chuyen_gias')->where('id', $expertId)->increment('so_du_an_hoan_thanh');
             }
         });
+
+        if ($validated['hanh_dong'] === 'hoan-tat') {
+            app(VehicleHistoryService::class)->recordAppointmentCompletedQuietly((int) $job->id);
+        }
 
         try {
             if ($job->email && $subject) {

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Mail\LichHenMail;
+use App\Services\VehicleHistoryService;
 use App\Services\VoucherService;
 use Carbon\Carbon;
 use Exception;
@@ -183,6 +184,7 @@ class PhieuDatLichController extends Controller
 
             DB::commit();
             app(VoucherService::class)->grantLoyaltyQuietly($lichHen->id_khach_hang ?? null);
+            app(VehicleHistoryService::class)->recordAppointmentCompletedQuietly((int) $lichHen->id);
             return response()->json(['status' => true, 'message' => 'Nghiệm thu xuất xưởng thành công. Hóa đơn đã được chốt.'], 200);
         } catch (Exception $e) {
             DB::rollBack();

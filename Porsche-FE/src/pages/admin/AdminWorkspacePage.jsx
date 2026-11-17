@@ -11,13 +11,14 @@ import { errorMessage } from "../chuyengia/workspace/expertUi";
 import AdminDashboardView from "./AdminDashboardView";
 import {
   AppointmentsView, BaysView, CustomersView, ExpertsView, InvoicesView, OrdersView,
-  ProductsView, RosterView, StaffView, TestDrivesView,
+  ProductsView, RosterView, StaffView, TestDrivesView, VehiclesView,
 } from "./AdminViews";
 
 const SOURCES = {
   dashboard: ["dashboard"],
   appointments: ["lich-hen", "chuyen-gia", "khu-vuc"],
   testDrives: ["lai-thu"],
+  vehicles: ["xe-khach-hang"],
   orders: ["don-hang"],
   invoices: ["hoa-don"],
   roster: ["lich-lam-viec"],
@@ -29,7 +30,7 @@ const SOURCES = {
 };
 
 const TITLES = {
-  dashboard: "Dashboard", appointments: "Lịch hẹn", testDrives: "Đăng ký lái thử", orders: "Đơn hàng", invoices: "Hóa đơn",
+  dashboard: "Dashboard", appointments: "Lịch hẹn", testDrives: "Đăng ký lái thử", vehicles: "Xe khách hàng", orders: "Đơn hàng", invoices: "Hóa đơn",
   roster: "Lịch làm việc chuyên gia", bays: "Khu vực workshop", customers: "Khách hàng",
   experts: "Chuyên gia / tuner", staff: "Nhân viên", products: "Xe & phụ tùng",
 };
@@ -51,6 +52,7 @@ const GROUPS = [
     label: "Danh mục",
     items: [
       { key: "customers", label: TITLES.customers, icon: Users },
+      { key: "vehicles", label: TITLES.vehicles, icon: CarFront },
       { key: "experts", label: TITLES.experts, icon: UserRound },
       { key: "staff", label: TITLES.staff, icon: UserRoundCog },
       { key: "products", label: TITLES.products, icon: Package },
@@ -58,7 +60,7 @@ const GROUPS = [
   },
 ];
 
-const STAFF_KEYS = ["dashboard", "appointments", "testDrives", "orders", "invoices", "customers", "products"];
+const STAFF_KEYS = ["dashboard", "appointments", "testDrives", "orders", "invoices", "customers", "vehicles", "products"];
 const STAFF_GROUPS = GROUPS
   .map((group) => ({ ...group, items: group.items.filter((item) => STAFF_KEYS.includes(item.key)) }))
   .filter((group) => group.items.length);
@@ -137,6 +139,7 @@ export default function AdminWorkspacePage() {
     if (activeKey === "roster") return <RosterView rows={rowsOf(data["lich-lam-viec"])} search={search} />;
     if (activeKey === "bays") return <BaysView rows={rowsOf(data["khu-vuc"])} search={search} />;
     if (activeKey === "customers") return <CustomersView rows={rowsOf(data["khach-hang"])} search={search} />;
+    if (activeKey === "vehicles") return <VehiclesView rows={rowsOf(data["xe-khach-hang"])} search={search} />;
     if (activeKey === "experts") return <ExpertsView rows={rowsOf(data["chuyen-gia"])} search={search} />;
     if (activeKey === "staff") return <StaffView rows={rowsOf(data["nhan-vien"])} search={search} />;
     return <ProductsView rows={rowsOf(data["san-pham"])} search={search} />;

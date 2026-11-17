@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminDataTable, { ActionButton, Chip, StatCards } from "./AdminDataTable";
+import VehicleHistoryModal from "../../components/workspaces/VehicleHistoryModal";
 import { formatDate, formatMoney } from "../chuyengia/workspace/expertUi";
 
 const APPOINTMENT_STATUS = {
@@ -185,6 +186,28 @@ export function TestDrivesView({ rows, search, run, busy }) {
         }}
       />
       {editing ? <TestDriveModal registration={editing} onClose={() => setEditing(null)} onSubmit={async (payload) => { if (await run("lai-thu/cap-nhat", payload, "Đã cập nhật lịch lái thử và gửi email cho khách.")) setEditing(null); }} /> : null}
+    </div>
+  );
+}
+
+export function VehiclesView({ rows, search }) {
+  const [selected, setSelected] = useState(null);
+  return (
+    <div className="space-y-6">
+      <AdminDataTable
+        rows={rows}
+        search={search}
+        searchText={(row) => `${row.ten_xe} ${row.bien_so_xe} ${row.chu_xe} ${row.so_dien_thoai} ${row.dong_xe}`}
+        emptyMessage="Chưa có xe nào trong garage của khách hàng."
+        columns={[
+          { label: "Xe", render: (row) => <Person name={row.ten_xe} sub={<span className="font-mono">{row.bien_so_xe}</span>} /> },
+          { label: "Chủ xe", render: (row) => <Person name={row.chu_xe} sub={row.so_dien_thoai} /> },
+          { label: "Thông tin", render: (row) => <Person name={[row.dong_xe, row.nam_san_xuat, row.mau_sac].filter(Boolean).join(" · ") || "—"} sub={row.so_km != null ? `${Number(row.so_km).toLocaleString("vi-VN")} km` : null} /> },
+          { label: "Lịch sử", render: (row) => <Person name={`${row.so_ban_ghi} bản ghi`} sub={row.lan_cuoi ? `Gần nhất ${formatDate(row.lan_cuoi)}` : "Chưa có"} /> },
+        ]}
+        actions={(row) => <ActionButton tone="primary" onClick={() => setSelected(row)}>Lịch sử / Ghi nhận</ActionButton>}
+      />
+      {selected ? <VehicleHistoryModal vehicle={selected} staff onClose={() => setSelected(null)} /> : null}
     </div>
   );
 }
