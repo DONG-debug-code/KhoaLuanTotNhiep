@@ -255,6 +255,81 @@ export function VehiclesView({ rows, search }) {
   );
 }
 
+const ACCOUNT_TYPE = {
+  nhan_vien: { label: "Nhân viên", tone: "dark" },
+  chuyen_gia: { label: "Chuyên gia", tone: "gold" },
+  khach_hang: { label: "Khách hàng", tone: "gray" },
+};
+
+export function AccountsView({ data, search, run, busy }) {
+  const rows = Array.isArray(data?.tai_khoan) ? data.tai_khoan : [];
+  const roles = Array.isArray(data?.vai_tro_nhan_vien) ? data.vai_tro_nhan_vien : [];
+  const count = (test) => rows.filter(test).length;
+  const tabs = [
+    { key: "all", label: "Tất cả" },
+    { key: "nv", label: "Nhân viên", test: (row) => row.loai === "nhan_vien" },
+    { key: "cg", label: "Chuyên gia", test: (row) => row.loai === "chuyen_gia" },
+    { key: "kh", label: "Khách hàng", test: (row) => row.loai === "khach_hang" },
+    { key: "khoa", label: "Bị khóa", test: (row) => Number(row.trang_thai) !== 1 },
+  ];
+
+  const toggleLock = (row) => {
+    const lock = Number(row.trang_thai) === 1;
+    if (!lock) {
+      void run("tai-khoan/trang-thai", { loai: row.loai, id: row.id, khoa: false }, `Đã mở khóa tài khoản ${row.email}.`);
+      return;
+    }
+    const reason = window.prompt(`Khóa tài khoản ${row.email}? Mọi phiên đăng nhập sẽ bị đăng xuất.\nLý do (không bắt buộc):`, "");
+    if (reason === null) return;
+    void run("tai-khoan/trang-thai", { loai: row.loai, id: row.id, khoa: true, ...(reason.trim() ? { ly_do: reason.trim() } : {}) }, `Đã khóa tài khoản ${row.email}.`);
+  };
+
+  const changeRole = (row, roleId) => {
+    if (!roleId || Number(roleId) === Number(row.vai_tro_id)) return;
+    const role = roles.find((item) => item.id === Number(roleId));
+    if (window.confirm(`Đổi vai trò của ${row.ho_ten} thành "${role?.ten}"?`)) {
+      void run("tai-khoan/doi-vai-tro", { id: row.id, vai_tro_id: Number(roleId) }, `Đã đổi vai trò của ${row.ho_ten}.`);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <StatCards items={[
+        { label: "Nhân viên", value: count((row) => row.loai === "nhan_vien") },
+        { label: "Chuyên gia", value: count((row) => row.loai === "chuyen_gia") },
+        { label: "Khách hàng", value: count((row) => row.loai === "khach_hang") },
+        { label: "Bị khóa / chưa kích hoạt", value: count((row) => Number(row.trang_thai) !== 1), dot: "#8B8B86" },
+      ]} />
+      <AdminDataTable
+        rows={rows}
+        search={search}
+        tabs={tabs}
+        searchText={(row) => `${row.ho_ten} ${row.email} ${row.so_dien_thoai} ${row.vai_tro}`}
+        emptyMessage="Không có tài khoản nào."
+        columns={[
+          { label: "Tài khoản", render: (row) => <Person name={row.ho_ten} sub={row.email} /> },
+          { label: "Loại", render: (row) => <Chip tone={ACCOUNT_TYPE[row.loai].tone}>{ACCOUNT_TYPE[row.loai].label}</Chip> },
+          {
+            label: "Vai trò",
+            render: (row) => (row.loai === "nhan_vien" ? (
+              <select aria-label={`Vai trò của ${row.ho_ten}`} value={row.vai_tro_id ?? ""} disabled={busy} onChange={(event) => changeRole(row, event.target.value)} className="rounded-lg border border-[#E4E4E0] bg-white px-2 py-1.5 text-xs">
+                {roles.map((role) => <option key={role.id} value={role.id}>{role.ten}</option>)}
+              </select>
+            ) : row.vai_tro),
+          },
+          { label: "Phiên đăng nhập", render: (row) => <Person name={`${row.so_phien} phiên`} sub={row.dang_nhap_gan_nhat ? `Gần nhất ${dateTime(row.dang_nhap_gan_nhat)}` : "Chưa đăng nhập"} /> },
+          { label: "Trạng thái", render: (row) => (Number(row.trang_thai) === 1 ? <Chip tone="dark">Hoạt động</Chip> : <Chip tone="red">Bị khóa</Chip>) },
+        ]}
+        actions={(row) => (
+          <ActionButton tone={Number(row.trang_thai) === 1 ? "danger" : "primary"} disabled={busy} onClick={() => toggleLock(row)}>
+            {Number(row.trang_thai) === 1 ? "Khóa" : "Mở khóa"}
+          </ActionButton>
+        )}
+      />
+    </div>
+  );
+}
+
 export function OrdersView({ rows, search, run, busy, openOrder }) {
   const count = (test) => rows.filter(test).length;
   const tabs = [

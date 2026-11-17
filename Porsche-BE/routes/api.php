@@ -71,6 +71,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     Route::post('/nhan-vien/update', [NhanVienController::class, 'updateNhanVien'])->middleware('permission:super_admin');
     Route::post('/nhan-vien/change-status', [NhanVienController::class, 'changeStatusNhanVien'])->middleware('permission:super_admin');
 
+    // 🔐 QUẢN LÝ TÀI KHOẢN (khóa/mở khóa, đổi vai trò) - chỉ quản trị viên cao cấp
+    Route::get('/workspace/tai-khoan', [\App\Http\Controllers\AccountController::class, 'danhSach'])->middleware('permission:super_admin');
+    Route::post('/tai-khoan/trang-thai', [\App\Http\Controllers\AccountController::class, 'doiTrangThai'])->middleware('permission:super_admin');
+    Route::post('/tai-khoan/doi-vai-tro', [\App\Http\Controllers\AccountController::class, 'doiVaiTro'])->middleware('permission:super_admin');
+
     // 🏎️ QUẢN LÝ KHÁCH HÀNG & CHỦ XE PORSCHE
     Route::get('/khach-hang/data', [KhachHangController::class, 'getDataKhachHang']);
     Route::post('/khach-hang/create', [KhachHangController::class, 'storeKhachHang']);

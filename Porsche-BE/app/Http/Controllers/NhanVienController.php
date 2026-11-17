@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -89,6 +90,14 @@ class NhanVienController extends Controller
             'id_chuc_vu' => 'required|integer'
         ]);
         try {
+            $current = DB::table('admins')->where('id', $request->id)->first();
+            if ((int) $current->vai_tro_id !== (int) $request->id_chuc_vu) {
+                $error = app(AccountService::class)->changeStaffRole((int) $request->id, (int) $request->id_chuc_vu, $request->user(), $request->ip());
+                if ($error) {
+                    return response()->json(['status' => false, 'message' => $error], 422);
+                }
+            }
+
             $update = [
                 'ho_ten'     => $request->ho_ten,
                 'email'      => $request->email,
@@ -113,7 +122,10 @@ class NhanVienController extends Controller
         try {
             $user = DB::table('admins')->where('id', $request->id)->first();
             $newStatus = $user->trang_thai == 1 ? 0 : 1;
-            DB::table('admins')->where('id', $request->id)->update(['trang_thai' => $newStatus, 'updated_at' => now()]);
+            $error = app(AccountService::class)->setActive('nhan_vien', (int) $request->id, $newStatus === 1, $request->user(), null, $request->ip());
+            if ($error) {
+                return response()->json(['status' => false, 'message' => $error], 422);
+            }
             return response()->json(['status' => true, 'message' => 'Đổi trạng thái nhân sự thành công.', 'trang_thai' => $newStatus], 200);
         } catch (Exception $e) {
             Log::error('Lỗi changeStatusNhanVien: ' . $e->getMessage());

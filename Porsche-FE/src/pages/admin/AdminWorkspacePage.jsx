@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Building2, CalendarClock, CalendarDays, FileText, LayoutDashboard, Package, ShoppingBag,
-  UserRound, UserRoundCog, Users, CarFront, MessageSquareText,
+  UserRound, UserRoundCog, Users, CarFront, MessageSquareText, ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkspaceData, postWorkspaceData } from "../../api/WorkspaceApi";
@@ -12,11 +12,12 @@ import AdminDashboardView from "./AdminDashboardView";
 import AdminChatView from "./AdminChatView";
 import {
   AppointmentsView, BaysView, CustomersView, ExpertsView, InvoicesView, OrdersView,
-  ProductsView, RosterView, StaffView, TestDrivesView, VehiclesView,
+  ProductsView, RosterView, StaffView, TestDrivesView, VehiclesView, AccountsView,
 } from "./AdminViews";
 
 const SOURCES = {
   dashboard: ["dashboard"],
+  accounts: ["tai-khoan"],
   appointments: ["lich-hen", "chuyen-gia", "khu-vuc"],
   testDrives: ["lai-thu"],
   chat: [],
@@ -32,7 +33,7 @@ const SOURCES = {
 };
 
 const TITLES = {
-  dashboard: "Dashboard", appointments: "Lịch hẹn", chat: "Chat khách hàng", testDrives: "Đăng ký lái thử", vehicles: "Xe khách hàng", orders: "Đơn hàng", invoices: "Hóa đơn",
+  dashboard: "Dashboard", accounts: "Quản lý tài khoản", appointments: "Lịch hẹn", chat: "Chat khách hàng", testDrives: "Đăng ký lái thử", vehicles: "Xe khách hàng", orders: "Đơn hàng", invoices: "Hóa đơn",
   roster: "Lịch làm việc chuyên gia", bays: "Khu vực workshop", customers: "Khách hàng",
   experts: "Chuyên gia / tuner", staff: "Nhân viên", products: "Xe & phụ tùng",
 };
@@ -58,6 +59,7 @@ const GROUPS = [
       { key: "vehicles", label: TITLES.vehicles, icon: CarFront },
       { key: "experts", label: TITLES.experts, icon: UserRound },
       { key: "staff", label: TITLES.staff, icon: UserRoundCog },
+      { key: "accounts", label: TITLES.accounts, icon: ShieldCheck },
       { key: "products", label: TITLES.products, icon: Package },
     ],
   },
@@ -137,6 +139,7 @@ export default function AdminWorkspacePage() {
       return <AppointmentsView rows={rowsOf(data["lich-hen"])} experts={rowsOf(data["chuyen-gia"])} bays={rowsOf(data["khu-vuc"])} search={search} run={run} busy={busy} />;
     }
     if (activeKey === "testDrives") return <TestDrivesView rows={rowsOf(data["lai-thu"])} search={search} run={run} busy={busy} />;
+    if (activeKey === "accounts") return <AccountsView data={data["tai-khoan"]} search={search} run={run} busy={busy} />;
     if (activeKey === "chat") return <AdminChatView />;
     if (activeKey === "orders") return <OrdersView rows={rowsOf(data["don-hang"])} search={search} run={run} busy={busy} openOrder={setOrderModalId} />;
     if (activeKey === "invoices") return <InvoicesView rows={rowsOf(data["hoa-don"])} search={search} openOrder={setOrderModalId} />;
