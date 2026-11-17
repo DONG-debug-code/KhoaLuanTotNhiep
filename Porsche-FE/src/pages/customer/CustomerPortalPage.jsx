@@ -10,6 +10,7 @@ import CustomerWorkspaceLayout from "../../components/workspaces/CustomerWorkspa
 import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
 import VehicleFormModal from "../../components/workspaces/VehicleFormModal";
 import VehicleHistoryModal from "../../components/workspaces/VehicleHistoryModal";
+import { SU_KIEN_MO_CHAT_NHAN_VIEN } from "../../constants/chat";
 import { useAuth } from "../../context/AuthContext";
 import {
   changeWorkspacePassword, clearAIHistory, deleteCustomerVehicle, getAIHistory, getWorkspaceAssetUrl, getWorkspaceData,
@@ -713,8 +714,16 @@ function CustomerPortalPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="rounded-full bg-[#f1f1ef] px-3 py-1 text-[11px] font-semibold">{appointmentStateLabel(item.trang_thai)}</span>
+                    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(SU_KIEN_MO_CHAT_NHAN_VIEN, { detail: { appointmentId: item.id } }))} className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#080a0d] hover:underline"><MessageSquareText className="h-3.5 w-3.5" />Nhắn nhân viên</button>
                     {appointmentState(item.trang_thai) === "active" ? <button type="button" disabled={saving} onClick={() => void cancelAppointment(item)} className="text-[13px] font-semibold text-[#AC0021] disabled:opacity-50">Hủy lịch</button> : null}
                   </div>
+                  {item.lich_su_thay_doi?.length ? (
+                    <ul className="basis-full space-y-1 border-t border-[#f0f0ed] pt-3 text-[12px] text-[#555a60]">
+                      {item.lich_su_thay_doi.map((change, index) => (
+                        <li key={index}><span className="text-[#9a9da2]">{formatDate(change.created_at)} · </span>{change.noi_dung}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </article>
               ))}
             </div>

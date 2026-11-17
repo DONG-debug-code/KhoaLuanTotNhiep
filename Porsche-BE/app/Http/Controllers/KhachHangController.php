@@ -651,11 +651,20 @@ class KhachHangController extends Controller
                     'phieu_dat_lichs.gio_dat',
                     'phieu_dat_lichs.thong_tin_xe',
                     'phieu_dat_lichs.trang_thai',
+                    'phieu_dat_lichs.id_chuyen_gia',
                     'chuyen_gias.ho_ten as ten_chuyen_gia'
                 )
                 ->where('phieu_dat_lichs.id_khach_hang', $khachHangId)
                 ->orderBy('phieu_dat_lichs.id', 'desc')
                 ->get();
+
+            // Lịch sử thay đổi (xác nhận, đổi giờ, đổi chuyên gia, hủy) đồng bộ với lịch hẹn của khách.
+            $changes = DB::table('lich_su_phieu_dat_lichs')
+                ->whereIn('id_phieu_dat_lich', $data->pluck('id'))
+                ->orderByDesc('id')
+                ->get(['id_phieu_dat_lich', 'loai', 'noi_dung', 'nguoi_thuc_hien', 'created_at'])
+                ->groupBy('id_phieu_dat_lich');
+            $data->each(fn ($row) => $row->lich_su_thay_doi = ($changes[$row->id] ?? collect())->take(10)->values());
 
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {

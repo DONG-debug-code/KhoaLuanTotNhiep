@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Mail\LichHenMail;
+use App\Services\LichHenThongBaoService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,15 @@ class CancelExpiredWorkshopAppointments extends Command
                         continue;
                     }
                     $cancelled++;
+                    app(LichHenThongBaoService::class)->notifyQuietly(
+                        $appointment,
+                        'tu_dong_huy',
+                        'Lịch hẹn đã tự động hủy do hết thời gian giữ chỗ. Bạn có thể đặt lại lịch hoặc nhắn tin cho nhân viên để được hỗ trợ.',
+                        null,
+                        null,
+                        null,
+                        false
+                    );
 
                     try {
                         Mail::to($appointment->email)->queue(
@@ -108,6 +118,15 @@ class CancelExpiredWorkshopAppointments extends Command
                     continue;
                 }
                 $cancelled++;
+                app(LichHenThongBaoService::class)->notifyQuietly(
+                    $appointment,
+                    'tu_dong_huy',
+                    'Lịch hẹn đã tự động hủy do quá giờ hẹn mà xe chưa được tiếp nhận. Bạn có thể đặt lại lịch hoặc nhắn tin cho nhân viên để được hỗ trợ.',
+                    null,
+                    null,
+                    null,
+                    false
+                );
 
                 try {
                     Mail::to($appointment->email)->queue(

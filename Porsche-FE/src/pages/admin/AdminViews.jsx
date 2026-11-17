@@ -34,9 +34,11 @@ function Person({ name, sub }) {
 function AssignModal({ appointment, experts, bays, onClose, onSubmit }) {
   const [expertId, setExpertId] = useState(appointment.id_chuyen_gia || "");
   const [bayId, setBayId] = useState(appointment.id_khu_vuc_workshop || "");
+  const [reason, setReason] = useState("");
+  const changingExpert = Boolean(appointment.id_chuyen_gia) && Number(expertId) !== Number(appointment.id_chuyen_gia);
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <form onClick={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); onSubmit({ id: appointment.id, id_chuyen_gia: Number(expertId), id_khu_vuc_workshop: Number(bayId) }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6">
+      <form onClick={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); onSubmit({ id: appointment.id, id_chuyen_gia: Number(expertId), id_khu_vuc_workshop: Number(bayId), ...(changingExpert && reason.trim() ? { ly_do: reason.trim() } : {}) }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6">
         <h3 className="text-lg font-extrabold">Phân công {appointment.ma_dat_lich}</h3>
         <label className="block text-sm font-medium">Chuyên gia
           <select required value={expertId} onChange={(event) => setExpertId(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5">
@@ -50,7 +52,45 @@ function AssignModal({ appointment, experts, bays, onClose, onSubmit }) {
             {bays.filter((item) => Number(item.trang_thai) === 1).map((item) => <option key={item.id} value={item.id}>{item.ten_khu_vuc}</option>)}
           </select>
         </label>
+        {changingExpert ? (
+          <label className="block text-sm font-medium">Lý do đổi chuyên gia (gửi cho khách)
+            <input value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} placeholder="Ví dụ: Chuyên gia không có mặt vào giờ hẹn" className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+          </label>
+        ) : null}
         <div className="flex justify-end gap-2"><ActionButton onClick={onClose}>Đóng</ActionButton><button type="submit" className="rounded-lg bg-[#AC0021] px-4 py-2 text-xs font-semibold text-white">Lưu phân công</button></div>
+      </form>
+    </div>
+  );
+}
+
+function RescheduleModal({ appointment, experts, onClose, onSubmit }) {
+  const [date, setDate] = useState(String(appointment.ngay_dat).slice(0, 10));
+  const [time, setTime] = useState(String(appointment.gio_dat).slice(0, 5));
+  const [expertId, setExpertId] = useState(appointment.id_chuyen_gia || "");
+  const [reason, setReason] = useState("");
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <form onClick={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); onSubmit({ id: appointment.id, ngay_dat: date, gio_dat: time, ...(expertId ? { id_chuyen_gia: Number(expertId) } : {}), ...(reason.trim() ? { ly_do: reason.trim() } : {}) }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6">
+        <h3 className="text-lg font-extrabold">Đổi lịch {appointment.ma_dat_lich}</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm font-medium">Ngày mới
+            <input required type="date" value={date} onChange={(event) => setDate(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+          </label>
+          <label className="block text-sm font-medium">Giờ mới
+            <input required type="time" value={time} onChange={(event) => setTime(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+          </label>
+        </div>
+        <label className="block text-sm font-medium">Chuyên gia phụ trách
+          <select value={expertId} onChange={(event) => setExpertId(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5">
+            <option value="">Giữ nguyên</option>
+            {experts.filter((item) => item.trang_thai === 1).map((item) => <option key={item.id} value={item.id}>{item.ho_ten}</option>)}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">Lý do (gửi cho khách)
+          <input value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} className="mt-1 w-full rounded-lg border border-[#E4E4E0] px-3 py-2.5" />
+        </label>
+        <p className="text-xs text-[#63635E]">Hệ thống kiểm tra chuyên gia và khu vực còn trống, sau đó thông báo cho khách qua chat, email và lịch hẹn của khách.</p>
+        <div className="flex justify-end gap-2"><ActionButton onClick={onClose}>Đóng</ActionButton><button type="submit" className="rounded-lg bg-[#AC0021] px-4 py-2 text-xs font-semibold text-white">Đổi lịch và thông báo</button></div>
       </form>
     </div>
   );
@@ -58,6 +98,7 @@ function AssignModal({ appointment, experts, bays, onClose, onSubmit }) {
 
 export function AppointmentsView({ rows, experts, bays, search, run, busy }) {
   const [assigning, setAssigning] = useState(null);
+  const [rescheduling, setRescheduling] = useState(null);
   const count = (status) => rows.filter((row) => Number(row.trang_thai) === status).length;
   const tabs = [
     { key: "all", label: "Tất cả" },
@@ -93,13 +134,15 @@ export function AppointmentsView({ rows, experts, bays, search, run, busy }) {
           return (
             <>
               {status === 0 ? <ActionButton tone="primary" disabled={busy} onClick={() => run("lich-hen/xac-nhan", { id: row.id }, "Đã xác nhận lịch hẹn.")}>Xác nhận</ActionButton> : null}
-              <ActionButton disabled={busy} onClick={() => setAssigning(row)}>Phân công</ActionButton>
+              <ActionButton disabled={busy} onClick={() => setRescheduling(row)}>Đổi lịch</ActionButton>
+              <ActionButton disabled={busy} onClick={() => setAssigning(row)}>{row.id_chuyen_gia ? "Đổi chuyên gia" : "Phân công"}</ActionButton>
               <ActionButton tone="danger" disabled={busy} onClick={() => window.confirm(`Hủy lịch ${row.ma_dat_lich}? Khách hàng sẽ nhận email thông báo.`) && run("lich-hen/huy", { id: row.id }, "Đã hủy lịch hẹn.")}>Hủy</ActionButton>
             </>
           );
         }}
       />
       {assigning ? <AssignModal appointment={assigning} experts={experts} bays={bays} onClose={() => setAssigning(null)} onSubmit={async (payload) => { if (await run("lich-hen/phan-cong", payload, "Đã phân công lịch hẹn.")) setAssigning(null); }} /> : null}
+      {rescheduling ? <RescheduleModal appointment={rescheduling} experts={experts} onClose={() => setRescheduling(null)} onSubmit={async (payload) => { if (await run("lich-hen/doi-lich", payload, "Đã đổi lịch và thông báo cho khách hàng.")) setRescheduling(null); }} /> : null}
     </div>
   );
 }

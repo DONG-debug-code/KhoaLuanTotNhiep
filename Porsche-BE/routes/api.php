@@ -89,6 +89,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     Route::get('/xe-khach-hang/{id}/lich-su', [\App\Http\Controllers\XeKhachHangController::class, 'adminLichSu'])->whereNumber('id');
     Route::post('/xe-khach-hang/lich-su/them', [\App\Http\Controllers\XeKhachHangController::class, 'adminThemLichSu']);
 
+    // 💬 CHAT VỚI KHÁCH HÀNG
+    Route::get('/workspace/chat', [\App\Http\Controllers\ChatController::class, 'nhanVienDanhSach']);
+    Route::get('/chat/{id}/tin-nhan', [\App\Http\Controllers\ChatController::class, 'nhanVienTinNhan'])->whereNumber('id')->middleware('throttle:240,1');
+    Route::post('/chat/{id}/gui', [\App\Http\Controllers\ChatController::class, 'nhanVienGui'])->whereNumber('id')->middleware('throttle:60,1');
+    Route::post('/chat/{id}/nhan', [\App\Http\Controllers\ChatController::class, 'nhanVienNhan'])->whereNumber('id');
+    Route::post('/chat/{id}/dong', [\App\Http\Controllers\ChatController::class, 'nhanVienDong'])->whereNumber('id');
+
     // 🖼️ QUẢN LÝ SLIDE & BANNER MARKETING
     Route::get('/slide/data', [SlideController::class, 'getDataSlide']);
     Route::post('/slide/create', [SlideController::class, 'createSlide']);
@@ -111,6 +118,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:sanctum', 'admin.acces
     Route::post('/lich-hen/create', [PhieuDatLichController::class, 'createLichHen']);
     Route::post('/lich-hen/xac-nhan', [PhieuDatLichController::class, 'xacNhanLichHen'])->middleware('permission:service_advisor');
     Route::post('/lich-hen/phan-cong', [PhieuDatLichController::class, 'phanCongLichHen'])->middleware('permission:service_advisor');
+    Route::post('/lich-hen/doi-lich', [PhieuDatLichController::class, 'doiLichHen'])->middleware('permission:service_advisor');
+    Route::post('/lich-hen/doi-chuyen-gia', [PhieuDatLichController::class, 'doiChuyenGia'])->middleware('permission:service_advisor');
     Route::post('/lich-hen/huy', [PhieuDatLichController::class, 'huyLichHen']);
     Route::post('/lich-hen/change-status', [PhieuDatLichController::class, 'changeStatusLichHen']);
 
@@ -264,6 +273,13 @@ Route::group(['prefix' => '/khach-hang', 'middleware' => ['auth:sanctum', 'custo
     Route::post('profile/change-password', [KhachHangController::class, 'changePassword']);
     Route::get('vouchers', [KhachHangController::class, 'getMyVouchers']);
     Route::get('lai-thu', [\App\Http\Controllers\LaiThuController::class, 'cuaToi']);
+
+    // Chat với nhân viên
+    Route::get('/chat/hien-tai', [\App\Http\Controllers\ChatController::class, 'khachHienTai'])->middleware('throttle:120,1');
+    Route::post('/chat/ket-noi', [\App\Http\Controllers\ChatController::class, 'khachKetNoi'])->middleware('throttle:20,1');
+    Route::get('/chat/{id}/tin-nhan', [\App\Http\Controllers\ChatController::class, 'khachTinNhan'])->whereNumber('id')->middleware('throttle:240,1');
+    Route::post('/chat/{id}/gui', [\App\Http\Controllers\ChatController::class, 'khachGui'])->whereNumber('id')->middleware('throttle:30,1');
+    Route::post('/chat/{id}/dong', [\App\Http\Controllers\ChatController::class, 'khachDong'])->whereNumber('id');
 
     // Quản lý xe trong garage
     Route::get('/xe', [\App\Http\Controllers\XeKhachHangController::class, 'index']);

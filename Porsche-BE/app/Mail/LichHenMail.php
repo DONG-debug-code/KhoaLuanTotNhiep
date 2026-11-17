@@ -12,15 +12,33 @@ class LichHenMail extends Mailable
 
     public $lichHen;
     public $tieuDe;
+    public $thongBao;
 
-    public function __construct($lichHen, $tieuDe)
+    public function __construct($lichHen, $tieuDe, ?string $thongBao = null)
     {
         $this->lichHen = $lichHen;
         $this->tieuDe = $tieuDe;
+        $this->thongBao = $thongBao;
+    }
+
+    private function khoiThongBao(): string
+    {
+        if ($this->thongBao === null || $this->thongBao === '') {
+            return '';
+        }
+
+        return "<div style='margin: 0 0 30px 0; padding: 18px 20px; border-left: 3px solid #c5a880; background-color: #faf6ef; color: #111111; font-size: 14px; line-height: 1.7;'>"
+            . e($this->thongBao)
+            . "<br><span style='color: #777777; font-size: 12px;'>Bạn có thể trả lời trực tiếp email này hoặc nhắn tin cho nhân viên trong mục Trợ lý trên website để trao đổi thêm.</span></div>";
     }
 
     public function build()
     {
+        $replyTo = config('shop.seller.email');
+        if ($replyTo) {
+            $this->replyTo($replyTo, config('shop.seller.ten'));
+        }
+
         return $this->subject($this->tieuDe)
             ->html("
                     <!DOCTYPE html>
@@ -54,6 +72,7 @@ class LichHenMail extends Mailable
                                                     Lời đầu tiên, Porsche Workshop xin gửi lời chào trân trọng và lời chúc thịnh vượng nhất đến Quý khách. Chúng tôi vô cùng vinh hạnh khi được tiếp tục đồng hành cùng Quý khách trong hành trình tối ưu và gìn giữ những giá trị độc bản trên tạo tác chuyển động của mình.
                                                 </p>
 
+                                                " . $this->khoiThongBao() . "
                                                 <!-- Session Info Grid -->
                                                 <table width='100%' border='0' cellspacing='0' cellpadding='0' style='margin-bottom: 35px; border-top: 1px solid #eeeeee; border-bottom: 1px solid #eeeeee; padding: 20px 0;'>
                                                     <tr>

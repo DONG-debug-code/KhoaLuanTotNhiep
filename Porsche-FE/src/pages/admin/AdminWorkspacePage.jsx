@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Building2, CalendarClock, CalendarDays, FileText, LayoutDashboard, Package, ShoppingBag,
-  UserRound, UserRoundCog, Users, CarFront,
+  UserRound, UserRoundCog, Users, CarFront, MessageSquareText,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkspaceData, postWorkspaceData } from "../../api/WorkspaceApi";
@@ -9,6 +9,7 @@ import AdminWorkspaceLayout from "../../components/workspaces/AdminWorkspaceLayo
 import OrderDetailModal from "../../components/workspaces/OrderDetailModal";
 import { errorMessage } from "../chuyengia/workspace/expertUi";
 import AdminDashboardView from "./AdminDashboardView";
+import AdminChatView from "./AdminChatView";
 import {
   AppointmentsView, BaysView, CustomersView, ExpertsView, InvoicesView, OrdersView,
   ProductsView, RosterView, StaffView, TestDrivesView, VehiclesView,
@@ -18,6 +19,7 @@ const SOURCES = {
   dashboard: ["dashboard"],
   appointments: ["lich-hen", "chuyen-gia", "khu-vuc"],
   testDrives: ["lai-thu"],
+  chat: [],
   vehicles: ["xe-khach-hang"],
   orders: ["don-hang"],
   invoices: ["hoa-don"],
@@ -30,7 +32,7 @@ const SOURCES = {
 };
 
 const TITLES = {
-  dashboard: "Dashboard", appointments: "Lịch hẹn", testDrives: "Đăng ký lái thử", vehicles: "Xe khách hàng", orders: "Đơn hàng", invoices: "Hóa đơn",
+  dashboard: "Dashboard", appointments: "Lịch hẹn", chat: "Chat khách hàng", testDrives: "Đăng ký lái thử", vehicles: "Xe khách hàng", orders: "Đơn hàng", invoices: "Hóa đơn",
   roster: "Lịch làm việc chuyên gia", bays: "Khu vực workshop", customers: "Khách hàng",
   experts: "Chuyên gia / tuner", staff: "Nhân viên", products: "Xe & phụ tùng",
 };
@@ -41,6 +43,7 @@ const GROUPS = [
     label: "Vận hành",
     items: [
       { key: "appointments", label: TITLES.appointments, icon: CalendarDays },
+      { key: "chat", label: TITLES.chat, icon: MessageSquareText },
       { key: "testDrives", label: TITLES.testDrives, icon: CarFront },
       { key: "orders", label: TITLES.orders, icon: ShoppingBag },
       { key: "invoices", label: TITLES.invoices, icon: FileText },
@@ -60,7 +63,7 @@ const GROUPS = [
   },
 ];
 
-const STAFF_KEYS = ["dashboard", "appointments", "testDrives", "orders", "invoices", "customers", "vehicles", "products"];
+const STAFF_KEYS = ["dashboard", "appointments", "chat", "testDrives", "orders", "invoices", "customers", "vehicles", "products"];
 const STAFF_GROUPS = GROUPS
   .map((group) => ({ ...group, items: group.items.filter((item) => STAFF_KEYS.includes(item.key)) }))
   .filter((group) => group.items.length);
@@ -134,6 +137,7 @@ export default function AdminWorkspacePage() {
       return <AppointmentsView rows={rowsOf(data["lich-hen"])} experts={rowsOf(data["chuyen-gia"])} bays={rowsOf(data["khu-vuc"])} search={search} run={run} busy={busy} />;
     }
     if (activeKey === "testDrives") return <TestDrivesView rows={rowsOf(data["lai-thu"])} search={search} run={run} busy={busy} />;
+    if (activeKey === "chat") return <AdminChatView />;
     if (activeKey === "orders") return <OrdersView rows={rowsOf(data["don-hang"])} search={search} run={run} busy={busy} openOrder={setOrderModalId} />;
     if (activeKey === "invoices") return <InvoicesView rows={rowsOf(data["hoa-don"])} search={search} openOrder={setOrderModalId} />;
     if (activeKey === "roster") return <RosterView rows={rowsOf(data["lich-lam-viec"])} search={search} />;

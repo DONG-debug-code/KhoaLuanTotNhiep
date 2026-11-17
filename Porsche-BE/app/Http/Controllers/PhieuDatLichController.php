@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Mail\LichHenMail;
+use App\Services\LichHenThongBaoService;
 use App\Services\VehicleHistoryService;
 use App\Services\VoucherService;
 use Carbon\Carbon;
@@ -17,6 +18,8 @@ use Exception;
 
 class PhieuDatLichController extends Controller
 {
+    private const TZ = 'Asia/Ho_Chi_Minh';
+
     // =========================================================================
     // I. NHÓM API CHO HỆ THỐNG QUẢN TRỊ (ADMIN PANEL)
     // =========================================================================
@@ -108,6 +111,17 @@ class PhieuDatLichController extends Controller
                 'updated_at' => Carbon::now()
             ]);
 
+            if ((int) $lichHen->trang_thai === 0) {
+                $this->thongBao()->notify(
+                    $lichHen,
+                    'xac_nhan',
+                    'Lịch hẹn của bạn đã được xác nhận: ' . $this->mota($lichHen) . '.',
+                    null,
+                    $request->user(),
+                    'Lịch hẹn Porsche Workshop đã được xác nhận'
+                );
+            }
+
             return response()->json(['status' => true, 'message' => 'Đã tiếp nhận xe vào Bay dịch vụ thành công.'], 200);
         } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Lỗi xác nhận lịch.'], 500);
@@ -120,20 +134,173 @@ class PhieuDatLichController extends Controller
             'id' => 'required|integer|exists:phieu_dat_lichs,id',
             'id_chuyen_gia' => 'required|integer|exists:chuyen_gias,id',
             'id_khu_vuc_workshop' => 'required|integer|exists:khu_vuc_workshops,id',
+            'ly_do' => 'nullable|string|max:500',
         ]);
 
         try {
+            $lichHen = DB::table('phieu_dat_lichs')->where('id', $validated['id'])->first();
+            $oldExpertId = $lichHen->id_chuyen_gia;
+
             DB::table('phieu_dat_lichs')->where('id', $validated['id'])->update([
                 'id_chuyen_gia' => $validated['id_chuyen_gia'],
                 'id_khu_vuc_workshop' => $validated['id_khu_vuc_workshop'],
                 'updated_at' => Carbon::now(),
             ]);
 
+            if ($oldExpertId && (int) $oldExpertId !== (int) $validated['id_chuyen_gia']) {
+                $this->notifyExpertChanged($lichHen, (int) $oldExpertId, (int) $validated['id_chuyen_gia'], $validated['ly_do'] ?? null, $request->user());
+            }
+
             return response()->json(['status' => true, 'message' => 'Phân công lịch hẹn thành công.'], 200);
         } catch (Exception $e) {
             Log::error('Lỗi phân công lịch hẹn: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Không thể phân công lịch hẹn.'], 500);
         }
+    }
+
+    /** Nhân viên đổi ngày/giờ của lịch hẹn (kiểm tra chuyên gia và bay còn trống); khách được báo qua chat và email. */
+    public function doiLichHen(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:phieu_dat_lichs,id',
+            'ngay_dat' => 'required|date_format:Y-m-d',
+            'gio_dat' => 'required|date_format:H:i',
+            'id_chuyen_gia' => 'nullable|integer|exists:chuyen_gias,id',
+            'ly_do' => 'nullable|string|max:500',
+        ]);
+
+        $lichHen = DB::table('phieu_dat_lichs')->where('id', $validated['id'])->first();
+        if (!$this->coTheThayDoi($lichHen)) {
+            return response()->json(['status' => false, 'message' => 'Chỉ đổi được lịch chưa hoàn thành, chưa hủy và xe chưa vào xưởng.'], 422);
+        }
+        if (Carbon::parse($validated['ngay_dat'] . ' ' . $validated['gio_dat'], self::TZ)->isPast()) {
+            return response()->json(['status' => false, 'message' => 'Thời gian mới phải ở tương lai.'], 422);
+        }
+
+        $newExpertId = $validated['id_chuyen_gia'] ?? $lichHen->id_chuyen_gia;
+        if ($error = $this->kiemTraLichTrong($lichHen, $validated['ngay_dat'], $validated['gio_dat'], $newExpertId ? (int) $newExpertId : null)) {
+            return response()->json(['status' => false, 'message' => $error], 422);
+        }
+
+        $oldExpertId = $lichHen->id_chuyen_gia;
+        $update = ['ngay_dat' => $validated['ngay_dat'], 'gio_dat' => $validated['gio_dat'], 'updated_at' => now()];
+        if ($newExpertId) {
+            $update['id_chuyen_gia'] = $newExpertId;
+        }
+        if (Schema::hasColumn('phieu_dat_lichs', 'reminder_sent_at')) {
+            $update['reminder_sent_at'] = null;
+        }
+        DB::table('phieu_dat_lichs')->where('id', $lichHen->id)->update($update);
+
+        $message = sprintf(
+            'Lịch hẹn đã được đổi từ %s %s sang %s %s.',
+            Carbon::parse($lichHen->ngay_dat)->format('d/m/Y'),
+            substr($lichHen->gio_dat, 0, 5),
+            Carbon::parse($validated['ngay_dat'])->format('d/m/Y'),
+            $validated['gio_dat']
+        );
+        if (!empty($validated['ly_do'])) {
+            $message .= ' Lý do: ' . $validated['ly_do'];
+        }
+        $this->thongBao()->notify($lichHen, 'doi_lich', $message, [
+            'ngay_cu' => $lichHen->ngay_dat, 'gio_cu' => $lichHen->gio_dat,
+            'ngay_moi' => $validated['ngay_dat'], 'gio_moi' => $validated['gio_dat'],
+        ], $request->user(), 'Lịch hẹn Porsche Workshop đã được thay đổi');
+
+        if ($oldExpertId && $newExpertId && (int) $oldExpertId !== (int) $newExpertId) {
+            $this->notifyExpertChanged($lichHen, (int) $oldExpertId, (int) $newExpertId, $validated['ly_do'] ?? null, $request->user());
+        }
+
+        return response()->json(['status' => true, 'message' => 'Đã đổi lịch hẹn và thông báo cho khách hàng.'], 200);
+    }
+
+    /** Đổi chuyên gia (ví dụ chuyên gia khách chọn không làm việc được vào giờ hẹn). */
+    public function doiChuyenGia(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:phieu_dat_lichs,id',
+            'id_chuyen_gia' => 'required|integer|exists:chuyen_gias,id',
+            'ly_do' => 'nullable|string|max:500',
+        ]);
+
+        $lichHen = DB::table('phieu_dat_lichs')->where('id', $validated['id'])->first();
+        if (!$this->coTheThayDoi($lichHen)) {
+            return response()->json(['status' => false, 'message' => 'Chỉ đổi được chuyên gia khi lịch chưa hoàn thành, chưa hủy và xe chưa vào xưởng.'], 422);
+        }
+        if ((int) $lichHen->id_chuyen_gia === (int) $validated['id_chuyen_gia']) {
+            return response()->json(['status' => false, 'message' => 'Chuyên gia này đang phụ trách lịch hẹn.'], 422);
+        }
+        if ($error = $this->kiemTraLichTrong($lichHen, $lichHen->ngay_dat, substr($lichHen->gio_dat, 0, 5), (int) $validated['id_chuyen_gia'])) {
+            return response()->json(['status' => false, 'message' => $error], 422);
+        }
+
+        DB::table('phieu_dat_lichs')->where('id', $lichHen->id)->update([
+            'id_chuyen_gia' => $validated['id_chuyen_gia'],
+            'updated_at' => now(),
+        ]);
+        $this->notifyExpertChanged($lichHen, $lichHen->id_chuyen_gia ? (int) $lichHen->id_chuyen_gia : null, (int) $validated['id_chuyen_gia'], $validated['ly_do'] ?? null, $request->user());
+
+        return response()->json(['status' => true, 'message' => 'Đã đổi chuyên gia và thông báo cho khách hàng.'], 200);
+    }
+
+    private function thongBao(): LichHenThongBaoService
+    {
+        return app(LichHenThongBaoService::class);
+    }
+
+    private function mota(object $lichHen): string
+    {
+        return Carbon::parse($lichHen->ngay_dat)->format('d/m/Y') . ' lúc ' . substr($lichHen->gio_dat, 0, 5);
+    }
+
+    private function coTheThayDoi(object $lichHen): bool
+    {
+        if (!in_array((int) $lichHen->trang_thai, [0, 1], true)) {
+            return false;
+        }
+
+        return (int) $lichHen->trang_thai === 0 || in_array($lichHen->giai_doan ?? 'cho_nhan_xe', ['cho_nhan_xe', null, ''], true);
+    }
+
+    /** @return string|null thông báo lỗi nếu chuyên gia/bay không rảnh vào thời điểm mới */
+    private function kiemTraLichTrong(object $lichHen, string $date, string $time, ?int $expertId): ?string
+    {
+        $slot = DB::table('phieu_dat_lichs')
+            ->where('id', '!=', $lichHen->id)
+            ->whereDate('ngay_dat', $date)
+            ->where('gio_dat', 'like', $time . '%')
+            ->whereIn('trang_thai', [0, 1]);
+
+        if ($expertId) {
+            $expert = DB::table('chuyen_gias')->where('id', $expertId)->where('trang_thai', 1)->first();
+            if (!$expert || ($expert->tinh_trang ?? null) === 'tam-nghi') {
+                return 'Chuyên gia không còn hoạt động hoặc đang tạm nghỉ.';
+            }
+            if (!$this->expertWorksAt($expertId, $date, $time)) {
+                return 'Chuyên gia không có ca làm việc ở khung giờ này.';
+            }
+            if ((clone $slot)->where('id_chuyen_gia', $expertId)->exists()) {
+                return 'Chuyên gia đã kín lịch ở khung giờ này.';
+            }
+        }
+        if ($lichHen->id_khu_vuc_workshop && (clone $slot)->where('id_khu_vuc_workshop', $lichHen->id_khu_vuc_workshop)->exists()) {
+            return 'Khu vực workshop đã kín lịch ở khung giờ này.';
+        }
+
+        return null;
+    }
+
+    private function notifyExpertChanged(object $lichHen, ?int $oldId, int $newId, ?string $reason, ?object $staff): void
+    {
+        $names = DB::table('chuyen_gias')->whereIn('id', array_filter([$oldId, $newId]))->pluck('ho_ten', 'id');
+        $message = 'Chuyên gia phụ trách lịch hẹn đã thay đổi'
+            . ($oldId ? ' từ ' . ($names[$oldId] ?? '#' . $oldId) : '')
+            . ' sang ' . ($names[$newId] ?? '#' . $newId) . '.';
+        if ($reason) {
+            $message .= ' Lý do: ' . $reason;
+        }
+
+        $this->thongBao()->notify($lichHen, 'doi_chuyen_gia', $message, ['chuyen_gia_cu' => $oldId, 'chuyen_gia_moi' => $newId], $staff, 'Chuyên gia phụ trách lịch hẹn đã thay đổi');
     }
 
     public function hoanThanhLichHen(Request $request): JsonResponse
@@ -206,7 +373,14 @@ class PhieuDatLichController extends Controller
                 'updated_at' => Carbon::now()
             ]);
 
-            Mail::to($lichHen->email)->queue(new LichHenMail($lichHen, 'Thông báo hủy lịch hẹn dịch vụ'));
+            $this->thongBao()->notify(
+                $lichHen,
+                'huy',
+                'Lịch hẹn ' . $this->mota($lichHen) . ' đã được hủy. Vui lòng nhắn tin hoặc gọi hotline ' . config('shop.hotline') . ' nếu bạn cần đặt lại lịch.',
+                null,
+                $request->user(),
+                'Thông báo hủy lịch hẹn dịch vụ'
+            );
 
             return response()->json(['status' => true, 'message' => 'Hủy lịch hẹn thành công.'], 200);
         } catch (Exception $e) {
