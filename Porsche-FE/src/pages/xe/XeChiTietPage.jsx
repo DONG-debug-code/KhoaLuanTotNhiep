@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import {
-  Gauge, Zap, Timer, Cog, Car, Fuel,
-  ChevronLeft, ChevronRight, Play, CalendarCheck,
-  Phone, ShieldCheck, Crown, Palette, Armchair,
-  FileText, Check,
+  Car, ChevronLeft, ChevronRight, CalendarCheck,
+  Phone, ShieldCheck, Crown, Palette, FileText,
 } from "lucide-react";
 import Navbar from "../../components/layouts/partials/Navbar";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import Footer from "../../components/layouts/partials/Footer";
-import { timXeTheoSlug } from "../../data/xeData";
 import { getSanPhamClientById } from "../../api/PublicApi";
 
 function chuanHoaTen(ten) {
@@ -30,24 +27,17 @@ function chuanHoaMaMau(maMau) {
   return /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(maMauChuanHoa) ? maMauChuanHoa : "";
 }
 
-function layGiaTriSanPham(sanPham, aliases, giaTriMacDinh = "") {
-  for (const alias of aliases) {
-    const giaTri = sanPham?.[alias];
-    if (giaTri !== undefined && giaTri !== null && giaTri !== "") return giaTri;
-  }
+function dinhDangGiaTri(giaTri) {
+  if (giaTri === null || giaTri === undefined || giaTri === "") return "Đang cập nhật";
+  if (typeof giaTri === "boolean") return giaTri ? "Có" : "Không";
+  if (typeof giaTri === "object") return JSON.stringify(giaTri);
+  return String(giaTri);
+}
 
-  const thongSo = sanPham?.thongSoChiTiet;
-  if (thongSo && typeof thongSo === "object") {
-    const tenCanTim = aliases.map(chuanHoaTen);
-    const ketQua = Object.entries(thongSo).find(([ten]) => (
-      tenCanTim.includes(chuanHoaTen(ten))
-    ));
-    if (ketQua?.[1] !== undefined && ketQua[1] !== null && ketQua[1] !== "") {
-      return ketQua[1];
-    }
-  }
-
-  return giaTriMacDinh;
+function dinhDangNgay(giaTri) {
+  if (!giaTri) return "Đang cập nhật";
+  const ngay = new Date(giaTri);
+  return Number.isNaN(ngay.getTime()) ? String(giaTri) : ngay.toLocaleString("vi-VN");
 }
 
 const TEN_THONG_SO = {
@@ -67,151 +57,52 @@ const TEN_THONG_SO = {
   sacdctoida: "Công suất sạc DC",
 };
 
-const THONG_SO_DA_HIEN_THI = new Set([
-  "dongco",
-  "congsuat",
-  "momenxoan",
-  "tangtoc0100",
-  "tocdotoida",
-  "hopso",
-  "hedandong",
-  "nhienlieu",
+const KHOA_SAN_PHAM_DA_HIEN_THI = new Set([
+  "id", "ten", "mau_xe_id", "mauXeId", "mau_xe", "mauXe", "gia", "giaSo",
+  "so_luong", "soLuong", "loai_san_pham", "loaiSanPham", "trang_thai", "slug",
+  "mo_ta", "moTa", "created_at", "updated_at", "thong_so_chi_tiet", "thongSoChiTiet",
+  "mau_sacs", "mauSacs", "anh_san_phams", "anhSanPhams", "anh_360_gallery",
+  "anh360Gallery", "anhGallery", "anh",
 ]);
 
-function taoXeTuSanPham(sanPham, xeMau, xeSlug) {
-  const ten = sanPham.ten || xeMau?.ten || "Xe Porsche";
+function taoXeTuSanPham(sanPham) {
+  const soLuong = Number(sanPham.soLuong) || 0;
   const thongSoChiTiet = sanPham.thongSoChiTiet ?? {};
-  const anhGallery = sanPham.anhGallery?.length
-    ? sanPham.anhGallery
-    : xeMau?.anhGallery ?? [];
-  const anh360Gallery = sanPham.anh360Gallery ?? [];
-  const mauSacs = sanPham.mauSacs ?? [];
-  const congSuat = layGiaTriSanPham(
-    sanPham,
-    ["congSuat", "cong_suat", "cong_suat_cuc_dai", "power"],
-    xeMau?.congSuat || "Đang cập nhật"
-  );
-  const gia = sanPham.gia || xeMau?.gia || "Liên hệ";
-  const phienBan = layGiaTriSanPham(sanPham, ["phienBan", "phien_ban"], null);
-  const diemNhanTrangBi = layGiaTriSanPham(
-    sanPham,
-    ["diemNhanTrangBi", "diem_nhan_trang_bi"],
-    null
-  );
-  const thongSoBoSung = Object.entries(thongSoChiTiet)
-    .filter(([khoa, giaTri]) => (
-      !THONG_SO_DA_HIEN_THI.has(chuanHoaTen(khoa))
-      && (typeof giaTri === "string" || typeof giaTri === "number")
-      && giaTri !== ""
-    ))
-    .map(([khoa, giaTri]) => ({
-      nhan: TEN_THONG_SO[chuanHoaTen(khoa)] ?? khoa,
-      giaTri,
-    }));
+  const anhGallery = sanPham.anhGallery ?? [];
 
   return {
-    ...xeMau,
-    id: sanPham.id ?? xeMau?.id ?? xeSlug,
-    slug: String(xeSlug),
-    ten,
-    dong: layGiaTriSanPham(
-      sanPham,
-      ["dong", "dongXe", "dong_xe", "mauXe", "mau_xe"],
-      xeMau?.dong || ten.split(" ")[0]
-    ),
-    nam: layGiaTriSanPham(
-      sanPham,
-      ["nam", "namSanXuat", "nam_san_xuat", "year"],
-      xeMau?.nam ?? "Đang cập nhật"
-    ),
-    trangThai: layGiaTriSanPham(
-      sanPham,
-      ["trangThai", "trang_thai"],
-      xeMau?.trangThai || (sanPham.soLuong > 0 ? "Sẵn xe" : "Hết hàng")
-    ),
-    nhan: layGiaTriSanPham(sanPham, ["nhan"], xeMau?.nhan),
-    anh: anhGallery[0] || sanPham.anh || xeMau?.anh || "",
+    id: sanPham.id,
+    slug: sanPham.slug,
+    ten: sanPham.ten,
+    dong: sanPham.mauXe,
+    mauXeId: sanPham.mauXeId,
+    gia: sanPham.gia,
+    soLuong,
+    loaiSanPham: dinhDangGiaTri(sanPham.loaiSanPham),
+    trangThai: soLuong > 0 ? "Còn hàng" : "Hết hàng",
+    moTa: dinhDangGiaTri(sanPham.moTa),
+    ngayTao: dinhDangNgay(sanPham.created_at),
+    ngayCapNhat: dinhDangNgay(sanPham.updated_at),
+    anh: anhGallery[0] ?? "",
     anhGallery,
-    anh360Gallery,
-    mauSacs,
-    coVideoGioiThieu: layGiaTriSanPham(
-      sanPham,
-      ["coVideoGioiThieu", "co_video_gioi_thieu"],
-      xeMau?.coVideoGioiThieu ?? false
-    ),
-    congSuat,
-    dongCo: layGiaTriSanPham(
-      sanPham,
-      ["dongCo", "dong_co"],
-      "Đang cập nhật"
-    ),
-    moMenXoan: layGiaTriSanPham(
-      sanPham,
-      ["moMenXoan", "mo_men_xoan"],
-      "Đang cập nhật"
-    ),
-    thongSoBoSung,
-    toc0_100: layGiaTriSanPham(
-      sanPham,
-      ["toc0_100", "tangToc", "tang_toc_0_100", "acceleration"],
-      xeMau?.toc0_100 || "Đang cập nhật"
-    ),
-    tocDoToiDa: layGiaTriSanPham(
-      sanPham,
-      ["tocDoToiDa", "toc_do_toi_da", "top_speed"],
-      xeMau?.tocDoToiDa || "Đang cập nhật"
-    ),
-    hopSo: layGiaTriSanPham(
-      sanPham,
-      ["hopSo", "hop_so", "transmission"],
-      xeMau?.hopSo || "Đang cập nhật"
-    ),
-    heDanDong: layGiaTriSanPham(
-      sanPham,
-      ["heDanDong", "he_dan_dong", "drivetrain"],
-      xeMau?.heDanDong || "Đang cập nhật"
-    ),
-    nhienLieu: layGiaTriSanPham(
-      sanPham,
-      ["nhienLieu", "nhien_lieu", "fuel_type"],
-      xeMau?.nhienLieu || "Đang cập nhật"
-    ),
-    gia,
-    soKmDaDi: layGiaTriSanPham(
-      sanPham,
-      ["soKmDaDi", "so_km_da_di", "so_km", "mileage"],
-      xeMau?.soKmDaDi || "Đang cập nhật"
-    ),
-    tinhTrang: layGiaTriSanPham(
-      sanPham,
-      ["tinhTrang", "tinh_trang"],
-      xeMau?.tinhTrang || (sanPham.soLuong > 0 ? "Sẵn xe" : "Hết hàng")
-    ),
-    ngoaiThat: layGiaTriSanPham(
-      sanPham,
-      ["ngoaiThat", "ngoai_that", "mau_ngoai_that"],
-      sanPham.mauSacs?.map((mau) => mau.ten).filter(Boolean).join(", ")
-        || xeMau?.ngoaiThat
-        || "Đang cập nhật"
-    ),
-    noiThat: layGiaTriSanPham(
-      sanPham,
-      ["noiThat", "noi_that", "mau_noi_that"],
-      xeMau?.noiThat || "Đang cập nhật"
-    ),
-    lyDoChon: layGiaTriSanPham(
-      sanPham,
-      ["lyDoChon", "ly_do_chon", "moTa"],
-      xeMau?.lyDoChon || sanPham.moTa || "Thông tin đang được cập nhật."
-    ),
-    diemNhanTrangBi: Array.isArray(diemNhanTrangBi)
-      ? diemNhanTrangBi
-      : xeMau?.diemNhanTrangBi ?? [],
-    phienBan: Array.isArray(phienBan) && phienBan.length > 0
-      ? phienBan
-      : [{ ten, congSuat, gia }],
+    anh360Gallery: sanPham.anh360Gallery ?? [],
+    mauSacs: sanPham.mauSacs ?? [],
+    thongSoChiTiet: Object.entries(thongSoChiTiet).map(([khoa, giaTri]) => ({
+      nhan: TEN_THONG_SO[chuanHoaTen(khoa)] ?? khoa,
+      giaTri: dinhDangGiaTri(giaTri),
+    })),
+    thongTinKhac: Object.entries(sanPham)
+      .filter(([khoa, giaTri]) => (
+        !KHOA_SAN_PHAM_DA_HIEN_THI.has(khoa)
+        && (giaTri === null || typeof giaTri === "string" || typeof giaTri === "number" || typeof giaTri === "boolean")
+      ))
+      .map(([khoa, giaTri]) => ({
+        nhan: khoa.replace(/_/g, " ").replace(/^./, (chu) => chu.toUpperCase()),
+        giaTri: dinhDangGiaTri(giaTri),
+      })),
   };
 }
+
 
 export default function XeChiTietPage() {
   const { xeSlug } = useParams();
@@ -230,20 +121,15 @@ export default function XeChiTietPage() {
         if (!active) return;
         setAnhDangXem(0);
         setDangXem360(false);
-        const xeMau = timXeTheoSlug(xeSlug);
         const trangThaiSanPham = result?.sanPham?.trang_thai ?? result?.sanPham?.trangThai;
         const dangKinhDoanh = trangThaiSanPham === undefined
           ? Number(result?.sanPham?.soLuong) > 0
           : String(trangThaiSanPham) === "1";
         const xe = result?.sanPham && dangKinhDoanh
-          ? taoXeTuSanPham(result.sanPham, xeMau, xeSlug)
+          ? taoXeTuSanPham(result.sanPham)
           : null;
         const xeTuongTu = (result?.xeLienQuan ?? [])
-          .map((sanPhamLienQuan) => taoXeTuSanPham(
-            sanPhamLienQuan,
-            null,
-            sanPhamLienQuan.id
-          ))
+          .map(taoXeTuSanPham)
           .filter((xeLienQuan) => {
             if (!xe || String(xeLienQuan.id) === String(xe.id)) return false;
             if (xe.mauXeId && xeLienQuan.mauXeId) {
@@ -329,12 +215,6 @@ export default function XeChiTietPage() {
                 SHOWROOM CERTIFIED
               </span>
 
-              {xe.nhan && (
-                <span className="absolute right-4 top-4 rounded-full bg-[#AC0021] px-3 py-1.5 text-[11px] font-semibold text-white">
-                  {xe.nhan}
-                </span>
-              )}
-
               {danhSachAnhDangXem.length > 1 && (
                 <>
                   <button
@@ -365,13 +245,6 @@ export default function XeChiTietPage() {
                   {dangXem360 ? "Ảnh thường" : "Xem ảnh 360°"}
                 </button>
               ) : null}
-
-              {xe.coVideoGioiThieu && (
-                <button className="absolute bottom-4 left-4 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-semibold text-white">
-                  <Play className="h-3.5 w-3.5" />
-                  Video giới thiệu
-                </button>
-              )}
             </div>
 
             {danhSachAnhDangXem.length > 1 && (
@@ -399,15 +272,15 @@ export default function XeChiTietPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#2FA84F]" />
                 {xe.trangThai} tại showroom
               </span>
-              {xe.nhan && (
+              {xe.loaiSanPham !== "Đang cập nhật" && (
                 <span className="rounded-full bg-[#FBF3E4] px-3 py-1 text-[11px] font-semibold text-[#8A6D1F]">
-                  {xe.nhan}
+                  {xe.loaiSanPham}
                 </span>
               )}
             </div>
 
             <div className="mb-1 text-[11px] font-semibold text-[#8A8A85]">
-              PORSCHE {xe.dong} · {xe.nam}
+              PORSCHE {xe.dong}
             </div>
             <h1 className="mb-5 text-[26px] font-extrabold tracking-[-0.3px]">{xe.ten}</h1>
 
@@ -417,26 +290,21 @@ export default function XeChiTietPage() {
                 <div className="text-[24px] font-extrabold text-[#AC0021]">{xe.gia}</div>
               </div>
               <div className="text-right">
-                <div className="mb-1 text-[11px] text-[#8A8A85]">Số km đã đi</div>
-                <div className="text-[14px] font-bold">{xe.soKmDaDi}</div>
+                <div className="mb-1 text-[11px] text-[#8A8A85]">Số lượng</div>
+                <div className="text-[14px] font-bold">{xe.soLuong}</div>
               </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-3 gap-3">
+            <div className="mb-6 grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
-                <Gauge className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-[11px] text-[#8A8A85]">Công suất</div>
-                <div className="text-[13px] font-bold">{xe.congSuat}</div>
+                <Car className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
+                <div className="text-[11px] text-[#8A8A85]">Dòng xe</div>
+                <div className="text-[13px] font-bold">{xe.dong}</div>
               </div>
               <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
-                <Timer className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-[11px] text-[#8A8A85]">0–100 km/h</div>
-                <div className="text-[13px] font-bold">{xe.toc0_100}</div>
-              </div>
-              <div className="rounded-xl border border-[#ECECE9] p-3.5 text-center">
-                <Zap className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
-                <div className="text-[11px] text-[#8A8A85]">Tốc độ tối đa</div>
-                <div className="text-[13px] font-bold">{xe.tocDoToiDa}</div>
+                <CalendarCheck className="mx-auto mb-2 h-5 w-5 text-[#8A8A85]" />
+                <div className="text-[11px] text-[#8A8A85]">Ngày nhập</div>
+                <div className="text-[13px] font-bold">{xe.ngayTao}</div>
               </div>
             </div>
 
@@ -467,31 +335,27 @@ export default function XeChiTietPage() {
           </div>
         </div>
 
-        {/* === Thông số vận hành (nền đen) === */}
+        {/* === Thông số kỹ thuật (nền đen) === */}
         <div className="mt-10 bg-[#0A0A0B] px-[1.3rem] py-8 text-white">
           <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
-            Thông số vận hành
+            Thông số kỹ thuật
           </div>
           <h2 className="mb-5 text-[26px] font-extrabold tracking-[-0.3px]">
             Hiệu năng của {xe.ten}
           </h2>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {[
-              { icon: Gauge, nhan: "Công suất cực đại", giaTri: xe.congSuat },
-              { icon: Zap, nhan: "Tăng tốc 0–100 km/h", giaTri: xe.toc0_100 },
-              { icon: Timer, nhan: "Tốc độ tối đa", giaTri: xe.tocDoToiDa },
-              { icon: Cog, nhan: "Hộp số", giaTri: xe.hopSo },
-              { icon: Car, nhan: "Hệ dẫn động", giaTri: xe.heDanDong },
-              { icon: Fuel, nhan: "Nhiên liệu", giaTri: xe.nhienLieu },
-            ].map(({ icon: Icon, nhan, giaTri }) => (
-              <div key={nhan} className="rounded-xl border border-white/10 p-4">
-                <Icon className="mb-3 h-5 w-5 text-[#9A9992]" />
-                <div className="mb-1 text-[11px] text-[#9A9992]">{nhan}</div>
-                <div className="text-[14px] font-bold">{giaTri}</div>
-              </div>
-            ))}
-          </div>
+          {xe.thongSoChiTiet.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              {xe.thongSoChiTiet.map(({ nhan, giaTri }) => (
+                <div key={nhan} className="rounded-xl border border-white/10 p-4">
+                  <div className="mb-1 text-[11px] text-[#9A9992]">{nhan}</div>
+                  <div className="text-[14px] font-bold">{giaTri}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#9A9992]">Đang cập nhật thông số kỹ thuật.</p>
+          )}
         </div>
 
         {/* === Tổng quan + Thông tin nhanh === */}
@@ -501,21 +365,9 @@ export default function XeChiTietPage() {
               Tổng quan
             </div>
             <h2 className="mb-4 text-[20px] font-extrabold tracking-[-0.3px]">
-              Vì sao nên chọn chiếc {xe.ten} này
+              Mô tả sản phẩm {xe.ten}
             </h2>
-            <p className="mb-5 text-[13px] leading-[1.7] text-[#63635E]">{xe.lyDoChon}</p>
-
-            <div className="mb-2 text-[13px] font-bold">Điểm nhấn trang bị</div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {xe.diemNhanTrangBi.map((diem) => (
-                <div key={diem} className="flex items-center gap-3 rounded-xl bg-[#F1F1EF] px-4 py-3.5">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#8A6D1F]/15 text-[#8A6D1F]">
-                    <Check className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="text-[13px] font-semibold">{diem}</span>
-                </div>
-              ))}
-            </div>
+            <p className="mb-5 whitespace-pre-line text-[13px] leading-[1.7] text-[#63635E]">{xe.moTa}</p>
           </div>
 
           <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
@@ -524,27 +376,29 @@ export default function XeChiTietPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
                 <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
-                  <Palette className="h-4 w-4" /> Ngoại thất
-                </span>
-                <span className="text-[13px] font-semibold">{xe.ngoaiThat}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
-                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
-                  <Armchair className="h-4 w-4" /> Nội thất
-                </span>
-                <span className="text-[13px] font-semibold">{xe.noiThat}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
-                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
                   <Car className="h-4 w-4" /> Dòng xe
                 </span>
-                <span className="text-[13px] font-semibold">Porsche {xe.dong}</span>
+                <span className="text-[13px] font-semibold">{xe.dong}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
+                  <Palette className="h-4 w-4" /> Màu sắc
+                </span>
+                <span className="text-[13px] font-semibold">
+                  {xe.mauSacs.map((mau) => mau.ten).join(", ") || "Đang cập nhật"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[#ECECE9] pb-4">
+                <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
+                  <CalendarCheck className="h-4 w-4" /> Ngày nhập
+                </span>
+                <span className="text-[13px] font-semibold">{xe.ngayTao}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2.5 text-[13px] text-[#63635E]">
-                  <CalendarCheck className="h-4 w-4" /> Năm sản xuất
+                  <CalendarCheck className="h-4 w-4" /> Cập nhật lần cuối
                 </span>
-                <span className="text-[13px] font-semibold">{xe.nam}</span>
+                <span className="text-[13px] font-semibold">{xe.ngayCapNhat}</span>
               </div>
             </div>
 
@@ -586,44 +440,6 @@ export default function XeChiTietPage() {
           </div>
         </div>
 
-        {/* === Phiên bản & giá === */}
-        <div className="mt-10 bg-[#F1F1EF] px-[1.3rem] py-8">
-          <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
-            Phiên bản & giá
-          </div>
-          <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.3px]">Chọn phiên bản phù hợp</h2>
-          <p className="mb-5 max-w-[560px] text-[13px] leading-[1.7] text-[#63635E]">
-            Giá đã bao gồm thuế trước bạ theo quy định. Chi phí đăng ký, biển số và bảo hiểm sẽ
-            được tư vấn chi tiết.
-          </p>
-
-          <div className="overflow-hidden rounded-2xl border border-[#ECECE9] bg-white">
-            <div className="grid grid-cols-[2fr_1fr_1.2fr_1fr] gap-4 border-b border-[#ECECE9] bg-[#FAFAF9] px-6 py-3 text-[11px] font-bold uppercase tracking-wide text-[#8A8A85] max-[860px]:hidden">
-              <div>Phiên bản</div>
-              <div>Công suất</div>
-              <div>Giá niêm yết</div>
-              <div className="text-right">Hành động</div>
-            </div>
-
-            {xe.phienBan.map((pb) => (
-              <div
-                key={pb.ten}
-                className="grid grid-cols-1 items-center gap-3 px-6 py-5 max-[860px]:gap-2 md:grid-cols-[2fr_1fr_1.2fr_1fr]"
-              >
-                <div className="flex items-center gap-2 font-bold">
-                  {pb.ten}
-                </div>
-                <div className="text-[13px] text-[#63635E]">{pb.congSuat}</div>
-                <div className="text-[16px] font-extrabold text-[#AC0021]">{pb.gia}</div>
-                <button className="flex items-center justify-center gap-1.5 rounded-lg bg-[#17171A] px-4 py-2.5 text-[13px] font-semibold text-white md:justify-self-end">
-                  <CalendarCheck className="h-4 w-4" />
-                  Đặt xe phiên bản này
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* === Hồ sơ kỹ thuật đầy đủ === */}
         <div className="px-[1.3rem] pt-14">
           <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#AC0021]">
@@ -639,30 +455,28 @@ export default function XeChiTietPage() {
             <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
               <div className="mb-4 flex items-center gap-2.5 font-bold">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#17171A] text-white">
-                  <Gauge className="h-4 w-4" />
+                  <Car className="h-4 w-4" />
                 </span>
-                Hiệu năng & vận hành
+                Thông tin sản phẩm
               </div>
 
               {[
-                ["Động cơ", xe.dongCo],
-                ["Công suất cực đại", xe.congSuat],
-                ["Mô-men xoắn", xe.moMenXoan],
-                ["Tăng tốc 0–100 km/h", xe.toc0_100],
-                ["Tốc độ tối đa", xe.tocDoToiDa],
-                ["Hộp số", xe.hopSo],
-                ["Hệ dẫn động", xe.heDanDong],
-                ["Nhiên liệu", xe.nhienLieu],
+                ["Mã sản phẩm", xe.id],
+                ["Tên sản phẩm", xe.ten],
+                ["Dòng xe", xe.dong],
+                ["Mã mẫu xe", xe.mauXeId],
+                ["Giá niêm yết", xe.gia],
+                ["Số lượng", xe.soLuong],
+                ["Loại sản phẩm", xe.loaiSanPham],
+                ["Trạng thái", xe.trangThai],
+                ["Slug", xe.slug],
+                ["Ngày nhập", xe.ngayTao],
+                ["Cập nhật lần cuối", xe.ngayCapNhat],
+                ...xe.thongTinKhac.map(({ nhan, giaTri }) => [nhan, giaTri]),
               ].map(([nhan, giaTri]) => (
-                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
+                <div key={nhan} className="flex items-center justify-between gap-4 border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
-                  <span className="font-semibold">{giaTri}</span>
-                </div>
-              ))}
-              {xe.thongSoBoSung.map(({ nhan, giaTri }) => (
-                <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
-                  <span className="text-[#63635E]">{nhan}</span>
-                  <span className="font-semibold">{giaTri}</span>
+                  <span className="text-right font-semibold">{dinhDangGiaTri(giaTri)}</span>
                 </div>
               ))}
             </div>
@@ -670,19 +484,29 @@ export default function XeChiTietPage() {
             <div className="rounded-2xl border border-[#ECECE9] bg-white p-5">
               <div className="mb-4 flex items-center gap-2.5 font-bold">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#17171A] text-white">
-                  <Car className="h-4 w-4" />
+                  <Palette className="h-4 w-4" />
                 </span>
-                Nhận diện & tình trạng
+                Màu sơn & hình ảnh
               </div>
 
+              {xe.mauSacs.length > 0 ? xe.mauSacs.map((mau, index) => {
+                const maMau = chuanHoaMaMau(mau.maMau);
+                return (
+                  <div key={`${mau.ten}-${index}`} className="flex items-center justify-between gap-4 border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
+                    <span className="text-[#63635E]">{mau.ten}</span>
+                    <span className="flex items-center gap-2 font-semibold">
+                      {maMau ? <span aria-hidden="true" className="h-4 w-4 rounded-full border border-black/15" style={{ backgroundColor: maMau }} /> : null}
+                      {maMau ? maMau.toUpperCase() : "Đang cập nhật"}
+                    </span>
+                  </div>
+                );
+              }) : (
+                <div className="py-3 text-[13px] text-[#63635E]">Đang cập nhật</div>
+              )}
+
               {[
-                ["Dòng xe", `Porsche ${xe.dong}`],
-                ["Năm sản xuất", xe.nam],
-                ["Màu ngoại thất", xe.ngoaiThat],
-                ["Mã màu sơn", xe.mauSacs.map((mau) => chuanHoaMaMau(mau.maMau)).filter(Boolean).join(", ") || "Đang cập nhật"],
-                ["Chất liệu nội thất", xe.noiThat],
-                ["Số km đã đi", xe.soKmDaDi],
-                ["Tình trạng", xe.tinhTrang],
+                ["Số ảnh thường", xe.anhGallery.length],
+                ["Số ảnh 360°", xe.anh360Gallery.length],
               ].map(([nhan, giaTri]) => (
                 <div key={nhan} className="flex items-center justify-between border-b border-[#F1F1EF] py-3 text-[13px] last:border-0">
                   <span className="text-[#63635E]">{nhan}</span>
@@ -733,22 +557,17 @@ export default function XeChiTietPage() {
                       <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#2FA84F]" />
                       {item.trangThai}
                     </span>
-                    {item.nhan ? (
-                      <span className="absolute left-3.5 top-[50px] rounded-full bg-[#17171A] px-3 py-1 text-[11px] text-white">
-                        {item.nhan}
-                      </span>
-                    ) : null}
                   </div>
                   <div className="flex flex-1 flex-col p-4">
                     <div className="mb-1 text-[11px] font-semibold tracking-[0.3px] text-[#8A8A85]">
-                      PORSCHE {item.dong} · {item.nam}
+                      PORSCHE {item.dong}
                     </div>
                     <div className="mb-3 font-bold">{item.ten}</div>
                     <div className="grid grid-cols-3 gap-2 border-y border-[#ECECE9] py-3">
                       {[
-                        ["Công suất", item.congSuat],
-                        ["0–100 km/h", item.toc0_100],
-                        ["Tốc độ tối đa", item.tocDoToiDa],
+                        ["Số lượng", item.soLuong],
+                        ["Loại", item.loaiSanPham],
+                        ["Ngày nhập", item.ngayTao],
                       ].map(([nhan, giaTri]) => (
                         <div key={nhan}>
                           <div className="text-[11px] text-[#8A8A85]">{nhan}</div>

@@ -7,29 +7,17 @@ import { getXeDangBanClient } from "../../api/PublicApi";
 const BO_LOC = ["Tất cả", "911", "718", "Taycan", "Panamera", "Cayenne", "Macan"];
 const SO_XE_MOI_TRANG = 12;
 
-function layThongSo(xe, aliases) {
-  for (const alias of aliases) {
-    const giaTri = xe[alias];
-    if (giaTri !== undefined && giaTri !== null && giaTri !== "") return giaTri;
-  }
-
-  const thongSo = xe.thongSoChiTiet;
-  if (!thongSo || typeof thongSo !== "object") return "Đang cập nhật";
-
-  const aliasesChuanHoa = aliases.map((ten) => (
-    ten.toLocaleLowerCase().replace(/[_\s-]/g, "")
-  ));
-  const ketQua = Object.entries(thongSo).find(([ten]) => (
-    aliasesChuanHoa.includes(ten.toLocaleLowerCase().replace(/[_\s-]/g, ""))
-  ));
-  return ketQua?.[1] ?? "Đang cập nhật";
-}
-
 function layDongXe(xe) {
   const tenXe = `${xe.mauXe || ""} ${xe.ten || ""}`.toLocaleLowerCase();
   return BO_LOC.slice(1).find((dong) => (
     new RegExp(`(^|[^a-z0-9])${dong.toLocaleLowerCase()}([^a-z0-9]|$)`).test(tenXe)
   )) || xe.mauXe || "Porsche";
+}
+
+function layNgayNhap(ngay) {
+  if (!ngay) return "Đang cập nhật";
+  const ngayHopLe = new Date(String(ngay).replace(" ", "T"));
+  return Number.isNaN(ngayHopLe.getTime()) ? "Đang cập nhật" : ngayHopLe.toLocaleDateString("vi-VN");
 }
 
 function chuyenDoiXe(sanPham) {
@@ -38,11 +26,10 @@ function chuyenDoiXe(sanPham) {
     ...sanPham,
     slug: String(sanPham.id),
     dong,
-    nam: layThongSo(sanPham, ["nam", "namSanXuat", "nam_san_xuat", "year"]),
     trangThai: sanPham.soLuong > 0 ? "Sẵn xe" : "Đã bán",
-    congSuat: layThongSo(sanPham, ["congSuat", "cong_suat", "cong_suat_cuc_dai", "power"]),
-    toc0_100: layThongSo(sanPham, ["toc0_100", "tangToc", "tang_toc_0_100", "acceleration"]),
-    tocDoToiDa: layThongSo(sanPham, ["tocDoToiDa", "toc_do_toi_da", "top_speed"]),
+    soLuongHienThi: `${sanPham.soLuong} xe`,
+    dongXe: sanPham.mauXe || dong,
+    ngayNhap: layNgayNhap(sanPham.created_at),
   };
 }
 
@@ -89,7 +76,7 @@ export const CarDangCo = () => {
     const khopDong = locDang === "Tất cả" || xe.dong === locDang;
     const tuKhoaChuanHoa = tuKhoa.trim().toLocaleLowerCase();
     const khopTuKhoa = !tuKhoaChuanHoa
-      || `${xe.ten} ${xe.dong} ${xe.nam}`.toLocaleLowerCase().includes(tuKhoaChuanHoa);
+      || `${xe.ten} ${xe.dong}`.toLocaleLowerCase().includes(tuKhoaChuanHoa);
     const khopGiaTu = !giaTu || (xe.giaSo !== null && xe.giaSo >= Number(giaTu));
     const khopGiaDen = !giaDen || (xe.giaSo !== null && xe.giaSo <= Number(giaDen));
     return khopDong && khopTuKhoa && khopGiaTu && khopGiaDen;

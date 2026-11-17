@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +15,9 @@ use Exception;
 
 class KhachHangController extends Controller
 {
+    private const OTP_QUEN_MAT_KHAU_PHUT = 10;
+    private const OTP_QUEN_MAT_KHAU_SO_LAN_NHAP = 5;
+
     // =========================================================================
     // I. API HỆ THỐNG QUẢN TRỊ (ADMIN) & CHUYÊN GIA ĐIỀU HÀNH KHÁCH HÀNG
     // =========================================================================
@@ -349,22 +353,28 @@ class KhachHangController extends Controller
         $request->validate(['email' => 'required|email|exists:users,email']);
 
         try {
-            $tokenToken = Str::random(40);
+            $otp = Str::upper(Str::random(6));
 
             DB::table('password_resets')->updateOrInsert(
                 ['email' => $request->email],
                 [
-                    'token'      => $tokenToken,
+                    'token'      => Hash::make($otp),
                     'created_at' => now()
                 ]
             );
+            RateLimiter::clear('doi-mat-khau:' . $request->email);
 
-            Mail::send('emails.quen_mat_khau', ['token' => $tokenToken], function ($message) use ($request) {
-                $message->to($request->email)->subject('🔑 Khôi phục mật khẩu Porsche Workshop');
+            Mail::send('emails.quen_mat_khau', [
+                'email'  => $request->email,
+                'otp'    => $otp,
+                'phut'   => self::OTP_QUEN_MAT_KHAU_PHUT,
+            ], function ($message) use ($request) {
+                $message->to($request->email)->subject('🔑 Mã OTP khôi phục mật khẩu Porsche Workshop');
             });
 
-            return response()->json(['status' => true, 'message' => 'Hệ thống đã điều hướng link khôi phục mật khẩu vào Email của bạn.'], 200);
+            return response()->json(['status' => true, 'message' => 'Mã OTP khôi phục mật khẩu đã được gửi vào Email của bạn.'], 200);
         } catch (Exception $e) {
+            Log::error('Lỗi quenMatKhauKhachHang: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Trục trặc dịch vụ Mail OTP.'], 500);
         }
     }
@@ -373,19 +383,27 @@ class KhachHangController extends Controller
     {
         $request->validate([
             'email'    => 'required|email|exists:users,email',
-            'token'    => 'required|string',
+            'token'    => 'required|string|size:6',
             'password' => 'required|string|min:6|confirmed'
         ]);
+
+        $khoaGioiHan = 'doi-mat-khau:' . $request->email;
+        if (RateLimiter::tooManyAttempts($khoaGioiHan, self::OTP_QUEN_MAT_KHAU_SO_LAN_NHAP)) {
+            return response()->json(['status' => false, 'message' => 'Bạn đã nhập sai quá nhiều lần. Vui lòng yêu cầu mã OTP mới.'], 429);
+        }
 
         try {
             $resetRecord = DB::table('password_resets')
                 ->where('email', $request->email)
-                ->where('token', $request->token)
+                ->where('created_at', '>=', now()->subMinutes(self::OTP_QUEN_MAT_KHAU_PHUT))
                 ->first();
 
-            if (!$resetRecord) {
-                return response()->json(['status' => false, 'message' => 'Mã xác thực đổi mật khẩu đã hết hạn hoặc không đúng.'], 400);
+            if (!$resetRecord || !Hash::check(Str::upper(trim($request->token)), $resetRecord->token)) {
+                RateLimiter::hit($khoaGioiHan, self::OTP_QUEN_MAT_KHAU_PHUT * 60);
+                return response()->json(['status' => false, 'message' => 'Mã OTP đã hết hạn hoặc không đúng.'], 400);
             }
+
+            RateLimiter::clear($khoaGioiHan);
 
             DB::table('users')->where('email', $request->email)->update([
                 'password'   => Hash::make($request->password),

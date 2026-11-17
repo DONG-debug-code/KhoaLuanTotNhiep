@@ -9,7 +9,7 @@ export function layThongTinDatCoc(loai, slug) {
     if (!xe) return null;
     return {
       tieuDe: `Đặt lịch lái thử ${xe.ten}`,
-      moTaNgan: `PORSCHE ${xe.dong} · ${xe.nam}`,
+      moTaNgan: `PORSCHE ${xe.dong}`,
       anh: xe.anhGallery?.[0],
       tienCoc: 2000000, // cọc cố định cho lịch lái thử
       ghiChuCoc: "Khoản cọc sẽ được hoàn lại hoặc trừ vào giá xe nếu bạn quyết định mua.",

@@ -94,14 +94,16 @@ export default function DoiMatKhauPage() {
                     </div>
                     {!tokenTuLienKet && (
                         <div>
-                            <label className="mb-1.5 block text-sm font-semibold">Mã xác nhận trong email</label>
+                            <label className="mb-1.5 block text-sm font-semibold">Mã OTP (6 ký tự)</label>
                             <input
                                 type="text"
                                 required
+                                maxLength={6}
+                                autoComplete="one-time-code"
                                 value={maXacNhan}
-                                onChange={(e) => setMaXacNhan(e.target.value)}
-                                placeholder="Nhập mã hoặc token đã nhận"
-                                className="w-full rounded-lg border border-[#ECECE9] px-4 py-3 text-sm outline-none focus:border-[#17171A]"
+                                onChange={(e) => setMaXacNhan(e.target.value.toUpperCase())}
+                                placeholder="Nhập mã OTP trong email"
+                                className="w-full rounded-lg border border-[#ECECE9] px-4 py-3 text-sm uppercase tracking-[4px] outline-none focus:border-[#17171A]"
                             />
                         </div>
                     )}

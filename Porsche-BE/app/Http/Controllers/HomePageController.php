@@ -155,13 +155,14 @@ class HomePageController extends Controller
     public function getGoiDoClient(): JsonResponse
     {
         try {
-            $data = $this->queryGoiDoClient()
-                ->orderBy('san_phams.id')
+            $data = $this->queryGoiDoXeClient()
+                ->where('goi_do_xes.trang_thai', true)
+                ->orderBy('goi_do_xes.id')
                 ->get();
 
             return response()->json([
                 'status' => true,
-                'data' => $this->ganAnhSanPham($data),
+                'data' => $this->presentGoiDo($data),
             ], 200);
         } catch (Exception $e) {
             Log::error('Lỗi getGoiDoClient: ' . $e->getMessage());
@@ -172,18 +173,18 @@ class HomePageController extends Controller
     public function getGoiDoClientById($id): JsonResponse
     {
         try {
-            $sanPham = $this->queryGoiDoClient()
+            $goiDo = $this->queryGoiDoXeClient()
                 ->where(function ($query) use ($id) {
-                    $query->where('san_phams.id', $id)
-                        ->orWhere('san_phams.slug', $id);
+                    $query->where('goi_do_xes.id', $id)
+                        ->orWhere('goi_do_xes.slug', $id);
                 })
                 ->first();
 
-            if (!$sanPham) {
+            if (!$goiDo) {
                 return response()->json(['status' => false, 'message' => 'Không tìm thấy gói độ.'], 404);
             }
 
-            $data = $this->ganAnhSanPham(collect([$sanPham]))->first();
+            $data = $this->presentGoiDo(collect([$goiDo]))->first();
 
             return response()->json(['status' => true, 'data' => $data], 200);
         } catch (Exception $e) {
@@ -256,24 +257,51 @@ class HomePageController extends Controller
             ->where('san_phams.slug', '!=', '');
     }
 
-    private function ganAnhSanPham($sanPhams)
+    private function queryGoiDoXeClient()
     {
-        if ($sanPhams->isEmpty()) {
-            return $sanPhams;
+        return DB::table('goi_do_xes')
+            ->leftJoin('mau_xes', 'goi_do_xes.mau_xe_id', '=', 'mau_xes.id')
+            ->select(
+                'goi_do_xes.id',
+                'goi_do_xes.ten_goi',
+                'goi_do_xes.slug',
+                'goi_do_xes.mo_ta',
+                'goi_do_xes.tong_gia_goc',
+                'goi_do_xes.gia_goi_khuyen_mai',
+                'goi_do_xes.trang_thai',
+                'mau_xes.ten as mau_xe_tuong_thich'
+            );
+    }
+
+    private function presentGoiDo($goiDos)
+    {
+        if ($goiDos->isEmpty()) {
+            return $goiDos;
         }
 
-        $anhTheoSanPham = DB::table('anh_san_phams')
-            ->whereIn('san_pham_id', $sanPhams->pluck('id'))
-            ->orderByDesc('la_anh_chinh')
-            ->orderBy('id')
-            ->get(['san_pham_id', 'duong_dan'])
-            ->groupBy('san_pham_id');
+        $anhTheoGoiDo = DB::table('chi_tiet_goi_do_xes as details')
+            ->join('anh_san_phams as images', 'images.san_pham_id', '=', 'details.san_pham_id')
+            ->whereIn('details.goi_do_xe_id', $goiDos->pluck('id'))
+            ->orderByDesc('images.la_anh_chinh')
+            ->orderBy('images.id')
+            ->get(['details.goi_do_xe_id', 'images.duong_dan'])
+            ->groupBy('goi_do_xe_id');
 
-        foreach ($sanPhams as $sanPham) {
-            $anh = $anhTheoSanPham->get($sanPham->id, collect())->first();
-            $sanPham->anh = $anh ? $anh->duong_dan : null;
-        }
+        return $goiDos->map(function ($goiDo) use ($anhTheoGoiDo) {
+            $anh = $anhTheoGoiDo->get($goiDo->id, collect())->first();
+            $giaKhuyenMai = (float) $goiDo->gia_goi_khuyen_mai;
 
-        return $sanPhams;
+            return [
+                'id' => $goiDo->id,
+                'slug' => $goiDo->slug,
+                'ten' => $goiDo->ten_goi,
+                'mo_ta' => $goiDo->mo_ta,
+                'mau_xe_tuong_thich' => $goiDo->mau_xe_tuong_thich,
+                'gia' => $giaKhuyenMai > 0 ? $giaKhuyenMai : (float) $goiDo->tong_gia_goc,
+                // goi_do_xes không có cột tồn kho; gói đang kích hoạt được coi là còn hàng.
+                'so_luong' => 1,
+                'anh' => $anh ? $anh->duong_dan : null,
+            ];
+        })->values();
     }
 }

@@ -36,7 +36,7 @@ export const CarItem = ({ xeHienThi }) => {
                     {/* Info */}
                     <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
                         <div className="mb-1 text-[11px] font-semibold tracking-[0.3px] text-[#8A8A85]">
-                            PORSCHE {xe.dong}{xe.nam && xe.nam !== "Đang cập nhật" ? ` · ${xe.nam}` : ""}
+                            PORSCHE {xe.dong}
                         </div>
 
                         <div title={xe.ten} className="mb-2 line-clamp-2 text-[18px] font-bold leading-snug">
@@ -45,16 +45,16 @@ export const CarItem = ({ xeHienThi }) => {
 
                         <div className="grid grid-cols-3 gap-2 border-y border-[#ECECE9] py-2">
                             <div>
-                                <div className="text-[11px] text-[#8A8A85]">Công suất</div>
-                                <div title={xe.congSuat} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.congSuat}</div>
+                                <div className="text-[11px] text-[#8A8A85]">Số lượng</div>
+                                <div title={xe.soLuongHienThi} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.soLuongHienThi}</div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#8A8A85]">0–100 km/h</div>
-                                <div title={xe.toc0_100} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.toc0_100}</div>
+                                <div className="text-[11px] text-[#8A8A85]">Dòng xe</div>
+                                <div title={xe.dongXe} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.dongXe}</div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#8A8A85]">Tốc độ tối đa</div>
-                                <div title={xe.tocDoToiDa} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.tocDoToiDa}</div>
+                                <div className="text-[11px] text-[#8A8A85]">Ngày nhập</div>
+                                <div title={xe.ngayNhap} className="mt-0.5 line-clamp-2 min-h-[2.5em] text-[13px] font-semibold leading-tight">{xe.ngayNhap}</div>
                             </div>
                         </div>
 

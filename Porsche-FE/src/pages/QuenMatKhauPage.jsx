@@ -40,7 +40,7 @@ export default function QuenMatKhauPage() {
       <AuthLayout
         eyebrow="Quên mật khẩu"
         title="Kiểm tra email của bạn"
-        description={`Nếu email ${email} tồn tại trong hệ thống, mã hoặc liên kết đặt lại mật khẩu đã được gửi tới đó.`}
+        description={`Nếu email ${email} tồn tại trong hệ thống, mã OTP 6 ký tự đã được gửi tới đó (có hiệu lực 10 phút).`}
       >
         <AuthSubmit
           onClick={() => navigate(`/doi-mat-khau?email=${encodeURIComponent(email)}`)}
@@ -61,7 +61,7 @@ export default function QuenMatKhauPage() {
     <AuthLayout
       eyebrow="Quên mật khẩu"
       title="Đặt lại mật khẩu"
-      description="Nhập email đã đăng ký, chúng tôi sẽ gửi cho bạn liên kết đặt lại mật khẩu."
+      description="Nhập email đã đăng ký, chúng tôi sẽ gửi cho bạn mã OTP để đặt lại mật khẩu."
     >
       <AuthError>{loi}</AuthError>
       <form onSubmit={xuLyGuiYeuCau} className="flex flex-col gap-4">
@@ -75,7 +75,7 @@ export default function QuenMatKhauPage() {
           autoComplete="email"
         />
         <AuthSubmit disabled={dangTai}>
-          {dangTai ? "Đang gửi..." : "Gửi liên kết đặt lại"}
+          {dangTai ? "Đang gửi..." : "Gửi mã OTP"}
         </AuthSubmit>
       </form>
       <p className="mt-6 text-sm text-[#666970]">
