@@ -654,6 +654,11 @@ function CustomerPortalPage() {
                           {Number(voucher.gia_tri_don_hang_toi_thieu) > 0 ? (
                             <p className="mt-1 text-[11px] text-[#777a80]">Đơn tối thiểu {money(voucher.gia_tri_don_hang_toi_thieu)}</p>
                           ) : null}
+                          <p className="mt-1 text-[11px] text-[#777a80]">
+                            {Number(voucher.gia_san_pham_toi_da) > 0
+                              ? `Áp dụng cho sản phẩm có giá dưới ${money(voucher.gia_san_pham_toi_da)}`
+                              : "Áp dụng cho tất cả sản phẩm"}
+                          </p>
                           {voucher.ngay_ket_thuc ? (
                             <p className="mt-1 text-[11px] text-[#777a80]">Hạn sử dụng: {formatDate(voucher.ngay_ket_thuc)}</p>
                           ) : null}

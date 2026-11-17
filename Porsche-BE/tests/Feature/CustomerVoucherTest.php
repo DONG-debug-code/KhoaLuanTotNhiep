@@ -63,6 +63,7 @@ class CustomerVoucherTest extends TestCase
 
         $migration = require database_path('migrations/2026_10_24_000001_create_user_vouchers_table.php');
         $migration->up();
+        (require database_path('migrations/2026_11_18_000002_add_voucher_scope_and_expiry.php'))->up();
 
         DB::table('vai_tros')->insert(['ma_vai_tro' => 'customer']);
     }
@@ -108,8 +109,10 @@ class CustomerVoucherTest extends TestCase
         Mail::shouldReceive('send')
             ->once()
             ->with('emails.kich_hoat', Mockery::on(function (array $data): bool {
-                $this->assertSame(['WELCOME10'], $data['vouchers']->pluck('code')->all());
-                $this->assertStringContainsString('WELCOME10', view('emails.kich_hoat', $data)->render());
+                $this->assertSame(['CHAOMUNG5', 'WELCOME10'], $data['vouchers']->pluck('code')->all());
+                $html = view('emails.kich_hoat', $data)->render();
+                $this->assertStringContainsString('WELCOME10', $html);
+                $this->assertStringContainsString(now()->addDays(30)->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y'), $html);
 
                 return true;
             }), Mockery::type('Closure'));
@@ -123,14 +126,25 @@ class CustomerVoucherTest extends TestCase
         ]);
 
         $response->assertCreated();
-        $this->assertSame(1, DB::table('user_vouchers')->count());
+        $this->assertSame(2, DB::table('user_vouchers')->count());
+
+        $welcome = DB::table('user_vouchers')
+            ->join('phieu_giam_gias', 'phieu_giam_gias.id', '=', 'user_vouchers.phieu_id')
+            ->where('phieu_giam_gias.code', 'CHAOMUNG5')
+            ->first();
+        $this->assertSame(5, (int) $welcome->gia_tri);
+        $this->assertNull($welcome->gia_san_pham_toi_da);
+        $this->assertSame(now()->addDays(30)->toDateString(), substr((string) $welcome->het_han_luc, 0, 10));
 
         $userId = DB::table('users')->where('email', 'voucher@example.com')->value('id');
         $request = Request::create('/api/khach-hang/profile/data', 'GET');
         $request->attributes->set('id_khach_hang', $userId);
         $profile = app(KhachHangController::class)->getProfile($request)->getData(true);
 
-        $this->assertSame('WELCOME10', $profile['data']['vouchers'][0]['code']);
+        $codes = collect($profile['data']['vouchers'])->pluck('code')->all();
+        $this->assertEqualsCanonicalizing(['CHAOMUNG5', 'WELCOME10'], $codes);
+        $profileWelcome = collect($profile['data']['vouchers'])->firstWhere('code', 'CHAOMUNG5');
+        $this->assertSame(now()->addDays(30)->toDateString(), substr((string) $profileWelcome['ngay_ket_thuc'], 0, 10));
         $this->assertNotEmpty($profile['data']['profile']['created_at']);
     }
 }

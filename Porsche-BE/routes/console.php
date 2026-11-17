@@ -19,3 +19,7 @@ Schedule::command('payments:expire-unpaid-card-orders')
 Schedule::command('workshop:remind-upcoming-appointments')
     ->dailyAt('08:00')
     ->withoutOverlapping();
+
+Schedule::command('vouchers:grant-loyalty')
+    ->dailyAt('02:00')
+    ->withoutOverlapping();

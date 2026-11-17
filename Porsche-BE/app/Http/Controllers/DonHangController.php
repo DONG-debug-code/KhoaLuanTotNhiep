@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\donHangModel;
 use App\Services\VnpayService;
+use App\Services\VoucherService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -129,7 +130,8 @@ class DonHangController extends Controller
                         $data['ma_voucher'],
                         $subtotal,
                         true,
-                        $userId
+                        $userId,
+                        array_map(fn ($item) => ['unit_price' => $item['unit_price'], 'line_total' => $item['line_total']], $orderItems)
                     );
                     if ($error !== null) {
                         return ['error' => $error, 'code' => 422];
@@ -521,6 +523,12 @@ class DonHangController extends Controller
                 $this->sendCashPaymentReceipt((int) $result['cash_receipt_order_id']);
             }
 
+            if ($data['trang_thai'] === donHangModel::TRANG_THAI_HOAN_THANH) {
+                app(VoucherService::class)->grantLoyaltyQuietly(
+                    DB::table('don_hangs')->where('id', $data['don_hang_id'])->value('users_id')
+                );
+            }
+
             return response()->json(['status' => true, 'message' => 'Cập nhật trạng thái đơn hàng thành công.']);
         } catch (Throwable $e) {
             Log::error('Không thể cập nhật trạng thái đơn hàng.', ['error' => $e->getMessage()]);
@@ -647,13 +655,18 @@ class DonHangController extends Controller
         $data = $request->validate([
             'ma_voucher' => 'required|string|max:100',
             'tong_tien' => 'required|numeric|min:0',
+            'items' => 'nullable|array|max:50',
+            'items.*.type' => 'required_with:items|string|in:goi_do,phu_tung',
+            'items.*.id' => 'required_with:items|integer|min:1',
+            'items.*.quantity' => 'required_with:items|integer|min:1|max:100',
         ]);
 
         [$voucher, $discount, $error] = $this->calculateVoucherDiscount(
             $data['ma_voucher'],
             (float) $data['tong_tien'],
             false,
-            (int) $request->user()->id
+            (int) $request->user()->id,
+            isset($data['items']) ? $this->priceLines($data['items']) : null
         );
         if ($error !== null) {
             return response()->json(['status' => false, 'message' => $error], 422);
@@ -671,7 +684,26 @@ class DonHangController extends Controller
         ]);
     }
 
-    private function calculateVoucherDiscount(string $code, float $subtotal, bool $lock = false, ?int $userId = null): array
+    /**
+     * Đơn giá và thành tiền từng dòng, tra theo dữ liệu máy chủ để áp mã giảm giá theo mức giá sản phẩm.
+     *
+     * @return array<int, array{unit_price: float, line_total: float}>
+     */
+    private function priceLines(array $items): array
+    {
+        $lines = [];
+        foreach ($items as $item) {
+            $table = $item['type'] === 'phu_tung' ? 'phu_tungs' : 'san_phams';
+            $price = DB::table($table)->where('id', $item['id'])->value('gia');
+            if ($price !== null) {
+                $lines[] = ['unit_price' => (float) $price, 'line_total' => (float) $price * (int) $item['quantity']];
+            }
+        }
+
+        return $lines;
+    }
+
+    private function calculateVoucherDiscount(string $code, float $subtotal, bool $lock = false, ?int $userId = null, ?array $lines = null): array
     {
         $query = DB::table('phieu_giam_gias')
             ->where('code', strtoupper(trim($code)))
@@ -685,21 +717,33 @@ class DonHangController extends Controller
             return [null, 0, 'Mã giảm giá không tồn tại hoặc đã bị khóa.'];
         }
 
-        if (!DB::table('user_vouchers')
+        $assignment = DB::table('user_vouchers')
             ->where('user_id', $userId)
             ->where('phieu_id', $voucher->id)
-            ->exists()) {
+            ->first();
+        if (!$assignment) {
             return [null, 0, 'Mã giảm giá này chưa được cấp cho tài khoản của bạn.'];
         }
 
         $now = now();
         if (($voucher->ngay_bat_dau && $now->lt($voucher->ngay_bat_dau))
-            || ($voucher->ngay_ket_thuc && $now->gt($voucher->ngay_ket_thuc))) {
+            || ($voucher->ngay_ket_thuc && $now->gt($voucher->ngay_ket_thuc))
+            || (($assignment->het_han_luc ?? null) && $now->gt($assignment->het_han_luc))) {
             return [null, 0, 'Mã giảm giá chưa có hiệu lực hoặc đã hết hạn.'];
         }
 
         if ($subtotal < (float) $voucher->gia_tri_don_hang_toi_thieu) {
             return [null, 0, 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã giảm giá.'];
+        }
+
+        $perCustomerLimit = $voucher->gioi_han_moi_khach ?? null;
+        if ($perCustomerLimit !== null
+            && DB::table('lich_su_su_dung_phieus')
+                ->where('phieu_id', $voucher->id)
+                ->where('user_id', $userId)
+                ->where('trang_thai', 'da_su_dung')
+                ->count() >= (int) $perCustomerLimit) {
+            return [null, 0, 'Bạn đã sử dụng hết số lần áp dụng của mã giảm giá này.'];
         }
 
         $used = DB::table('lich_su_su_dung_phieus')
@@ -710,15 +754,30 @@ class DonHangController extends Controller
             return [null, 0, 'Mã giảm giá đã hết lượt sử dụng.'];
         }
 
+        // Mã giới hạn theo giá sản phẩm chỉ giảm trên các dòng có đơn giá dưới mức trần.
+        $discountBase = $subtotal;
+        $priceCap = $voucher->gia_san_pham_toi_da ?? null;
+        if ($priceCap !== null && (float) $priceCap > 0) {
+            if ($lines === null) {
+                return [null, 0, 'Vui lòng chọn sản phẩm cụ thể để áp dụng mã giảm giá này.'];
+            }
+            $discountBase = collect($lines)
+                ->filter(fn ($line) => $line['unit_price'] < (float) $priceCap)
+                ->sum('line_total');
+            if ($discountBase <= 0) {
+                return [null, 0, 'Mã giảm giá chỉ áp dụng cho sản phẩm có giá dưới ' . number_format((float) $priceCap, 0, ',', '.') . ' ₫.'];
+            }
+        }
+
         $discount = $voucher->loai === 'phan_tram'
-            ? $subtotal * (float) $voucher->gia_tri / 100
+            ? $discountBase * (float) $voucher->gia_tri / 100
             : (float) $voucher->gia_tri;
 
         if ($voucher->giam_toi_da !== null && (float) $voucher->giam_toi_da > 0) {
             $discount = min($discount, (float) $voucher->giam_toi_da);
         }
 
-        return [$voucher, min($subtotal, max(0, $discount)), null];
+        return [$voucher, min($discountBase, max(0, $discount)), null];
     }
 
     private function restoreOrderStock(int $orderId): void

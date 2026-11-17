@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -281,6 +282,9 @@ class KhachHangController extends Controller
             $now = now();
             $vouchers = DB::table('phieu_giam_gias')
                 ->where('trang_thai', true)
+                ->where(function ($query) {
+                    $query->whereNull('nhom')->orWhereNotIn('nhom', ['chao_mung', 'chi_tieu']);
+                })
                 ->where(function ($query) use ($now) {
                     $query->whereNull('ngay_bat_dau')->orWhere('ngay_bat_dau', '<=', $now);
                 })
@@ -303,6 +307,11 @@ class KhachHangController extends Controller
                         'updated_at' => $now,
                     ])->all()
                 );
+            }
+
+            $welcomeVoucher = app(VoucherService::class)->grantWelcome($khachHangId, $now);
+            if ($welcomeVoucher) {
+                $vouchers->prepend($welcomeVoucher);
             }
 
             Mail::send('emails.kich_hoat', [
@@ -517,12 +526,15 @@ class KhachHangController extends Controller
                 'phieu_giam_gias.gia_tri',
                 'phieu_giam_gias.gia_tri_don_hang_toi_thieu',
                 'phieu_giam_gias.giam_toi_da',
+                'phieu_giam_gias.gia_san_pham_toi_da',
+                'phieu_giam_gias.nhom',
                 'phieu_giam_gias.so_luong',
                 'phieu_giam_gias.trang_thai',
                 'phieu_giam_gias.ngay_bat_dau',
-                'phieu_giam_gias.ngay_ket_thuc',
                 'user_vouchers.created_at as ngay_duoc_cap'
             )
+            // Hạn dùng thực tế của khách: sớm hơn giữa hạn riêng của khách và hạn của chương trình.
+            ->selectRaw('CASE WHEN user_vouchers.het_han_luc IS NOT NULL AND (phieu_giam_gias.ngay_ket_thuc IS NULL OR user_vouchers.het_han_luc < phieu_giam_gias.ngay_ket_thuc) THEN user_vouchers.het_han_luc ELSE phieu_giam_gias.ngay_ket_thuc END AS ngay_ket_thuc')
             ->selectSub(function ($query) use ($khachHangId) {
                 $query->from('lich_su_su_dung_phieus')
                     ->selectRaw('COUNT(*)')

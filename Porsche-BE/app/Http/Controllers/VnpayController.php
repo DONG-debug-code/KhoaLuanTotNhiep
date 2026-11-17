@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\PaymentReceiptMail;
 use App\Services\VnpayService;
+use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +123,10 @@ class VnpayController extends Controller
         if ($alreadyPaid === null) {
             return ['result' => 'failed'];
         }
+
+        app(VoucherService::class)->grantLoyaltyQuietly(
+            DB::table('don_hangs')->where('id', $payment->don_hang_id)->value('users_id')
+        );
 
         $this->sendReceipt((int) $payment->id);
 

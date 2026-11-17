@@ -8,6 +8,8 @@ use App\Http\Controllers\DonHangController;
 use App\Mail\PaymentReceiptMail;
 use App\Models\User;
 use App\Services\VnpayService;
+use App\Services\VoucherService;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -155,6 +157,7 @@ class CommerceUpgradeTest extends TestCase
             $table->unsignedBigInteger('phieu_id');
             $table->timestamps();
         });
+        (require database_path('migrations/2026_11_18_000002_add_voucher_scope_and_expiry.php'))->up();
 
         Schema::create('nhat_ky_khos', function (Blueprint $table) {
             $table->id();
@@ -183,10 +186,12 @@ class CommerceUpgradeTest extends TestCase
         Schema::create('hoa_dons', function (Blueprint $table) {
             $table->id();
             $table->string('ma_hoa_don');
-            $table->unsignedBigInteger('don_hang_id');
-            $table->unsignedBigInteger('users_id');
+            $table->unsignedBigInteger('don_hang_id')->nullable();
+            $table->unsignedBigInteger('id_phieu_dat_lich')->nullable();
+            $table->unsignedBigInteger('users_id')->nullable();
             $table->decimal('tong_tien', 15, 2);
-            $table->string('trang_thai_tt');
+            $table->tinyInteger('trang_thai')->default(0);
+            $table->string('trang_thai_tt')->nullable();
             $table->timestamp('ngay_xuat')->nullable();
             $table->timestamps();
         });
@@ -314,6 +319,95 @@ class CommerceUpgradeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.san_pham_id', 1)
             ->assertJsonPath('data.0.hinh_anh', 'products/911.jpg');
+    }
+
+    private function applyVoucher(string $code, array $items = null, float $total = 1000): \Illuminate\Testing\TestResponse
+    {
+        $user = new User();
+        $user->id = 42;
+        $request = Request::create('/api/khach-hang/ap-ma-giam-gia', 'POST', array_filter([
+            'ma_voucher' => $code,
+            'tong_tien' => $total,
+            'items' => $items,
+        ], fn ($value) => $value !== null));
+        $request->setUserResolver(fn () => $user);
+
+        return \Illuminate\Testing\TestResponse::fromBaseResponse(app(DonHangController::class)->apMaGiamGia($request));
+    }
+
+    public function test_price_capped_voucher_only_discounts_products_under_the_cap(): void
+    {
+        DB::table('san_phams')->insert([
+            ['id' => 1, 'ten' => 'Goi re', 'gia' => 500_000_000, 'so_luong' => 5],
+            ['id' => 2, 'ten' => 'Goi dat', 'gia' => 1_500_000_000, 'so_luong' => 5],
+        ]);
+        $voucher = app(VoucherService::class)->template(VoucherService::LOYALTY_CODE_UNDER_700);
+        DB::table('user_vouchers')->insert(['user_id' => 42, 'phieu_id' => $voucher->id, 'created_at' => now(), 'updated_at' => now()]);
+
+        $mixed = [['type' => 'goi_do', 'id' => 1, 'quantity' => 1], ['type' => 'goi_do', 'id' => 2, 'quantity' => 1]];
+        $this->applyVoucher(VoucherService::LOYALTY_CODE_UNDER_700, $mixed, 2_000_000_000)
+            ->assertOk()->assertJsonPath('data.so_tien_giam', 50_000_000);
+
+        $this->applyVoucher(VoucherService::LOYALTY_CODE_UNDER_700, [['type' => 'goi_do', 'id' => 2, 'quantity' => 1]], 1_500_000_000)
+            ->assertStatus(422);
+        $this->applyVoucher(VoucherService::LOYALTY_CODE_UNDER_700, null, 2_000_000_000)
+            ->assertStatus(422);
+    }
+
+    public function test_welcome_voucher_expires_after_30_days_and_is_single_use(): void
+    {
+        $service = app(VoucherService::class);
+        $service->grantWelcome(42, now());
+
+        $this->applyVoucher(VoucherService::WELCOME_CODE, null, 1000)
+            ->assertOk()->assertJsonPath('data.so_tien_giam', 50);
+
+        DB::table('lich_su_su_dung_phieus')->insert([
+            'user_id' => 42,
+            'phieu_id' => DB::table('phieu_giam_gias')->where('code', VoucherService::WELCOME_CODE)->value('id'),
+            'trang_thai' => 'da_su_dung',
+        ]);
+        $this->applyVoucher(VoucherService::WELCOME_CODE, null, 1000)->assertStatus(422);
+
+        DB::table('lich_su_su_dung_phieus')->delete();
+        Carbon::setTestNow(now()->addDays(31));
+        $this->applyVoucher(VoucherService::WELCOME_CODE, null, 1000)->assertStatus(422);
+        Carbon::setTestNow();
+    }
+
+    public function test_customers_spending_one_billion_receive_loyalty_vouchers_once(): void
+    {
+        DB::table('users')->insert(['id' => 42, 'ho_ten' => 'Khach VIP', 'email' => 'vip@example.test']);
+        $order = fn (float $amount, string $payment, string $status = 'hoan_thanh') => [
+            'users_id' => 42, 'tong_tien' => $amount, 'giam_gia' => 0, 'thanh_tien' => $amount,
+            'trang_thai' => $status, 'phuong_thuc_tt' => 'the', 'trang_thai_thanh_toan' => $payment,
+        ];
+        DB::table('don_hangs')->insert([
+            $order(600_000_000, 'da_thanh_toan'),
+            $order(300_000_000, 'cho_thanh_toan'),
+            $order(500_000_000, 'da_thanh_toan', 'da_huy_hoan_kho'),
+        ]);
+
+        $service = app(VoucherService::class);
+        $this->assertCount(0, $service->grantLoyaltyIfEligible(42));
+
+        $appointmentId = DB::table('phieu_dat_lichs')->insertGetId([
+            'ma_dat_lich' => 'APPT', 'id_khach_hang' => 42, 'ngay_dat' => '2026-11-01', 'gio_dat' => '09:00',
+        ]);
+        DB::table('hoa_dons')->insert(['ma_hoa_don' => 'HD1', 'id_phieu_dat_lich' => $appointmentId, 'tong_tien' => 400_000_000, 'trang_thai' => 1]);
+        DB::table('hoa_dons')->insert(['ma_hoa_don' => 'HD2', 'don_hang_id' => 1, 'tong_tien' => 600_000_000, 'trang_thai' => 1]);
+        $this->assertSame(1_000_000_000.0, $service->totalSpend(42));
+
+        Mail::shouldReceive('send')->once()->with('emails.voucher_chi_tieu', \Mockery::on(function (array $data): bool {
+            $this->assertSame([VoucherService::LOYALTY_CODE_UNDER_700, VoucherService::LOYALTY_CODE_UNDER_200], $data['vouchers']->pluck('code')->all());
+            $this->assertStringContainsString('VIP10-DUOI700TR', view('emails.voucher_chi_tieu', $data)->render());
+
+            return true;
+        }), \Mockery::type('Closure'));
+
+        $this->assertCount(2, $service->grantLoyaltyIfEligible(42));
+        $this->assertCount(0, $service->grantLoyaltyIfEligible(42));
+        $this->assertSame(2, DB::table('user_vouchers')->where('user_id', 42)->count());
     }
 
     public function test_cars_cannot_be_purchased_online(): void

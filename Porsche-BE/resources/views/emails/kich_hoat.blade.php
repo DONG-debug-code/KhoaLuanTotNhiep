@@ -32,6 +32,10 @@
                         @if ((float) $voucher->gia_tri_don_hang_toi_thieu > 0)
                             cho đơn từ {{ number_format($voucher->gia_tri_don_hang_toi_thieu, 0, ',', '.') }}₫
                         @endif
+                        @php($hetHan = $voucher->het_han_luc ?? $voucher->ngay_ket_thuc ?? null)
+                        @if ($hetHan)
+                            <br><span style="color: #b00020;">Hạn sử dụng đến {{ \Carbon\Carbon::parse($hetHan)->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y') }}</span>
+                        @endif
                     </li>
                 @endforeach
             </ul>

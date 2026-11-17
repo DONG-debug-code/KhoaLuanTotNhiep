@@ -145,6 +145,7 @@ export default function ThanhToanPage() {
       const response = await postWorkspaceData("khach-hang", "ap-ma-giam-gia", {
         ma_voucher: voucherCode.trim(),
         tong_tien: subtotal,
+        items: items.map((item) => ({ type: item.type, id: item.id, quantity: item.quantity })),
       });
       if (!response?.status || !response.data) {
         throw new Error(response?.message || "Không thể áp dụng mã giảm giá.");
@@ -400,6 +401,7 @@ export default function ThanhToanPage() {
                       return (
                         <option key={voucher.id} value={voucher.code}>
                           {voucher.code} · giảm {discountLabel}
+                          {Number(voucher.gia_san_pham_toi_da) > 0 ? ` · SP dưới ${money(voucher.gia_san_pham_toi_da)}` : ""}
                         </option>
                       );
                     })}

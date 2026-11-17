@@ -227,13 +227,15 @@ class AiContextBuilder
         $lines = array_merge($lines, $this->safe(fn () => DB::table('user_vouchers')
             ->join('phieu_giam_gias as p', 'user_vouchers.phieu_id', '=', 'p.id')
             ->where('user_vouchers.user_id', $user->id)
-            ->select('p.code', 'p.loai', 'p.gia_tri', 'p.gia_tri_don_hang_toi_thieu', 'p.giam_toi_da', 'p.ngay_ket_thuc', 'p.trang_thai')
+            ->select('p.code', 'p.loai', 'p.gia_tri', 'p.gia_tri_don_hang_toi_thieu', 'p.giam_toi_da', 'p.gia_san_pham_toi_da', 'p.trang_thai')
+            ->selectRaw('CASE WHEN user_vouchers.het_han_luc IS NOT NULL AND (p.ngay_ket_thuc IS NULL OR user_vouchers.het_han_luc < p.ngay_ket_thuc) THEN user_vouchers.het_han_luc ELSE p.ngay_ket_thuc END AS ngay_ket_thuc')
             ->get()
             ->map(function ($v) use ($today) {
                 $con = (int) $v->trang_thai === 1 && (!$v->ngay_ket_thuc || substr((string) $v->ngay_ket_thuc, 0, 10) >= $today);
                 return "- {$v->code} | {$v->loai}: {$v->gia_tri}"
                     . ($v->gia_tri_don_hang_toi_thieu ? ' | đơn tối thiểu ' . $this->money((float) $v->gia_tri_don_hang_toi_thieu) : '')
                     . ($v->giam_toi_da ? ' | giảm tối đa ' . $this->money((float) $v->giam_toi_da) : '')
+                    . ($v->gia_san_pham_toi_da ? ' | chỉ áp dụng sản phẩm dưới ' . $this->money((float) $v->gia_san_pham_toi_da) : '')
                     . ($v->ngay_ket_thuc ? " | hạn: {$v->ngay_ket_thuc}" : '')
                     . ' | ' . ($con ? 'còn hiệu lực' : 'hết hiệu lực / không áp dụng');
             })->all(), 'Khách chưa có voucher.'));
