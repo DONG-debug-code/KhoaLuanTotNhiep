@@ -1,11 +1,20 @@
 import { Fragment } from "react";
 
-const INLINE_PATTERN = /(\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g;
+const INLINE_PATTERN = /(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s)]+)/g;
+const MARKDOWN_LINK = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/;
 
 function renderInline(text) {
   return text.split(INLINE_PATTERN).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    const markdownLink = part.match(MARKDOWN_LINK);
+    if (markdownLink) {
+      return (
+        <a key={index} href={markdownLink[2]} target="_blank" rel="noopener noreferrer" className="text-[#AC0021] underline">
+          {markdownLink[1]}
+        </a>
+      );
     }
     if (/^https?:\/\//.test(part)) {
       return (
